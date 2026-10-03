@@ -1,0 +1,215 @@
+{
+ "fuente": "SharpAstrology.HumanDesign (MIT), github.com/CReizner/SharpAstrology.HumanDesign, commit 5d95ece (2026-07-29), Enums/Channels.cs y Enums/Centers.cs; leído el 2026-10-03",
+ "canales": [
+  [
+   1,
+   8
+  ],
+  [
+   2,
+   14
+  ],
+  [
+   3,
+   60
+  ],
+  [
+   4,
+   63
+  ],
+  [
+   5,
+   15
+  ],
+  [
+   6,
+   59
+  ],
+  [
+   7,
+   31
+  ],
+  [
+   9,
+   52
+  ],
+  [
+   10,
+   20
+  ],
+  [
+   10,
+   34
+  ],
+  [
+   10,
+   57
+  ],
+  [
+   11,
+   56
+  ],
+  [
+   12,
+   22
+  ],
+  [
+   13,
+   33
+  ],
+  [
+   16,
+   48
+  ],
+  [
+   17,
+   62
+  ],
+  [
+   18,
+   58
+  ],
+  [
+   19,
+   49
+  ],
+  [
+   20,
+   34
+  ],
+  [
+   20,
+   57
+  ],
+  [
+   21,
+   45
+  ],
+  [
+   23,
+   43
+  ],
+  [
+   24,
+   61
+  ],
+  [
+   25,
+   51
+  ],
+  [
+   26,
+   44
+  ],
+  [
+   27,
+   50
+  ],
+  [
+   28,
+   38
+  ],
+  [
+   29,
+   46
+  ],
+  [
+   30,
+   41
+  ],
+  [
+   32,
+   54
+  ],
+  [
+   34,
+   57
+  ],
+  [
+   35,
+   36
+  ],
+  [
+   37,
+   40
+  ],
+  [
+   39,
+   55
+  ],
+  [
+   42,
+   53
+  ],
+  [
+   47,
+   64
+  ]
+ ],
+ "centroDePuerta": {
+  "1": "g",
+  "2": "g",
+  "3": "sacral",
+  "4": "ajna",
+  "5": "sacral",
+  "6": "plexo",
+  "7": "g",
+  "8": "garganta",
+  "9": "sacral",
+  "10": "g",
+  "11": "ajna",
+  "12": "garganta",
+  "13": "g",
+  "14": "sacral",
+  "15": "g",
+  "16": "garganta",
+  "17": "ajna",
+  "18": "bazo",
+  "19": "raiz",
+  "20": "garganta",
+  "21": "corazon",
+  "22": "plexo",
+  "23": "garganta",
+  "24": "ajna",
+  "25": "g",
+  "26": "corazon",
+  "27": "sacral",
+  "28": "bazo",
+  "29": "sacral",
+  "30": "plexo",
+  "31": "garganta",
+  "32": "bazo",
+  "33": "garganta",
+  "34": "sacral",
+  "35": "garganta",
+  "36": "plexo",
+  "37": "plexo",
+  "38": "raiz",
+  "39": "raiz",
+  "40": "corazon",
+  "41": "raiz",
+  "42": "sacral",
+  "43": "ajna",
+  "44": "bazo",
+  "45": "garganta",
+  "46": "g",
+  "47": "ajna",
+  "48": "bazo",
+  "49": "plexo",
+  "50": "bazo",
+  "51": "corazon",
+  "52": "raiz",
+  "53": "raiz",
+  "54": "raiz",
+  "55": "plexo",
+  "56": "garganta",
+  "57": "bazo",
+  "58": "raiz",
+  "59": "sacral",
+  "60": "raiz",
+  "61": "cabeza",
+  "62": "garganta",
+  "63": "cabeza",
+  "64": "cabeza"
+ }
+}

@@ -1,0 +1,6 @@
+{
+  // Solo para los tests: una base D1 local en memoria de Miniflare.
+  "name": "dhlab-test",
+  "compatibility_date": "2026-10-01",
+  "d1_databases": [{ "binding": "DB", "database_name": "dhlab-test", "database_id": "00000000-0000-0000-0000-000000000000" }]
+}

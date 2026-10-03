@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="robots" content="noindex" />
+    <title>DH Lab: panel</title>
+    <script type="module" src="/src/admin.ts"></script>
+  </head>
+  <body>
+    <main class="panel panel-admin">
+      <p class="rotulo">DH Lab</p>
+      <h1 class="nombre">Panel</h1>
+      <form id="invitar" class="fila-invitar">
+        <label for="email" class="rotulo-campo">Invitar un email</label>
+        <input id="email" type="email" autocomplete="off" required />
+        <button class="boton-principal">Invitar</button>
+      </form>
+      <p id="estado" class="error" role="alert"></p>
+      <h2 class="detalle-titulo">Invitaciones sin cuenta</h2>
+      <ul id="invitaciones" class="lista-admin"></ul>
+      <h2 class="detalle-titulo">Cuentas</h2>
+      <ul id="cuentas" class="lista-admin"></ul>
+    </main>
+  </body>
+</html>

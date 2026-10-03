@@ -1,0 +1,37 @@
+{
+  "name": "dhlab",
+  "private": true,
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "scripts": {
+    "ciudades": "node scripts/ciudades.mjs",
+    "dev": "npm run ciudades && vite",
+    "build": "npm run ciudades && tsc --noEmit && tsc --noEmit -p worker && vite build",
+    "preview": "npm run build && wrangler dev",
+    "test": "npm run ciudades && vitest run",
+    "deploy": "npm run build && wrangler deploy",
+    "e2e": "playwright test"
+  },
+  "dependencies": {
+    "@fontsource-variable/archivo": "^5",
+    "@fontsource-variable/martian-mono": "^5.3.0",
+    "@swisseph/browser": "^1.4.0",
+    "jose": "^6.2.12",
+    "timezonecomplete": "^5.15.1",
+    "tzdata": "^1.0.52"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@cloudflare/workers-types": "^5",
+    "@fontsource-variable/caveat": "^5.3.0",
+    "@fontsource/architects-daughter": "^5.3.0",
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^26.6.4",
+    "@vitest/browser": "^3.2.7",
+    "playwright": "^1.63.0",
+    "typescript": "^5",
+    "vite": "^7",
+    "vitest": "^3",
+    "wrangler": "^4"
+  }
+}

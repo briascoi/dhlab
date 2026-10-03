@@ -1,0 +1,6 @@
+.pantalla-hora { display: flex; flex-direction: column; gap: 12px; }
+.pantalla-hora p { margin: 0; }
+.posibilidades { margin: 0; padding: 0; list-style: none; }
+.posibilidades li { padding: 8px 0; border-top: 1px dotted var(--text-muted); font-weight: 600; }
+.banner { margin: 12px; padding: 12px; background: var(--surface-panel); border: 2px solid var(--border); border-radius: 2px; }
+.banner p { margin: 0; }

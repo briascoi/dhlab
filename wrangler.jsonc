@@ -1,0 +1,15 @@
+{
+  // Un solo Worker sirve la app y la API en /v1/ (CEO-S10, T30).
+  "name": "dhlab",
+  "account_id": "779f7aac032c259da141d2d204f7e06f",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "dist",
+    "binding": "ASSETS",
+    "run_worker_first": ["/v1/*", "/admin", "/admin/*"]
+  },
+  // D1 creada con --jurisdiction=us: se guarda y se ejecuta solo en Estados Unidos (T69).
+  "d1_databases": [{ "binding": "DB", "database_name": "dhlab", "database_id": "7d723169-af05-4e5f-bc29-86f66eb560f3", "migrations_dir": "migrations" }],
+  "routes": [{ "pattern": "dhlab.app", "custom_domain": true }]
+}

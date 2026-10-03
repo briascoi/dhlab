@@ -1,0 +1,7 @@
+.panel-admin { width: min(100%, 40rem); padding: 32px 24px; }
+.panel-admin .detalle-titulo { margin: 32px 0 8px; font-size: 1.375rem; }
+.fila-invitar { display: grid; gap: 8px; margin-top: 24px; }
+.fila-invitar input { min-height: 44px; padding: 8px 12px; font: inherit; color: var(--text); background: var(--surface-page); border: 2px solid var(--border); border-radius: 4px; }
+.lista-admin { margin: 0; padding: 0; list-style: none; }
+.lista-admin li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 0; border-top: 1px solid var(--border-decor); overflow-wrap: anywhere; }
+.lista-admin:empty::after { content: "Nadie todavía."; color: var(--text-muted); }

@@ -1,0 +1,60 @@
+/* Hoja que sube sobre la carta (DR28, DR46) y pantallas completas (DR21). Es un <dialog>: el foco no se escapa y Escape la cierra (DR51). */
+.hoja {
+  position: fixed;
+  inset: auto 0 0 0;
+  width: 100%;
+  max-width: 30rem;
+  max-height: 92dvh;
+  margin: 0 auto;
+  padding: 24px 20px 28px;
+  overflow: auto;
+  color: var(--text);
+  background: var(--surface-panel) url(/grano.svg);
+  border: 2px solid var(--border);
+  border-bottom: 0;
+  border-radius: 2px 2px 0 0;
+  box-shadow: 3px 0 0 var(--shadow);
+  animation: hoja-sube 320ms ease-out;
+}
+.hoja::backdrop { background: transparent; }
+.hoja.completa { inset: 0; max-width: none; max-height: none; height: 100dvh; border: 0; box-shadow: none; padding: 32px 20px; }
+.hoja.completa > * { max-width: 68ch; margin-inline: auto; }
+@keyframes hoja-sube { from { transform: translateY(100%); } }
+@media (prefers-reduced-motion: reduce) { .hoja { animation: none; } }
+/* Desde 1024 px la hoja va al lado de la carta, sin taparla (DR51). */
+@media (min-width: 1024px) {
+  /* La página deja libre el lado derecho mientras la hoja está abierta. */
+  body:has(.hoja[open]:not(.completa)) { padding-right: calc(30rem + 96px); }
+  .hoja:not(.completa) { inset: 50% 48px auto auto; margin: 0; transform: translateY(-50%); border-bottom: 2px solid var(--border); border-radius: 2px; box-shadow: 3px 3px 0 var(--shadow); animation: none; }
+}
+
+.hoja-titulo { margin: 0 0 16px; font-weight: 800; font-stretch: 112%; font-size: clamp(1.75rem, 1.2rem + 2.4vw, 2.75rem); line-height: 1.05; letter-spacing: -0.01em; outline: none; }
+.hoja form, .hoja.completa { display: flex; flex-direction: column; gap: 12px; }
+.hoja p { margin: 0; }
+.rotulo-campo { font-weight: 600; }
+.hoja input[type="email"], .hoja input[type="text"], .campo {
+  min-height: 44px;
+  padding: 8px 12px;
+  font: inherit;
+  color: var(--text);
+  background: var(--surface-page);
+  border: 2px solid var(--border);
+  border-radius: 4px;
+}
+.hoja .codigo { font: 400 1.5rem/1 "Martian Mono Variable", ui-monospace, monospace; font-variant-numeric: tabular-nums; letter-spacing: 0.3em; }
+.casilla { display: flex; align-items: center; gap: 4px; min-height: 44px; }
+.casilla input { appearance: none; flex: none; width: 24px; height: 24px; margin: 10px; border: 2px solid var(--border); border-radius: 2px; background: var(--surface-page); }
+.casilla input:checked { background: var(--action); box-shadow: inset 0 0 0 3px var(--surface-page); }
+.links { display: flex; gap: 24px; }
+.links a, .boton-link { display: inline-flex; align-items: center; min-height: 44px; padding: 0; font: inherit; color: var(--link); background: none; border: 0; text-decoration: underline; cursor: pointer; }
+.boton-principal, .boton-secundario { min-height: 44px; padding: 8px 16px; font: inherit; font-weight: 700; border-radius: 4px; cursor: pointer; }
+.boton-principal { color: var(--on-action); background: var(--action); border: 2px solid var(--border); box-shadow: 3px 3px 0 var(--shadow); }
+.boton-principal:hover, .boton-principal:active { box-shadow: 1px 1px 0 var(--shadow); }
+.boton-principal:disabled { color: var(--text-muted); background: transparent; border-style: dashed; box-shadow: none; }
+.boton-secundario { color: var(--text); background: transparent; border: 2px solid var(--border); }
+.error { color: var(--error); font-weight: 600; }
+.error:empty, .estado:empty { display: none; }
+.error .boton-principal { display: block; margin-top: 12px; }
+.icono-error { display: inline-grid; place-items: center; width: 1.25em; height: 1.25em; margin-right: 6px; color: var(--surface-panel); background: var(--error); border-radius: 50%; font-weight: 800; }
+.espera, .enviado { color: var(--text-muted); }
+.lineas { margin: 0; padding-left: 1.2em; display: grid; gap: 8px; }

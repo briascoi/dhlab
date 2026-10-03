@@ -1,0 +1,50 @@
+.mapa { display: block; width: 100%; height: auto; max-height: 30rem; }
+.mapa-centro { fill: var(--surface-panel); }
+.mapa-tinta { fill: var(--light); filter: url(#riso); mix-blend-mode: var(--mezcla); }
+/* Sombra en trama de puntos, en un tono más oscuro de la misma tinta. */
+.mapa-trama { fill: url(#semitono); color: color-mix(in srgb, var(--light), var(--on-light) 38%); mask: url(#sombreado); pointer-events: none; }
+#semitono circle { fill: color-mix(in srgb, var(--light), var(--on-light) 38%); }
+/* Todo lo que es línea lleva el pulso de la tinta a mano. */
+.mapa-contorno, .mapa-canal, .mapa-cable, .mapa-enchufe, .mapa-guia { filter: url(#pulso); }
+.mapa-contorno { fill: none; stroke: var(--border); stroke-width: 1.75; stroke-linejoin: round; }
+/* La luz: un punto claro con su halo, sobre la tinta de luz. */
+.mapa-halo, .mapa-luz { fill: color-mix(in srgb, var(--light), white 82%); }
+.mapa-halo { opacity: 0.45; }
+/* La segunda tinta: rótulos y guías en el azul de acción (de noche, oro). */
+.mapa-rotulo {
+  fill: var(--action);
+  /* Rótulos en la letra de plano de las anotaciones, como en el mockup. */
+  font: 400 14px "Architects Daughter", "Archivo Variable", system-ui, sans-serif;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  /* Un filete del mismo color le da el peso de una fibra. */
+  stroke: var(--action);
+  stroke-width: 0.5;
+}
+.mapa-guia { stroke: var(--action); stroke-width: 1.25; stroke-dasharray: 1 4; stroke-linecap: round; }
+.mapa-canal { stroke: var(--border-decor); stroke-width: 1; stroke-linecap: round; }
+/* Cable de parche: cuerpo en tinta y enchufes metálicos en sus dos puntas. */
+.mapa-cable { fill: none; stroke: var(--cable); stroke-width: 5; stroke-linecap: round; }
+.mapa-enchufe { stroke: var(--text-muted); stroke-width: 9; stroke-linecap: butt; }
+.mapa-boton { fill: transparent; cursor: pointer; outline: none; }
+.mapa-boton:focus-visible { stroke: var(--focus); stroke-width: 3; stroke-linejoin: round; stroke-dasharray: 5 3; }
+
+.detalle { margin: 8px 12px 12px; padding-top: 12px; border-top: 2px solid var(--border); min-height: 5.5rem; }
+.detalle-titulo { margin: 0 0 8px; font-size: 1.375rem; font-weight: 700; line-height: 1.2; }
+.detalle-candado { display: flex; gap: 8px; align-items: flex-start; margin: 0; }
+.candado { flex: none; fill: var(--text); stroke: var(--text); stroke-width: 2; }
+.detalle-canales { margin: 8px 0 0; padding: 0; list-style: none; }
+.detalle-canales li { border-top: 1px solid var(--border-decor); color: var(--text-muted); }
+.detalle-canales button { display: block; width: 100%; min-height: 44px; padding: 6px 0; font: inherit; color: inherit; text-align: left; background: none; border: 0; cursor: pointer; }
+.detalle-canales + .detalle-candado { margin-top: 12px; }
+.detalle-canales li.definido { color: var(--text); font-weight: 700; }
+.detalle-canales li.media { color: var(--text); }
+
+/* Revelación (DR10): "Saltar" abajo a la derecha y el interruptor de sonido abajo a la izquierda, 44 px. */
+.saltear { position: fixed; right: 16px; bottom: 16px; min-width: 44px; background: var(--surface-page); }
+.sonido { position: fixed; left: 16px; bottom: 16px; display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px; background: var(--surface-page); cursor: pointer; }
+.sonido input { width: 20px; height: 20px; margin: 0; }
+.revelacion-cierre { margin: 0; font-weight: 700; }
+/* La nota a mano del mapa, en unidades del dibujo. */
+.mapa-anotacion { fill: var(--action); font-size: 30px; }
+.mapa .trazo { stroke-width: 2.5; }

@@ -1,0 +1,20 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "lib": [
+      "ES2022"
+    ],
+    "types": [
+      "@cloudflare/workers-types",
+      "node"
+    ]
+  },
+  "include": [
+    ".",
+    "../test/worker.test.ts",
+    "../test/cuenta.test.ts",
+    "../test/admin.test.ts",
+    "../test/documentos.test.ts"
+  ],
+  "exclude": []
+}

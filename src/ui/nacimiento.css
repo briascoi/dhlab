@@ -1,0 +1,16 @@
+.nacimiento, .nacimiento .campos { display: flex; flex-direction: column; gap: 12px; }
+.nacimiento p { margin: 0; }
+.nacimiento .promesa { color: var(--text-muted); }
+.nacimiento select.campo { appearance: auto; }
+.nacimiento .campo:disabled { color: var(--text-muted); border-style: dashed; }
+.opciones { margin: 0; padding: 0; border: 0; }
+.opciones legend { padding: 0; margin-bottom: 4px; }
+.opcion { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+.opcion input { width: 22px; height: 22px; margin: 0; accent-color: var(--action); }
+.resultados { margin: 0; padding: 0; list-style: none; border: 2px solid var(--border); border-radius: 4px; }
+.resultados:empty { display: none; }
+.resultado { display: block; width: 100%; min-height: 44px; padding: 8px 12px; font: inherit; text-align: left; color: var(--text); background: var(--surface-page); border: 0; border-bottom: 1px solid var(--border-decor); cursor: pointer; }
+.resultado:hover { background: var(--surface-panel); }
+.acciones { display: flex; gap: 12px; justify-content: flex-end; margin-top: 8px; }
+.acciones .boton-principal { flex: 1; }
+.nacimiento .campo, .nacimiento .resultados { width: 100%; min-width: 0; box-sizing: border-box; }

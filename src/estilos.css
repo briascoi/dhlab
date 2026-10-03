@@ -1,0 +1,199 @@
+/* Tokens semánticos de DESIGN.md: cada tema los reasigna (DR47). */
+:root {
+  --surface-page: #f4ede0;
+  --surface-panel: #fbf7ef;
+  --text: #1e1b24;
+  --text-muted: #5c5866;
+  --border: #1e1b24;
+  --border-decor: #a89d88;
+  --action: #2742c7;
+  --on-action: #fbf7ef;
+  --link: #2742c7;
+  --accent-text: #b0125f;
+  --error: #b3261e;
+  --on-error: #fbf7ef;
+  --light: #ff3ea5;
+  --on-light: #1e1b24;
+  --cable: #1e1b24;
+  --focus: #2742c7;
+  --shadow: #1e1b24;
+  /* De día las tintas se pisan como en papel; de noche no (oscurecería el oro). */
+  --mezcla: multiply;
+}
+/* De noche: por el sistema (salvo que se elija Día en Ajustes) o porque se eligió Noche (DR16). */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="dia"]) {
+    --surface-page: #0e1431;
+    --surface-panel: #172048;
+    --text: #f4ede0;
+    --text-muted: #b8b3c9;
+    --border: #b8b3c9;
+    --border-decor: #4a5487;
+    --action: #e9b85c;
+    --on-action: #0e1431;
+    --link: #9aabff;
+    --accent-text: #f48c7f;
+    --error: #ff8f86;
+    --on-error: #0e1431;
+    --light: #e9b85c;
+    --on-light: #0e1431;
+    --cable: #f4ede0;
+    --focus: #e9b85c;
+    --shadow: #05081a;
+    --mezcla: normal;
+  }
+}
+:root[data-tema="noche"] {
+  --surface-page: #0e1431;
+  --surface-panel: #172048;
+  --text: #f4ede0;
+  --text-muted: #b8b3c9;
+  --border: #b8b3c9;
+  --border-decor: #4a5487;
+  --action: #e9b85c;
+  --on-action: #0e1431;
+  --link: #9aabff;
+  --accent-text: #f48c7f;
+  --error: #ff8f86;
+  --on-error: #0e1431;
+  --light: #e9b85c;
+  --on-light: #0e1431;
+  --cable: #f4ede0;
+  --focus: #e9b85c;
+  --shadow: #05081a;
+  --mezcla: normal;
+}
+:root[data-tema="dia"] { color-scheme: light; --mezcla: multiply; }
+:root[data-tema="noche"] { color-scheme: dark; }
+
+* { box-sizing: border-box; }
+#app { display: contents; }
+#tintas { position: absolute; }
+/* Lo oculto queda oculto aunque una regla de layout le ponga display. */
+[hidden] { display: none !important; }
+body {
+  margin: 0;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 24px 16px;
+  background: var(--surface-page) url(/grano.svg);
+  color: var(--text);
+  font: 400 1rem/1.5 "Archivo Variable", system-ui, sans-serif;
+}
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+.panel {
+  position: relative;
+  width: min(100%, 34rem);
+  padding: 50px 34px;
+  background: var(--surface-panel) url(/grano.svg);
+  border-radius: 9px;
+}
+/* El borde del panel es tinta a pulso: doble línea, como el canto de un módulo de consola, y sombra de impresión. */
+.panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border: 2px solid var(--border);
+  border-radius: 9px;
+  box-shadow: inset 0 0 0 3px var(--surface-panel), inset 0 0 0 4px var(--border-decor), 3px 3px 0 var(--shadow);
+  filter: url(#pulso-caja);
+}
+/* Tornillos decorativos en las esquinas: cabeza con ranura en cruz, como en los mockups. */
+.panel::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  pointer-events: none;
+  --aro: radial-gradient(circle closest-side, var(--surface-panel) 0 68%, var(--border) 72% 94%, transparent 100%);
+  --r1: linear-gradient(45deg, transparent 44%, var(--border) 44% 56%, transparent 56%);
+  --r2: linear-gradient(-45deg, transparent 44%, var(--border) 44% 56%, transparent 56%);
+  background:
+    var(--r1) left 3px top 3px, var(--r1) right 3px top 3px, var(--r1) left 3px bottom 3px, var(--r1) right 3px bottom 3px,
+    var(--r2) left 3px top 3px, var(--r2) right 3px top 3px, var(--r2) left 3px bottom 3px, var(--r2) right 3px bottom 3px,
+    var(--aro) top left, var(--aro) top right, var(--aro) bottom left, var(--aro) bottom right;
+  background-size: 8px 8px, 8px 8px, 8px 8px, 8px 8px, 8px 8px, 8px 8px, 8px 8px, 8px 8px, 14px 14px, 14px 14px, 14px 14px, 14px 14px;
+  background-repeat: no-repeat;
+}
+
+.rotulo {
+  margin: 0;
+  font-weight: 600;
+  font-stretch: 75%;
+  font-size: 0.875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+/* Anotaciones a mano (DR13): Caveat para las notas en minúscula y Architects Daughter para las notas en mayúsculas. */
+.anotacion { font-family: "Caveat Variable", cursive; font-weight: 600; font-size: 1.5rem; line-height: 1.1; color: var(--action); }
+.anotacion.nota { font-family: "Architects Daughter", cursive; font-weight: 400; font-size: 1rem; line-height: 1.25; text-transform: uppercase; }
+/* Trazo a mano en la segunda tinta: flechas y subrayados. */
+.trazo { fill: none; stroke: var(--action); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+/* Tarjeta de una línea, con su ícono en un círculo: el experimento (tinta de luz) y el coach (segunda tinta). */
+.tarjeta { position: relative; display: flex; align-items: center; gap: 14px; width: 100%; padding: 12px 18px; }
+.tarjeta::after { content: ""; position: absolute; inset: 0; pointer-events: none; border: 2px solid var(--accent-text); border-radius: 10px; filter: url(#pulso-caja); }
+.tarjeta.coach::after { border-color: var(--action); }
+.tarjeta .icono { flex: none; width: 44px; height: 44px; padding: 8px; color: var(--accent-text); border: 2px solid currentColor; border-radius: 50%; }
+.tarjeta.coach .icono { color: var(--action); }
+.tarjeta p { margin: 0; }
+.tarjeta strong { display: block; font-size: 1.0625rem; }
+/* Sello en estallido y megáfono, a la derecha de su tarjeta. */
+.tarjeta > p:first-of-type { flex: 1; }
+.sello { position: relative; flex: none; display: grid; place-items: center; width: 7rem; height: 4.25rem; margin: -6px 0; rotate: 7deg; color: var(--accent-text); text-align: center; }
+.sello svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.sello .trazo { stroke: currentColor; }
+.sello .anotacion { position: relative; color: inherit; font-size: 0.8125rem; line-height: 1.1; max-width: 4.5rem; }
+.tarjeta .megafono { flex: none; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 0; rotate: -8deg; }
+.tarjeta .megafono .tinta2 { fill: color-mix(in srgb, var(--action), transparent 75%); stroke: none; }
+/* Interruptores: dos cajas con su rótulo, el valor escrito y una palanca de adorno. */
+.interruptores { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
+.interruptor { position: relative; display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 56px; margin: 0; padding: 8px 14px; color: var(--action); }
+.interruptor::after { content: ""; position: absolute; inset: 0; pointer-events: none; border: 2px solid currentColor; border-radius: 10px; filter: url(#pulso-caja); }
+.interruptor.responder { color: var(--accent-text); }
+.interruptor .rotulo { color: var(--text); font-size: 1rem; font-weight: 700; }
+.interruptor strong { font-size: 1.5rem; font-weight: 800; line-height: 1; text-transform: uppercase; }
+.palanca { position: relative; flex: none; width: 50px; height: 26px; border: 2px solid var(--border); border-radius: 999px; background: var(--surface-panel); }
+.palanca::after { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border: 2px solid var(--border); border-radius: 50%; background: var(--surface-panel); }
+.prendido .palanca { background: var(--light); }
+.prendido .palanca::after { left: auto; right: 2px; }
+/* Notas a mano debajo de los paneles, con su flecha. */
+.notas { display: flex; align-items: flex-start; justify-content: flex-end; gap: 10px; margin-top: 4px; width: 100%; padding-right: 8px; text-align: right; }
+.notas svg { flex: none; width: 64px; height: 56px; overflow: visible; }
+.notas .anotacion.nota { display: block; color: var(--accent-text); }
+/* Pegatina: una mancha de la tinta de luz con una nota en mayúsculas, apenas girada. */
+.pegatina { position: relative; display: grid; place-items: center; width: 9.5rem; height: 5.25rem; rotate: -7deg; color: var(--on-light); text-align: center; }
+.pegatina svg { position: absolute; inset: 0; width: 100%; height: 100%; fill: var(--light); filter: url(#riso-caja); }
+.pegatina .anotacion { position: relative; color: inherit; font-size: 0.8125rem; white-space: nowrap; }
+/* Título de un panel de la consola: etiqueta en tinta llena, como la serigrafía de un equipo. */
+.rotulo.etiqueta { position: relative; z-index: 0; display: inline-block; padding: 3px 10px; color: var(--surface-panel); border-radius: 2px; }
+/* El fondo de la etiqueta es tinta impresa, con el borde a pulso; el texto queda nítido encima. */
+.rotulo.etiqueta::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--text); border-radius: 2px; filter: url(#pulso-caja); }
+.nombre {
+  margin: 8px 0 0;
+  font-weight: 800;
+  font-stretch: 112%;
+  font-size: clamp(1.75rem, 1.2rem + 2.4vw, 2.75rem);
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+}
+/* Subrayado en la tinta de luz: nunca texto (DR15). */
+.nombre span { box-shadow: inset 0 -0.28em 0 var(--light); }
+.frase { margin: 24px 0 0; font-size: 1.375rem; font-weight: 700; line-height: 1.2; }
+.aviso { margin: 32px 0 0; padding-top: 16px; border-top: 2px solid var(--border); color: var(--text-muted); }
+/* Trama de semitono en la segunda tinta, que se pierde hacia la derecha, sobre el papel del panel del mapa. */
+.panel-mapa {
+  width: min(100%, 34rem);
+  padding: 22px 22px 18px;
+  background:
+    linear-gradient(to right, transparent, var(--surface-panel) 44%),
+    radial-gradient(circle, color-mix(in srgb, var(--action), transparent 68%) 0 1px, transparent 1.3px) 0 0 / 6px 6px,
+    var(--surface-panel) url(/grano.svg);
+}
+.panel-mapa .rotulo { margin: 0 0 4px; }
+.zona-cuenta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 24px; }
+.zona-cuenta .error { flex-basis: 100%; margin: 0; }
+.cuenta-email { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+.salida-dev { margin: 12px; overflow: auto; font-size: 0.8rem; white-space: pre-wrap; }

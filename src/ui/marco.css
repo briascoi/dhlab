@@ -1,0 +1,68 @@
+/* Marco de la app, como en el mockup riso-consola: título centrado con subrayado en la segunda tinta, contenido y barra de pestañas abajo. */
+.marco { align-self: start; width: min(100%, 60rem); display: grid; gap: 16px; padding-bottom: 104px; }
+.marco-encabezado { position: relative; display: flex; align-items: center; justify-content: center; min-height: 72px; }
+/* La pegatina va arriba a la izquierda; en pantallas angostas no entra y se omite. */
+.marco-adorno { position: absolute; left: 0; top: 50%; translate: 0 -50%; }
+.marco-adorno.derecha { left: auto; right: 64px; margin: 0; rotate: 5deg; text-align: center; }
+.marco-adorno.derecha svg { display: block; width: 46px; height: 30px; margin: 0 auto; overflow: visible; }
+/* Con la marca de sincronización a la vista, la nota le deja el lugar. */
+.marco-encabezado:has(.marco-marca) .marco-adorno.derecha { display: none; }
+@media (max-width: 639px) { .marco-adorno { display: none; } }
+.marco-encabezado .nombre { margin: 0; outline: none; text-align: center; font-size: clamp(2rem, 1.4rem + 3vw, 3.25rem); }
+.marco-encabezado .nombre span { position: relative; display: inline-block; box-shadow: none; }
+.marco-subrayado { position: absolute; left: -2%; bottom: -0.2em; width: 104%; height: 0.3em; overflow: visible; }
+.marco-subrayado .trazo { stroke-width: 4; }
+.marco-ajustes, .marco-capitulo .barra { filter: url(#pulso-caja); }
+.marco-ajustes { position: absolute; right: 0; top: 50%; transform: translateY(-50%); display: grid; place-items: center; width: 44px; height: 44px; padding: 0; color: var(--text); background: var(--surface-panel); border: 2px solid var(--border); border-radius: 4px; cursor: pointer; }
+.marco-zona-marca { position: absolute; right: 52px; top: 50%; transform: translateY(-50%); }
+.marco-marca { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 8px; font: inherit; font-size: 0.875rem; color: var(--text-muted); background: none; border: 0; cursor: pointer; }
+.icono .tinta2 { fill: var(--light); stroke: none; }
+.marco-pestanas [aria-current] .icono .tinta2 { fill: var(--surface-panel); }
+.icono { fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+
+.marco-pestanas {
+  position: fixed;
+  z-index: 1;
+  left: 50%;
+  bottom: 12px;
+  width: min(100% - 32px, 60rem);
+  transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: var(--surface-panel) url(/grano.svg);
+  border: 2px solid var(--border);
+  border-radius: 2px;
+  box-shadow: 3px 3px 0 var(--shadow);
+}
+.marco-pestanas button {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  min-height: 72px;
+  padding: 8px 2px;
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.9375rem;
+  color: var(--text);
+  background: none;
+  border: 0;
+  border-left: 1px dotted var(--text-muted);
+  cursor: pointer;
+}
+.marco-pestanas .icono { width: 40px; height: 40px; stroke-width: 1.6; filter: url(#pulso-caja); }
+.marco-pestanas button:first-child { border-left: 0; }
+/* La pestaña activa va en la tinta de luz (rosa de día, oro de noche), con texto en su color de contraste; además lleva aria-current. */
+.marco-pestanas button { position: relative; z-index: 0; }
+.marco-pestanas button[aria-current] { color: var(--on-light); }
+/* La pestaña activa es un bloque de tinta de luz impresa, con su trama de puntos; el texto y el ícono quedan nítidos encima. */
+.marco-pestanas button[aria-current]::before { content: ""; position: absolute; inset: 0; z-index: -1; background: radial-gradient(circle, color-mix(in srgb, var(--light), var(--on-light) 26%) 0 1px, transparent 1.3px) 0 0 / 6px 6px, var(--light); filter: url(#riso-caja); }
+.marco-pestanas button:focus-visible { outline-offset: -4px; }
+.marco-vacio { margin: 0; }
+/* Línea del capítulo en curso con su barra de avance, bajo el título. */
+.marco-capitulo { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 12px; width: min(100%, 26rem); margin: -4px auto 4px; }
+.marco-capitulo p { grid-column: 1 / -1; margin: 0; font-weight: 800; font-size: 1.125rem; }
+.marco-capitulo .barra { height: 10px; border: 2px solid var(--border); border-radius: 999px; overflow: hidden; background: var(--surface-panel); }
+.marco-capitulo .barra i { display: block; height: 100%; background: var(--light); filter: url(#riso-caja); }
+.marco-capitulo .cuenta { font-size: 0.875rem; }
+.marco-capitulo .cuenta.anotacion { font-size: 1.25rem; }
+@media (max-width: 419px) { .marco-pestanas button { font-size: 0.8125rem; } }
