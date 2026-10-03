@@ -58,3 +58,6 @@
 .icono-error { display: inline-grid; place-items: center; width: 1.25em; height: 1.25em; margin-right: 6px; color: var(--surface-panel); background: var(--error); border-radius: 50%; font-weight: 800; }
 .espera, .enviado { color: var(--text-muted); }
 .lineas { margin: 0; padding-left: 1.2em; display: grid; gap: 8px; }
+/* El código de recuperación: texto real en Martian Mono, que parte entre grupos y nunca dentro de uno (DR34). */
+.codigo-recuperacion { font: 400 1.25rem/1.6 "Martian Mono Variable", ui-monospace, monospace; letter-spacing: 0.06em; user-select: all; overflow-wrap: normal; }
+textarea.codigo-recuperacion { width: 100%; resize: none; user-select: auto; }

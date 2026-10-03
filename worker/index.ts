@@ -11,6 +11,7 @@ interface Env {
   // Clave de Resend con permiso solo de envío (secreto del Worker).
   RESEND_API_KEY?: string;
   EMAIL_EN_CONSOLA?: string;
+  REGISTRO?: string;
 }
 
 const REMITENTE = "acceso@dhlab.app";
@@ -23,6 +24,7 @@ export default {
       if (!env.DB) return Response.json({ error: "no_disponible" }, { status: 503 });
       return cuenta(request, {
         DB: env.DB,
+        REGISTRO: env.REGISTRO,
         // Sin envío configurado, el pedido falla a la vista ("no pudimos mandarte el email") en vez de simular que salió.
         enviarEmail: async ({ para, asunto, texto, html }) => {
           // Solo para probar en local con `wrangler dev` (.dev.vars): el email sale por la consola en vez de enviarse.

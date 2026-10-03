@@ -111,20 +111,16 @@ export function crearDiario(almacen: Almacen, sync: ReturnType<typeof crearSync>
     if (modo === "nube") {
       const r = await registro();
       const pedido = r.propia?.revision === 0 ? await api.guardar({ idClave: r.propia.idClave, envuelta: r.propia.envuelta, revisionBase: 0 }) : await api.leer();
-      if ("clave" in pedido) {
-        const servidor = pedido.clave;
-        if (servidor && servidor.idClave === r.propia?.idClave) {
-          await guardar({ ...r, propia: { ...r.propia, envuelta: servidor.envuelta, revision: servidor.revision }, vigente: undefined });
-          await resubir(r.propia, r.anteriores);
-        }
-        // Hay un diario en la cuenta y este dispositivo no tiene su clave (dispositivo nuevo, o un diario nuevo empezado en otro).
-        else if (servidor) await guardar({ ...r, vigente: servidor });
-      } else {
-        // Otro dispositivo registró su clave primero: la de acá perdió (E3-dosclaves).
-        const vigente = pedido.error === "conflicto" && (pedido as { actual?: ClaveGuardada | null }).actual;
-        if (!vigente) return pedido.error;
-        await guardar({ ...r, vigente });
+      // Otro dispositivo registró su clave primero: el servidor devuelve la vigente con el conflicto (E3-dosclaves).
+      const servidor = "clave" in pedido ? pedido.clave : pedido.error === "conflicto" ? (pedido as { actual?: ClaveGuardada | null }).actual || undefined : undefined;
+      if (servidor === undefined) return (pedido as { error: string }).error;
+      // La vigente es la propia, también si el registro llegó por otro pedido a la vez (dos pestañas, dos sincronizaciones juntas).
+      if (servidor && servidor.idClave === r.propia?.idClave) {
+        await guardar({ ...r, propia: { ...r.propia, envuelta: servidor.envuelta, revision: servidor.revision }, vigente: undefined });
+        await resubir(r.propia, r.anteriores);
       }
+      // Hay un diario en la cuenta y este dispositivo no tiene su clave (dispositivo nuevo, o un diario nuevo empezado en otro).
+      else if (servidor) await guardar({ ...r, vigente: servidor });
     }
     return sync.sincronizar();
   }

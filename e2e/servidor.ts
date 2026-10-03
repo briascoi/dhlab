@@ -17,6 +17,8 @@ export async function simularServidor(page: Page, { conSesion = false, carta = f
     sinRed: false,
     // Cuántas veces falla el borrado de la cuenta antes de andar (BorradoServidorFallido).
     fallosAlBorrar: 0,
+    // La clave del diario envuelta, como la guarda el servidor.
+    clave: null as { idClave: string; envuelta: string; revision: number } | null,
     cuenta: conSesion ? { email: "prueba@ejemplo.com", modo: "nube" } : null,
     documentos: carta ? [{ tipo: "carta", id: "principal", contenido: JSON.stringify(CARTA), cifrado: false, version: 1 }] : ([] as { tipo: string; id: string; contenido: string; cifrado: boolean; version: number }[]),
   };
@@ -40,8 +42,13 @@ export async function simularServidor(page: Page, { conSesion = false, carta = f
       return json({ ok: true });
     }
     if (camino === "/v1/cuenta") return json({ cuenta: estado.cuenta });
-    if (estado.sinRed && camino.startsWith("/v1/documentos")) return ruta.abort();
-    if (camino === "/v1/clave") return json({ clave: null });
+    if (estado.sinRed && (camino.startsWith("/v1/documentos") || camino === "/v1/clave")) return ruta.abort();
+    if (camino === "/v1/clave") {
+      if (pedido.method() !== "PUT") return json({ clave: estado.clave });
+      if ((estado.clave?.revision ?? 0) !== cuerpo.revisionBase) return json({ error: "conflicto", actual: estado.clave }, 409);
+      estado.clave = { idClave: String(cuerpo.idClave), envuelta: String(cuerpo.envuelta), revision: (estado.clave?.revision ?? 0) + 1 };
+      return json({ clave: estado.clave });
+    }
     if (camino === "/v1/documentos") return json({ documentos: estado.documentos });
     const [, , , tipo, id] = camino.split("/");
     const previo = estado.documentos.find((d) => d.tipo === tipo && d.id === id);

@@ -43,3 +43,12 @@ test("con la hora incierta, la app muestra el aviso y lleva a corregir la hora c
   await page.locator(".banner").getByRole("button").click();
   await expect(page.getByLabel("Hora de nacimiento")).toBeVisible();
 });
+
+test("una carta guardada con un esquema más nuevo no se interpreta: la app pide actualizar", async ({ page }) => {
+  const servidor = await simularServidor(page, { conSesion: true, carta: true });
+  servidor.documentos[0]!.contenido = JSON.stringify({ ...CARTA, esquema: 2 });
+  await page.goto("/");
+  await expect(page.getByRole("heading", { level: 1, name: "Actualiza la app" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Reintentar" })).toBeVisible();
+  expect((await new AxeBuilder({ page }).analyze()).violations.map((v) => v.id)).toEqual([]);
+});

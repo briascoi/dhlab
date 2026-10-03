@@ -161,6 +161,12 @@ test("sync: otro dispositivo baja la carta, y su edición con versión vieja que
   await compu.sincronizar();
   expect(await enServidor()).toEqual([{ contenido: "de la compu", version: 3 }]);
   expect((await compu.leer("carta", "principal"))!.rechazado).toBeUndefined();
+  // Quedarse con lo del servidor quita la marca sin subir nada.
+  await celu.guardar("carta", "principal", "otra del celu");
+  await celu.sincronizar();
+  expect((await celu.leer("carta", "principal"))!.rechazado).toBe("otra del celu");
+  await celu.guardar("carta", "principal", "de la compu");
+  expect([(await celu.leer("carta", "principal"))!.rechazado, await celu.pendientes()]).toEqual([undefined, 0]);
 });
 
 test("sync: sin sesión la cola queda intacta, y una cuenta solo local no encola ni sube", async () => {
@@ -291,4 +297,12 @@ test("diario: una entrada que se intentó subir antes de registrar la clave sube
   expect((await celu.sync.leer("diario", "e1"))!.sinSubir).toBe(true);
   expect(await celu.diario.sincronizar()).toBe("al_dia");
   expect([(await db.prepare("SELECT id FROM documentos").all()).results, (await celu.sync.leer("diario", "e1"))!.sinSubir]).toEqual([[{ id: "e1" }], undefined]);
+});
+
+test("diario: dos sincronizaciones a la vez registran la misma clave y el diario queda abierto", async () => {
+  const d = dispositivo(await entrar("ana@ejemplo.com"));
+  await d.diario.crear();
+  expect(await Promise.all([d.diario.sincronizar(), d.diario.sincronizar()])).toEqual(["al_dia", "al_dia"]);
+  expect(await d.diario.estado()).toBe("abierto");
+  expect((await d.diario.nuevoCodigo()) as { codigo?: string }).toHaveProperty("codigo");
 });

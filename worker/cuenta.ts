@@ -5,6 +5,8 @@ export interface EnvCuenta {
   DB: D1Database;
   // Envío de email reemplazable: Cloudflare Email Service u otro proveedor detrás de la misma función.
   enviarEmail?: (mensaje: { para: string; asunto: string; texto: string; html: string }) => Promise<void>;
+  // "cerrado": no se crean cuentas nuevas (variable del Worker, T59).
+  REGISTRO?: string;
 }
 
 const MIN = 60_000;
@@ -73,8 +75,9 @@ async function pedirAcceso(request: Request, env: EnvCuenta, ahora: number): Pro
   const idPedido = typeof cuerpo.idPedido === "string" && cuerpo.idPedido.length <= 64 ? cuerpo.idPedido : azar(16);
   const listo = { ok: true, reenviarEn: LIMITES.esperaReenvio / 1000 };
 
+  // Interruptor del registro (T59): con REGISTRO=cerrado no se crean cuentas nuevas; las que ya existen siguen entrando.
   const invitado = await env.DB.prepare(
-    "SELECT 1 FROM invitaciones WHERE email = ?1 UNION SELECT 1 FROM cuentas WHERE email = ?1",
+    `SELECT 1 FROM cuentas WHERE email = ?1${env.REGISTRO === "cerrado" ? "" : " UNION SELECT 1 FROM invitaciones WHERE email = ?1"}`,
   ).bind(email).first();
   if (!invitado) return fallo("no_invitado", 403);
 

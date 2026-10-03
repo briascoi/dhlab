@@ -14,3 +14,8 @@
 .boton-destructivo { min-height: 44px; padding: 8px 16px; font: inherit; font-weight: 700; color: var(--on-error); background: var(--error); border: 2px solid var(--border); border-radius: 4px; box-shadow: 3px 3px 0 var(--shadow); cursor: pointer; }
 .boton-destructivo:hover, .boton-destructivo:active { box-shadow: 1px 1px 0 var(--shadow); }
 .boton-destructivo:disabled { color: var(--text-muted); background: transparent; border-style: dashed; box-shadow: none; }
+/* Carta actual y corrección: una debajo de la otra en celular, lado a lado desde 640 px (DR38). */
+.carta-cambio { display: grid; gap: 16px; width: 100%; }
+.carta-cambio section { padding: 12px; border: 2px solid var(--border); border-radius: 2px; }
+.carta-cambio h3 { margin: 0 0 8px; }
+@media (min-width: 640px) { .carta-cambio { grid-template-columns: 1fr 1fr; } }

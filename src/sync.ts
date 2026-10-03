@@ -35,7 +35,9 @@ export function crearSync(almacen: Almacen, api: DocumentosApi, modo: Modo) {
       const poner: [Store, object][] = [["documentos", { clave, tipo, id, contenido, cifrado, version: previo?.version ?? 0 } satisfies Local]];
       // El id de operación nace al encolar y queda guardado: un reintento lleva el mismo (Codex #4).
       // Una cuenta "solo en este dispositivo" no encola nada (invariante 2).
-      if (modo === "nube") poner.push(["cola", { clave, contenido, cifrado, idOperacion: crypto.randomUUID() } satisfies Operacion]);
+      // Quedarse con lo del servidor tras un rechazo tampoco: solo se quita la marca, no hay nada que subir.
+      const aceptaServidor = previo?.contenido === contenido && previo.rechazado !== undefined && !previo.sinSubir;
+      if (modo === "nube" && !aceptaServidor) poner.push(["cola", { clave, contenido, cifrado, idOperacion: crypto.randomUUID() } satisfies Operacion]);
       await almacen.aplicar(poner);
     });
 

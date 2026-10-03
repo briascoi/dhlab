@@ -23,14 +23,14 @@ beforeEach(async () => {
   await db.prepare("INSERT INTO invitaciones (email, creada) VALUES ('ana@ejemplo.com', 0)").run();
 });
 
-const env = () => ({ DB: db, enviarEmail: async (m: { para: string; texto: string }) => void enviados.push(m) });
-function pedir(metodo: string, ruta: string, cuerpo?: object, extra: { cookie?: string; origen?: string | null; ahora?: number; ip?: string } = {}) {
+const env = (registro?: string) => ({ DB: db, REGISTRO: registro, enviarEmail: async (m: { para: string; texto: string }) => void enviados.push(m) });
+function pedir(metodo: string, ruta: string, cuerpo?: object, extra: { cookie?: string; origen?: string | null; ahora?: number; ip?: string; registro?: string } = {}) {
   const headers: Record<string, string> = { "CF-Connecting-IP": extra.ip ?? "1.1.1.1" };
   if (extra.origen !== null) headers.Origin = extra.origen ?? ORIGEN;
   if (extra.cookie) headers.Cookie = extra.cookie;
   const init: RequestInit = { method: metodo, headers };
   if (cuerpo) init.body = JSON.stringify(cuerpo);
-  return cuenta(new Request(`${ORIGEN}${ruta}`, init) as never, env() as never, extra.ahora ?? T0);
+  return cuenta(new Request(`${ORIGEN}${ruta}`, init) as never, env(extra.registro) as never, extra.ahora ?? T0);
 }
 const codigoEnviado = () => /\d{6}/.exec(enviados.at(-1)!.texto)![0];
 async function entrar(email = "ana@ejemplo.com", modo?: string) {
@@ -129,4 +129,13 @@ test("borrar cuenta no deja ninguna fila de esa cuenta", async () => {
   // De los topes de envío solo puede quedar la fila por IP, que no lleva el email y caduca sola en una hora.
   expect((await db.prepare("SELECT clave FROM envios").all<{ clave: string }>()).results.map((f) => f.clave)).toEqual(["i:1.1.1.1"]);
   expect((await pedir("GET", "/v1/cuenta", undefined, { cookie })).status).toBe(401);
+});
+
+test("con el registro cerrado no se crean cuentas nuevas, y las que existen siguen entrando", async () => {
+  const cerrado = { registro: "cerrado", ahora: T0 + LIMITES.ventana * 2 };
+  await entrar();
+  await db.prepare("INSERT INTO invitaciones (email, creada) VALUES ('nueva@ejemplo.com', 0)").run();
+  const nueva = await pedir("POST", "/v1/cuenta/acceso", { email: "nueva@ejemplo.com", idPedido: "p2" }, cerrado);
+  expect([nueva.status, await nueva.json()]).toEqual([403, { error: "no_invitado" }]);
+  expect((await pedir("POST", "/v1/cuenta/acceso", { email: "ana@ejemplo.com", idPedido: "p3" }, cerrado)).status).toBe(200);
 });
