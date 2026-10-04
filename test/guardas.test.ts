@@ -44,3 +44,11 @@ test("temas sensibles y la pregunta por la ciencia se detectan en lo que escribe
   expect(esSensible("¿qué hago cuando me invitan a algo?")).toBe(false);
   expect([preguntaSiEsCiencia("¿esto es ciencia?"), preguntaSiEsCiencia("¿cómo decido?")]).toEqual([true, false]);
 });
+
+test("una frase que nombra un término que sus fichas no traen se detecta; la primera palabra de la frase no cuenta", async () => {
+  const { frasesAjenas } = await import("../src/guardas");
+  const fichas = [{ id: "linea.4", texto: 'La Línea 4 es El Oportunista ("The Opportunist"). Arma su vida a través de sus vínculos.' }, { id: "canal", texto: "Tienes definido el Canal 28-38, que une la Raíz y el Bazo." }];
+  const p = { tipo: "interpretativo" as const, texto: "Tu Línea 4 es El Oportunista. Tienes definido el Canal 28-38, que une la Raíz y el Bazo. Armas tu vida a través de tus vínculos.", fuentes: ["linea.4"] };
+  expect(frasesAjenas(p, fichas)).toEqual([1]);
+  expect(frasesAjenas({ ...p, fuentes: ["linea.4", "canal"] }, fichas)).toEqual([]);
+});

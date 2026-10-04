@@ -14,7 +14,7 @@ const ORIGEN = "https://dhlab.app";
 const T0 = Date.UTC(2026, 9, 4);
 const atributos: Atributos = { tipo: "proyector", autoridad: "emocional", perfil: "1/3", centros: ["plexo", "garganta"], definicion: "simple", canales: ["12-22"] };
 // Un catálogo chico: las fichas que le tocan a esa carta, con un texto reconocible.
-const catalogo: Catalogo = { fichas: Object.fromEntries([1, 2, 3, 4, 5].flatMap((n) => piezas(n, atributos)[0]).map((id) => [id, { texto: `Texto de la ficha ${id}, con el 20% de ejemplo.`, version: 1 }])) };
+const catalogo: Catalogo = { fichas: Object.fromEntries([1, 2, 3, 4, 5].flatMap((n) => piezas(n, atributos)[0]).map((id) => [id, { texto: `Texto de la ficha ${id}, con el 20% de ejemplo y sus términos: Firma, Éxito, Estrategia.`, version: 1 }])) };
 
 beforeAll(async () => {
   const proxy = await getPlatformProxy<{ DB: D1Database }>({ configPath: "test/wrangler.test.jsonc", persist: false });

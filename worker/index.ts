@@ -17,6 +17,7 @@ interface Env {
   // IA incluida: la clave es un secreto del Worker; modelo y topes son variables (T54).
   OPENROUTER_API_KEY?: string;
   IA_MODELO?: string;
+  IA_VERIFICADOR?: string;
   IA_TOPE_CUENTA?: string;
   IA_TOPE_GLOBAL?: string;
   IA_PAUSA?: string;

@@ -1,6 +1,6 @@
 // Cómo se le pide un texto al modelo y qué se hace con lo que devuelve. Sin red propia ni DOM: recibe la función que llama al modelo,
 // así el mismo código corre en el Worker (IA incluida) y en el navegador (clave propia), con las mismas guardas (E3-guardas).
-import { filtrar, frases, leerSalida, type FichaIA, type Parrafo } from "./guardas";
+import { filtrar, frases, frasesAjenas, leerSalida, type FichaIA, type Parrafo } from "./guardas";
 
 export const MODELO = "anthropic/claude-haiku-4.5";
 // Una llamada al modelo: devuelve el texto y lo que costó en millonésimas de dólar, o null si no respondió.
@@ -21,11 +21,13 @@ export function leerOpenRouter(d: unknown): { texto: string; micros: number } | 
   return typeof texto === "string" ? { texto, micros: Math.ceil((r?.usage?.cost ?? 0) * 1_000_000) } : null;
 }
 
-const REGLAS = `Eres el redactor de DH Lab, un laboratorio de Diseño Humano. Escribes en español neutro, de tú, con frases cortas.
+const REGLAS = `Eres el redactor de DH Lab, un laboratorio de Diseño Humano. Escribes en español neutro, de tú (nunca de vos), con frases cortas.
 Respondes SOLO con un JSON de esta forma: {"parrafos":[{"tipo":"narrativo","texto":"..."},{"tipo":"interpretativo","texto":"...","fuentes":["id.de.ficha"]}]}
 Reglas, sin excepción:
 - "interpretativo": todo lo que diga algo sobre el Diseño de la persona. Lleva en "fuentes" los ids de las fichas que lo respaldan. Cada frase tiene que poder señalarse en una de esas fichas: reformulas o resumes lo que la ficha dice, y nada más.
 - No agregas nada de tu conocimiento: ni causas, ni consecuencias, ni consejos, ni ejemplos, ni metáforas, ni cómo se siente o qué pasa "cuando" la persona hace algo, salvo que la ficha lo diga.
+- No explicas qué significa un término (Firma, No-Yo, Estrategia, Autoridad, Definición...) si la ficha no lo explica: lo nombras y sigues.
+- En "fuentes" van todas las fichas de las que sale el párrafo, y solo esas: no dices en un párrafo lo que está en una ficha que ese párrafo no cita.
 - Si las fichas dicen poco, escribes poco. Un texto corto y fiel vale más que uno largo.
 - "narrativo": transiciones y preguntas, dos oraciones como máximo, sin afirmar nada sobre el Diseño de la persona y sin números.
 - Ningún número que no esté en la ficha citada.
@@ -66,20 +68,23 @@ export async function verificar(llamar: Llamar, fichas: FichaIA[], parrafos: Par
 // Un capítulo: redactar, guardas y verificador. El verificador quita las frases interpretativas sin respaldo (y el párrafo, si se
 // queda sin frases). No se publica si las guardas descartan más del 40% de los párrafos interpretativos o el verificador más del
 // 40% de sus frases.
-export async function escribirCapitulo(llamar: Llamar, n: number, fichas: FichaIA[]): Promise<{ parrafos?: Parrafo[]; error?: "salida_invalida" | "no_publicable"; micros: number }> {
+// `llamarVerificador`: la llamada del verificador, por si usa otro modelo que el redactor.
+export async function escribirCapitulo(llamar: Llamar, n: number, fichas: FichaIA[], llamarVerificador: Llamar = llamar): Promise<{ parrafos?: Parrafo[]; error?: "salida_invalida" | "no_publicable"; micros: number }> {
   const r = await redactar(llamar, `${JSON.stringify({ fichas })}\nEscribe la sección del capítulo ${n} del libro de esta persona usando solo estas fichas. No tiene que ser más larga que las fichas juntas, y nunca más de 250 palabras.`);
   if (!r.parrafos) return { error: "salida_invalida", micros: r.micros };
   const { validos, publicable } = filtrar(r.parrafos, fichas);
   if (!publicable) return { error: "no_publicable", micros: r.micros };
   const interpretativos = validos.filter((p) => p.tipo === "interpretativo");
-  const v = await verificar(llamar, fichas, interpretativos);
+  const v = await verificar(llamarVerificador, fichas, interpretativos);
   const micros = r.micros + v.micros;
   if (!v.sinRespaldo) return { error: "salida_invalida", micros };
   let total = 0, quedan = 0;
   const parrafos = validos.flatMap((p) => {
     if (p.tipo === "narrativo") return [p];
     const i = interpretativos.indexOf(p), todas = frases(p.texto);
-    const firmes = todas.filter((_, j) => !v.sinRespaldo!.some((s) => s.parrafo === i && s.frase === j));
+    // Se caen las frases que marca el verificador y las que nombran un término que sus fichas no traen.
+    const ajenas = frasesAjenas(p, fichas);
+    const firmes = todas.filter((_, j) => !ajenas.includes(j) && !v.sinRespaldo!.some((s) => s.parrafo === i && s.frase === j));
     total += todas.length;
     quedan += firmes.length;
     return firmes.length ? [{ ...p, texto: firmes.join(" ") }] : [];
@@ -87,10 +92,15 @@ export async function escribirCapitulo(llamar: Llamar, n: number, fichas: FichaI
   return quedan > 0 && (total - quedan) / total <= 0.4 ? { parrafos, micros } : { error: "no_publicable", micros };
 }
 
-// Un mensaje del coach: una llamada, sin verificador. Sin ningún párrafo interpretativo válido, no hay respuesta del modelo que mostrar.
+// Un mensaje del coach: una llamada, sin verificador (con la guarda de términos). Sin ningún párrafo interpretativo válido, no hay respuesta del modelo que mostrar.
 export async function responder(llamar: Llamar, texto: string, historial: unknown[], fichas: FichaIA[]): Promise<{ parrafos?: Parrafo[]; error?: "salida_invalida"; micros: number }> {
   const r = await redactar(llamar, `${JSON.stringify({ fichas })}\nConversación hasta ahora: ${JSON.stringify(historial)}\nLa persona pregunta: ${JSON.stringify(texto)}\nResponde usando solo estas fichas, en 120 palabras como máximo; si las fichas dicen poco, responde corto.`);
   if (!r.parrafos) return { error: "salida_invalida", micros: r.micros };
-  const { validos, conInterpretacion } = filtrar(r.parrafos, fichas);
-  return conInterpretacion ? { parrafos: validos, micros: r.micros } : { micros: r.micros };
+  // Sin verificador, pero con la guarda de términos: se caen las frases que nombran algo que sus fichas no traen.
+  const validos = filtrar(r.parrafos, fichas).validos.flatMap((p) => {
+    if (p.tipo === "narrativo") return [p];
+    const ajenas = frasesAjenas(p, fichas), firmes = frases(p.texto).filter((_, j) => !ajenas.includes(j));
+    return firmes.length ? [{ ...p, texto: firmes.join(" ") }] : [];
+  });
+  return validos.some((p) => p.tipo === "interpretativo") ? { parrafos: validos, micros: r.micros } : { micros: r.micros };
 }

@@ -11,6 +11,8 @@ export interface EnvIA extends EnvCuenta {
   OPENROUTER_API_KEY?: string;
   // Valores a calibrar con la prueba de costo (T54): modelo, y topes y reservas en millonésimas de dólar.
   IA_MODELO?: string;
+  // El verificador puede usar otro modelo que el redactor; sin este valor, usa el mismo.
+  IA_VERIFICADOR?: string;
   IA_TOPE_CUENTA?: string;
   IA_TOPE_GLOBAL?: string;
   // "1" pone la IA incluida en pausa para todos, sin tocar la clave: se usa mientras los evals no aprueban (test/evals.test.ts).
@@ -30,11 +32,11 @@ const mesDe = (ahora: number) => new Date(ahora).toISOString().slice(0, 7);
 const renovacion = (ahora: number) => new Date(Date.UTC(new Date(ahora).getUTCFullYear(), new Date(ahora).getUTCMonth() + 1, 1)).toISOString().slice(0, 10);
 
 // La llamada del camino incluido: con la clave de Isma, que es un secreto del Worker.
-const llamarCon = (env: EnvIA): Llamar => async (sistema, usuario) => {
+const llamarCon = (env: EnvIA, modelo = env.IA_MODELO || MODELO): Llamar => async (sistema, usuario) => {
   const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${env.OPENROUTER_API_KEY}`, "Content-Type": "application/json", "X-Title": "DH Lab" },
-    body: JSON.stringify(cuerpoOpenRouter(env.IA_MODELO || MODELO, sistema, usuario)),
+    body: JSON.stringify(cuerpoOpenRouter(modelo, sistema, usuario)),
   }).catch(() => null);
   return r?.ok ? leerOpenRouter(await r.json().catch(() => null)) : null;
 };
@@ -102,11 +104,12 @@ export async function ia(request: Request, env: EnvIA, ahora = Date.now()): Prom
     await asentar(respuesta.micros);
     return respuesta.error ? fallo(respuesta.error, 502) : json(respuesta.parrafos ? { parrafos: respuesta.parrafos } : { fija: "sin_biblioteca" });
   }
-  const escrito = await escribirCapitulo(llamar, cuerpo.n as number, fichas);
+  const verificador = env.IA_VERIFICADOR || env.IA_MODELO || MODELO;
+  const escrito = await escribirCapitulo(llamar, cuerpo.n as number, fichas, llamarCon(env, verificador));
   await asentar(escrito.micros);
   if (escrito.error) return fallo(escrito.error, escrito.error === "no_publicable" ? 422 : 502);
   const modelo = env.IA_MODELO || MODELO;
-  return json({ parrafos: escrito.parrafos, modelo, verificador: modelo, fichas: fichas.map(({ id }) => ({ id, version: catalogo.fichas[id]!.version })) });
+  return json({ parrafos: escrito.parrafos, modelo, verificador, fichas: fichas.map(({ id }) => ({ id, version: catalogo.fichas[id]!.version })) });
 }
 
 // Para el coach: todas las fichas que le tocan a esta carta en los cinco capítulos.

@@ -61,6 +61,17 @@ export function motivo(p: Parrafo, fichas: FichaIA[]): string | null {
   return null;
 }
 
+// Frases de un párrafo interpretativo que nombran un término con mayúscula (un Centro, un Canal, una Línea, un Tipo...) que no
+// está en las fichas que el párrafo cita: es la forma más común de colar algo de otra ficha o del conocimiento del modelo.
+// No cuenta la primera palabra de cada frase. Devuelve las posiciones de esas frases.
+export function frasesAjenas(p: Parrafo, fichas: FichaIA[]): number[] {
+  const citado = sinTildes(fichas.filter((f) => p.fuentes?.includes(f.id)).map((f) => f.texto).join(" "));
+  return frases(p.texto).flatMap((frase, i) => {
+    const terminos = frase.split(/\s+/).slice(1).map((x) => x.replace(/^[^\p{L}]+|[^\p{L}]+$/gu, "")).filter((x) => x.length > 1 && /^\p{Lu}/u.test(x));
+    return terminos.some((x) => !new RegExp(`\\b${sinTildes(x)}`).test(citado)) ? [i] : [];
+  });
+}
+
 // Aplica las guardas a una salida ya leída. Un capítulo no se publica si se descartó más del 40% de lo interpretativo;
 // una respuesta del coach sin ningún párrafo interpretativo válido se reemplaza por la frase fija.
 export function filtrar(parrafos: Parrafo[], fichas: FichaIA[]) {
