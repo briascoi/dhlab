@@ -34,6 +34,8 @@ export interface OpcionesAjustes {
   alSalir: () => void;
   // La IA incluida, si el servidor la tiene configurada: cuánto se usó del tope del mes y cuándo se renueva (DR40).
   ia: { configurada: boolean; usado: number; tope: number; pausa: boolean; renovacion: string } | null;
+  // La clave propia de OpenRouter, si hay capítulos que escribir: conectarla, o desconectarla (DR40).
+  clave: { conectada: boolean; conectar: (alConectar: () => void) => void; desconectar: () => void } | null;
   // Vuelve al formulario de nacimiento con los datos guardados, para corregirlos.
   alCorregir: () => void;
   // El diario en este dispositivo: sin clave (todavía no hay diario), abierto o cerrado (DR32).
@@ -51,8 +53,9 @@ export interface OpcionesAjustes {
 }
 
 export function dibujarAjustes(opciones: OpcionesAjustes): HTMLElement {
-  const { cuenta, carta, api, alSalir, alCorregir, ia, diario, documentos, importar, alBorrar, pasarALocal, pasarALaNube } = opciones;
+  const { cuenta, carta, api, alSalir, alCorregir, ia, clave, diario, documentos, importar, alBorrar, pasarALocal, pasarALaNube } = opciones;
   // Al terminar un cambio de modo, Ajustes se vuelve a dibujar con la cuenta ya cambiada.
+  const redibujar = () => panel.replaceWith(dibujarAjustes({ ...opciones, clave: clave && { ...clave, conectada: !clave.conectada } }));
   const conModo = (modo: Cuenta["modo"]) => () => panel.replaceWith(dibujarAjustes({ ...opciones, cuenta: { ...cuenta, modo } }));
   const exportar = () => abrirExportar(documentos, diario.estado);
   const panel = el("div", "panel ajustes");
@@ -134,12 +137,22 @@ export function dibujarAjustes(opciones: OpcionesAjustes): HTMLElement {
       boton("boton-secundario", t("ajustes.carta.corregir"), alCorregir),
     ),
     grupoDiario,
-    ...(ia?.configurada
+    ...(ia?.configurada || clave
       ? [
           grupo(
             "ajustes.grupo.ia",
-            el("dl", "", fila("ajustes.ia.incluida", t(ia.pausa ? "ajustes.ia.pausa" : ia.usado > ia.tope * 0.8 ? "ajustes.ia.cerca" : "ajustes.ia.disponible"))),
-            el("p", "ajustes-nota", t("ia.renovacion", { fecha: new Date(`${ia.renovacion}T12:00:00Z`).toLocaleDateString("es", { timeZone: "UTC", day: "numeric", month: "long" }) })),
+            ...(ia?.configurada
+              ? [
+                  el("dl", "", fila("ajustes.ia.incluida", t(ia.pausa ? "ajustes.ia.pausa" : ia.usado > ia.tope * 0.8 ? "ajustes.ia.cerca" : "ajustes.ia.disponible"))),
+                  el("p", "ajustes-nota", t("ia.renovacion", { fecha: new Date(`${ia.renovacion}T12:00:00Z`).toLocaleDateString("es", { timeZone: "UTC", day: "numeric", month: "long" }) })),
+                ]
+              : []),
+            // Con la clave conectada, la IA usa esa clave y no la incluida.
+            ...(clave?.conectada
+              ? [el("dl", "", fila("ajustes.ia.propia", t("ia.clave.conectada"))), boton("boton-secundario", t("ia.clave.desconectar"), () => (clave.desconectar(), redibujar()))]
+              : clave
+                ? [boton("boton-secundario", t("ia.clave.titulo"), () => clave.conectar(redibujar))]
+                : []),
           ),
         ]
       : []),

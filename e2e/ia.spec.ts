@@ -107,3 +107,61 @@ test("coach: responde con sus fuentes, tiene respuestas fijas para lo sensible y
   await page.getByRole("button", { name: "Enviar" }).click();
   await expect(charla.nth(5)).toContainText("busca a una persona profesional");
 });
+
+test("con la clave propia la IA va directo a OpenRouter, sin pasar por nuestro servidor, y corren las mismas guardas", async ({ page }) => {
+  const servidor = await simularServidor(page, { conSesion: true, carta: true });
+  // OpenRouter simulado: valida la clave y contesta lo que le toca, en orden.
+  const respuestas: object[] = [];
+  const pedidos: { url: string; clave: string | null; cuerpo: { provider?: object; messages?: { content: string }[] } | null }[] = [];
+  await page.route("https://openrouter.ai/**", async (ruta) => {
+    const pedido = ruta.request();
+    const clave = pedido.headers().authorization ?? null;
+    pedidos.push({ url: pedido.url(), clave, cuerpo: pedido.postDataJSON() as never });
+    if (clave !== "Bearer sk-or-buena") return ruta.fulfill({ status: 401, contentType: "application/json", body: "{}" });
+    if (pedido.url().endsWith("/key")) return ruta.fulfill({ status: 200, contentType: "application/json", body: "{}" });
+    return ruta.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ choices: [{ message: { content: JSON.stringify(respuestas.shift()) } }], usage: { cost: 0.001 } }) });
+  });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Ajustes" }).click();
+  await page.getByRole("button", { name: "Usar tu clave de OpenRouter" }).click();
+  const hoja = page.getByRole("dialog");
+  await expect(hoja.getByText("va directo de este navegador a OpenRouter, sin pasar por nuestro servidor")).toBeVisible();
+  await expect(hoja.getByText("Se guarda solo en este navegador; los cargos son de tu cuenta de OpenRouter.")).toBeVisible();
+  await sinFallas(page);
+  await hoja.getByLabel("Clave de OpenRouter").fill("sk-or-mala");
+  await hoja.getByRole("button", { name: "Pegar mi clave" }).click();
+  await expect(hoja.getByRole("alert")).toHaveText("Esa clave no funciona. Revísala o crea otra en OpenRouter.");
+  await hoja.getByLabel("Clave de OpenRouter").fill("sk-or-buena");
+  await hoja.getByRole("button", { name: "Pegar mi clave" }).click();
+  await expect(page.getByText("Conectada")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Desconectar" })).toBeVisible();
+
+  // Un capítulo: redacta y verifica, las dos llamadas directo a OpenRouter con proveedores sin retención.
+  respuestas.push({ parrafos: seccion.parrafos }, { respaldados: [0, 1] });
+  await page.getByRole("button", { name: "Libro" }).click();
+  await page.getByRole("button", { name: "Escribir este capítulo con IA" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Escribir este capítulo con IA" }).click();
+  await expect(page.locator(".seccion-ia")).toContainText("Tu Estrategia es esperar la invitación.");
+  const llamadas = pedidos.filter((p) => p.url.endsWith("/chat/completions"));
+  expect(llamadas).toHaveLength(2);
+  expect(llamadas[0]!.cuerpo).toMatchObject({ provider: { zdr: true, data_collection: "deny" } });
+  expect(llamadas[0]!.cuerpo!.messages![1]!.content).toContain("tipo.proyector");
+
+  // El coach: una afirmación con una ficha que no se entregó se descarta en el navegador; lo sensible ni sale.
+  respuestas.push({ parrafos: [{ tipo: "interpretativo", texto: "Algo sin respaldo.", fuentes: ["ficha.inventada"] }] });
+  await page.getByRole("button", { name: "Coach" }).click();
+  await page.getByLabel("Escribe tu pregunta").fill("¿Qué hago con una invitación?");
+  await page.getByRole("button", { name: "Enviar" }).click();
+  await expect(page.locator(".coach-charla li").nth(1)).toContainText("Eso todavía no lo tengo en mi biblioteca.");
+  await page.getByLabel("Escribe tu pregunta").fill("¿Debería dejar la medicación?");
+  await page.getByRole("button", { name: "Enviar" }).click();
+  await expect(page.locator(".coach-charla li").nth(3)).toContainText("busca a una persona profesional");
+  expect(pedidos.filter((p) => p.url.endsWith("/chat/completions"))).toHaveLength(3);
+  // Nada de esto pasó por nuestro servidor.
+  expect(servidor.pedidosIA).toHaveLength(0);
+
+  await page.getByRole("button", { name: "Ajustes" }).click();
+  await page.getByRole("button", { name: "Desconectar" }).click();
+  await expect(page.getByRole("button", { name: "Usar tu clave de OpenRouter" })).toBeVisible();
+  expect(await page.evaluate(() => localStorage.getItem("dhlab.clave_openrouter"))).toBeNull();
+});

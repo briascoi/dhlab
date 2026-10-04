@@ -2,7 +2,8 @@
 // y los atributos de la carta validados contra sus valores posibles: la app nunca manda un prompt (E3-guardas).
 // Nada de lo que pasa por acá se guarda: ni lo que escribe la persona ni lo que responde el modelo (CEO2-S3b).
 import { sesionDe, type EnvCuenta } from "./cuenta";
-import { esSensible, filtrar, leerSalida, preguntaSiEsCiencia, type FichaIA, type Parrafo } from "../src/guardas";
+import { esSensible, preguntaSiEsCiencia, type FichaIA } from "../src/guardas";
+import { cuerpoOpenRouter, escribirCapitulo, leerOpenRouter, MODELO, responder, type Llamar } from "../src/redactor";
 import { atributosValidos, piezas, type Atributos } from "../src/piezas";
 
 export interface Catalogo { fichas: Record<string, { texto: string; version: number }> }
@@ -14,7 +15,6 @@ export interface EnvIA extends EnvCuenta {
   IA_TOPE_GLOBAL?: string;
   catalogo: () => Promise<Catalogo>;
 }
-const MODELO = "anthropic/claude-haiku-4.5";
 const TOPE_CUENTA = 500_000;
 const TOPE_GLOBAL = 10_000_000;
 // Lo que se aparta antes de llamar: un capítulo son dos llamadas (redactar y verificar).
@@ -27,51 +27,15 @@ const mesDe = (ahora: number) => new Date(ahora).toISOString().slice(0, 7);
 // El tope se renueva cada mes calendario (nota delegada de T54).
 const renovacion = (ahora: number) => new Date(Date.UTC(new Date(ahora).getUTCFullYear(), new Date(ahora).getUTCMonth() + 1, 1)).toISOString().slice(0, 10);
 
-const REGLAS = `Eres el redactor de DH Lab, un laboratorio de Diseño Humano. Escribes en español neutro, de tú, con frases cortas.
-Respondes SOLO con un JSON de esta forma: {"parrafos":[{"tipo":"narrativo","texto":"..."},{"tipo":"interpretativo","texto":"...","fuentes":["id.de.ficha"]}]}
-Reglas, sin excepción:
-- "interpretativo": todo lo que diga algo sobre el Diseño de la persona. Lleva en "fuentes" los ids de las fichas que lo respaldan. Solo puedes afirmar lo que esas fichas dicen; no agregas nada de tu conocimiento.
-- "narrativo": transiciones y preguntas, dos oraciones como máximo, sin afirmar nada sobre el Diseño de la persona y sin números.
-- Ningún número que no esté en la ficha citada.
-- Prohibido: predicciones, salud, medicina, terapia, consejos de pareja, y llamar ciencia al sistema o decir que está comprobado.
-- Si las fichas no alcanzan para responder, devuelve un solo párrafo narrativo que lo diga.`;
-
-async function llamar(env: EnvIA, sistema: string, usuario: string): Promise<{ texto: string; micros: number } | null> {
+// La llamada del camino incluido: con la clave de Isma, que es un secreto del Worker.
+const llamarCon = (env: EnvIA): Llamar => async (sistema, usuario) => {
   const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${env.OPENROUTER_API_KEY}`, "Content-Type": "application/json", "X-Title": "DH Lab" },
-    body: JSON.stringify({
-      model: env.IA_MODELO || MODELO,
-      messages: [{ role: "system", content: sistema }, { role: "user", content: usuario }],
-      response_format: { type: "json_object" },
-      max_tokens: 1500,
-      usage: { include: true },
-      // Solo proveedores sin retención ni entrenamiento (nota delegada de T51).
-      provider: { zdr: true, data_collection: "deny" },
-    }),
+    body: JSON.stringify(cuerpoOpenRouter(env.IA_MODELO || MODELO, sistema, usuario)),
   }).catch(() => null);
-  if (!r?.ok) return null;
-  const d = (await r.json().catch(() => null)) as { choices?: { message?: { content?: string } }[]; usage?: { cost?: number } } | null;
-  const texto = d?.choices?.[0]?.message?.content;
-  return typeof texto === "string" ? { texto, micros: Math.ceil((d?.usage?.cost ?? 0) * 1_000_000) } : null;
-}
-
-// Segunda llamada (solo en capítulos): qué párrafos interpretativos están respaldados por las fichas que citan.
-async function verificar(env: EnvIA, parrafos: Parrafo[], fichas: FichaIA[]): Promise<{ respaldados: Set<number>; micros: number } | null> {
-  const r = await llamar(
-    env,
-    'Eres un verificador. Recibes fichas y párrafos numerados. Para cada párrafo decides si TODO lo que afirma está dicho en las fichas que cita. Respondes SOLO con JSON: {"respaldados":[números de los párrafos respaldados]}',
-    JSON.stringify({ fichas, parrafos: parrafos.map((p, i) => ({ numero: i, texto: p.texto, fuentes: p.fuentes })) }),
-  );
-  if (!r) return null;
-  try {
-    const { respaldados } = JSON.parse(r.texto.replace(/^\s*```(?:json)?\s*|\s*```\s*$/g, "")) as { respaldados?: unknown };
-    if (!Array.isArray(respaldados)) return null;
-    return { respaldados: new Set(respaldados.filter((n): n is number => Number.isInteger(n))), micros: r.micros };
-  } catch {
-    return null;
-  }
-}
+  return r?.ok ? leerOpenRouter(await r.json().catch(() => null)) : null;
+};
 
 export async function ia(request: Request, env: EnvIA, ahora = Date.now()): Promise<Response> {
   const url = new URL(request.url);
@@ -127,40 +91,17 @@ export async function ia(request: Request, env: EnvIA, ahora = Date.now()): Prom
   // gstack-shortcut(dec-46ef0036): un capítulo pagado se pierde por corte, upgrade when capitulo_cortado supere el umbral acordado con datos del círculo (pasar a Cloudflare Workflows)
   const asentar = (micros: number) => env.DB.prepare("UPDATE gasto_ia SET micros = MAX(0, micros - ?1 + ?2) WHERE mes = ?3 AND clave IN (?4, 'global')").bind(reserva, micros, mes, sesion.id).run();
 
-  const contexto = JSON.stringify({ fichas });
-  const pedido = esCapitulo
-    ? `${contexto}\nEscribe la sección del capítulo ${cuerpo.n} del libro de esta persona, de hasta 250 palabras, usando solo estas fichas.`
-    : `${contexto}\nConversación hasta ahora: ${JSON.stringify(historial)}\nLa persona pregunta: ${JSON.stringify(cuerpo.texto)}\nResponde en hasta 120 palabras, usando solo estas fichas.`;
-  let micros = 0;
-  // La salida se valida contra el esquema, con hasta 2 reintentos.
-  let parrafos: Parrafo[] | null = null;
-  for (let intento = 0; intento < 3 && !parrafos; intento++) {
-    const salida = await llamar(env, REGLAS, pedido);
-    if (!salida) break;
-    micros += salida.micros;
-    parrafos = leerSalida(salida.texto);
-  }
-  if (!parrafos) return void (await asentar(micros)), fallo("salida_invalida", 502);
-  let { validos, publicable, conInterpretacion } = filtrar(parrafos, fichas);
-
+  const llamar = llamarCon(env);
   if (esMensaje) {
-    await asentar(micros);
-    return json(conInterpretacion ? { parrafos: validos } : { fija: "sin_biblioteca" });
+    const respuesta = await responder(llamar, cuerpo.texto as string, historial, fichas);
+    await asentar(respuesta.micros);
+    return respuesta.error ? fallo(respuesta.error, 502) : json(respuesta.parrafos ? { parrafos: respuesta.parrafos } : { fija: "sin_biblioteca" });
   }
-  // Capítulo: el verificador quita lo interpretativo que no está respaldado, y eso también cuenta para el umbral del 40%.
-  if (publicable) {
-    const v = await verificar(env, validos, fichas);
-    if (!v) return void (await asentar(micros)), fallo("salida_invalida", 502);
-    micros += v.micros;
-    const total = parrafos.filter((p) => p.tipo === "interpretativo").length;
-    validos = validos.filter((p, i) => p.tipo === "narrativo" || v.respaldados.has(i));
-    const quedan = validos.filter((p) => p.tipo === "interpretativo").length;
-    publicable = quedan > 0 && (total - quedan) / total <= 0.4;
-  }
-  await asentar(micros);
-  if (!publicable) return fallo("no_publicable", 422);
+  const escrito = await escribirCapitulo(llamar, cuerpo.n as number, fichas);
+  await asentar(escrito.micros);
+  if (escrito.error) return fallo(escrito.error, escrito.error === "no_publicable" ? 422 : 502);
   const modelo = env.IA_MODELO || MODELO;
-  return json({ parrafos: validos, modelo, verificador: modelo, fichas: fichas.map(({ id }) => ({ id, version: catalogo.fichas[id]!.version })) });
+  return json({ parrafos: escrito.parrafos, modelo, verificador: modelo, fichas: fichas.map(({ id }) => ({ id, version: catalogo.fichas[id]!.version })) });
 }
 
 // Para el coach: todas las fichas que le tocan a esta carta en los cinco capítulos.

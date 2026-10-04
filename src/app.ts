@@ -9,6 +9,7 @@ import { abrirAlmacen, borrarAlmacen, contenidoCarta, ID_CARTA, type CartaGuarda
 import { crearDiario } from "./cifrado";
 import { api, claveApi, documentosApi, type Cuenta } from "./cuenta-api";
 import { iaApi, type EstadoIA, type Seccion } from "./ia";
+import { clavePropia, conectarClave, iaPropia, quitarClave } from "./ia-propia";
 import { clasificar, clave, leerArchivo, otraVersion } from "./importar";
 import { motor } from "./motor";
 import { crearSync } from "./sync";
@@ -24,7 +25,7 @@ import { DEL_TIPO } from "./engine/tipos";
 import { dibujarCapitulo, dibujarExperimento } from "./ui/capitulo";
 import { abrirCodigo, abrirDiarioCerrado, dibujarDiario, marcarCodigoPendiente, type DiarioCerrado, type Entrada } from "./ui/diario";
 import { avisarHoraInexistente, bannerHoraIncierta, dibujarPendienteDeHora, preguntarHoraRepetida } from "./ui/hora";
-import { abrirEscritura, conConsentimiento, dibujarCoach, dibujarSeccion } from "./ui/ia";
+import { abrirClave, abrirEscritura, conConsentimiento, dibujarCoach, dibujarSeccion } from "./ui/ia";
 import { dibujarMapa, rotuloMapa } from "./ui/mapa";
 import { dibujarMarco, icono, type Marco, type Pestana } from "./ui/marco";
 import { abrirNacimiento, type Nacimiento } from "./ui/nacimiento";
@@ -440,6 +441,14 @@ const leerEstadoIA = async () => {
   const r = await iaApi.estado();
   estadoIA = "error" in r ? null : r;
 };
+// Con una clave propia conectada, la IA va directo de este navegador a OpenRouter; si no, por la incluida.
+const iaActiva = () => {
+  const clave = clavePropia();
+  return clave ? iaPropia(clave) : iaApi;
+};
+const hayIA = () => Boolean(clavePropia()) || Boolean(estadoIA?.configurada);
+// Con clave propia no rige el tope de la IA incluida.
+const SIN_TOPE: EstadoIA = { configurada: true, usado: 0, tope: Infinity, pausa: false, renovacion: "", reserva: { capitulo: 0, mensaje: 0 } };
 // El tema de cada ficha de esta carta, para decir de dónde sale cada afirmación generada.
 const temas = (a: Atributos) => {
   const mapa = new Map([1, 2, 3, 4, 5].flatMap((n) => capitulo(n, a)?.fichas ?? []).map((f) => [f.id, f.tema]));
@@ -486,14 +495,14 @@ async function libro(a: Atributos, contenido: HTMLElement, repintar: () => void)
       const vigente = new Map(c.fichas.map((f) => [f.id, f.version]));
       ia.push(dibujarSeccion(seccion, temas(a), seccion.fichas.some((f) => vigente.get(f.id) !== f.version)));
     }
-    if (estadoIA?.configurada) {
-      const estado = estadoIA;
+    if (hayIA()) {
+      const estado = clavePropia() ? SIN_TOPE : estadoIA!;
       ia.push(
         boton("boton-secundario", t(guardada ? "ia.capitulo.reescribir" : "ia.capitulo.escribir"), () =>
           conConsentimiento(() =>
             abrirEscritura(
               estado,
-              (senal) => iaApi.capitulo(c.n, a, senal),
+              (senal) => iaActiva().capitulo(c.n, a, senal),
               async (r) => {
                 // Solo se guarda un capítulo que pasó las verificaciones: uno incompleto nunca queda como estable.
                 await c.s.guardar("libro", `seccion-${c.n}`, JSON.stringify({ ...(r as Omit<Seccion, "esquema" | "escrita">), esquema: 1, escrita: new Date().toISOString() } satisfies Seccion));
@@ -532,7 +541,7 @@ async function pantallaCoach(a: Atributos, contenido: HTMLElement, repintar: () 
   if (!localStorage.getItem("dhlab.ia_consentida")) {
     return void contenido.append(el("p", "marco-vacio", t("ia.consentimiento.que_recibe")), boton("boton-principal", t("ia.consentimiento.titulo"), () => conConsentimiento(repintar)));
   }
-  const estado = estadoIA!;
+  const estado = clavePropia() ? SIN_TOPE : estadoIA!;
   if (estado.pausa) contenido.append(el("p", "banner", `${t("ia.pausa")}.`));
   else if (estado.usado > estado.tope * 0.8) contenido.append(el("p", "banner", t("ia.banner.cerca")));
   const puedeAnotar = ["abierto", "sin_clave"].includes(await diario!.estado());
@@ -540,7 +549,7 @@ async function pantallaCoach(a: Atributos, contenido: HTMLElement, repintar: () 
     dibujarCoach({
       temaDe: temas(a),
       preguntar: async (texto, historial) => {
-        const r = await iaApi.mensaje(texto, historial, a);
+        const r = await iaActiva().mensaje(texto, historial, a);
         void leerEstadoIA();
         return r;
       },
@@ -606,7 +615,7 @@ async function app(carta: CartaGuardada, inicial: Pestana = "mapa") {
   const nuevo = dibujarMarco(
     (pestana, contenido) => {
       if (pestana === "libro" && ESCRITOS) return void libro(atributos, contenido, () => nuevo.activar("libro"));
-      if (pestana === "coach" && estadoIA?.configurada) return void pantallaCoach(atributos, contenido, () => nuevo.activar("coach"));
+      if (pestana === "coach" && hayIA()) return void pantallaCoach(atributos, contenido, () => nuevo.activar("coach"));
       if (pestana !== "mapa") {
         const vacio = el("p", "marco-vacio", t(`${pestana}.vacio`));
         // Con algo elegido, Experimentos lo muestra con su chequeo; sin nada, queda el estado vacío.
@@ -696,10 +705,10 @@ async function app(carta: CartaGuardada, inicial: Pestana = "mapa") {
       const alSalir = () => ((cuenta = undefined), (marco = undefined), bienvenida());
       const alBorrar = async () => {
         await borrarAlmacen(c.email);
-        for (const clave of ["dhlab.nacimiento", "dhlab.precuenta", "dhlab.codigo_pendiente", MODO]) localStorage.removeItem(clave);
+        for (const clave of ["dhlab.nacimiento", "dhlab.precuenta", "dhlab.codigo_pendiente", "dhlab.clave_openrouter", MODO]) localStorage.removeItem(clave);
         alSalir();
       };
-      nuevo.mostrar(t("ajustes.titulo"), dibujarAjustes({ cuenta: c, carta, api, alSalir, ia: estadoIA, alCorregir: () => corregir(1), importar: (texto) => importar(c, texto), diario: { estado: d.estado, escribirCodigo: (alCambiar) => void abrirDiarioCerrado(diarioCerrado(), alCambiar), nuevoCodigo }, documentos, alBorrar, pasarALocal, pasarALaNube }));
+      nuevo.mostrar(t("ajustes.titulo"), dibujarAjustes({ cuenta: c, carta, api, alSalir, ia: estadoIA, clave: ESCRITOS ? { conectada: Boolean(clavePropia()), conectar: (alConectar) => abrirClave(conectarClave, alConectar), desconectar: quitarClave } : null, alCorregir: () => corregir(1), importar: (texto) => importar(c, texto), diario: { estado: d.estado, escribirCodigo: (alCambiar) => void abrirDiarioCerrado(diarioCerrado(), alCambiar), nuevoCodigo }, documentos, alBorrar, pasarALocal, pasarALaNube }));
     },
     detalleDeMarca,
     { izquierda: pegatina(), derecha: notaDelTitulo() },

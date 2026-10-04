@@ -21,9 +21,48 @@ export function conConsentimiento(seguir: () => void) {
   ]);
 }
 
+// Usar la clave propia (DR40): qué implica, el campo ocultable y la prueba contra OpenRouter antes de guardarla.
+// Conectarla cuenta como consentimiento: la pantalla dice qué recibe la IA y por dónde va.
+export function abrirClave(conectar: (clave: string) => Promise<"conectada" | "invalida" | "sin_red">, alConectar: () => void) {
+  const campo = el("input", "campo");
+  Object.assign(campo, { id: "clave-openrouter", type: "password", autocomplete: "off", spellcheck: false });
+  const rotulo = el("label", "rotulo-campo", t("ia.clave.rotulo"));
+  rotulo.htmlFor = campo.id;
+  const ver = boton("boton-link", t("ia.clave.mostrar"), (b) => {
+    campo.type = campo.type === "password" ? "text" : "password";
+    b.textContent = t(campo.type === "password" ? "ia.clave.mostrar" : "ia.clave.ocultar");
+  });
+  const estado = anuncio("estado", "status");
+  const error = anuncio("error", "alert");
+  completa("ia.clave.titulo", (cerrar) => [
+    el("p", "", t("ia.consentimiento.que_recibe")),
+    el("p", "", t("ia.clave.consentimiento")),
+    el("p", "", t("ia.clave.guardado")),
+    rotulo,
+    campo,
+    ver,
+    estado,
+    error,
+    boton("boton-principal", t("ia.clave.pegar"), async (b) => {
+      if (!campo.value.trim()) return campo.focus();
+      b.disabled = true;
+      error.textContent = "";
+      estado.textContent = t("ia.clave.conectando");
+      const r = await conectar(campo.value.trim());
+      estado.textContent = "";
+      b.disabled = false;
+      if (r !== "conectada") return void (error.textContent = t(r === "invalida" ? "ia.clave.invalida" : "sync.sin_conexion"));
+      localStorage.setItem(CONSENTIDA, new Date().toISOString());
+      cerrar();
+      alConectar();
+    }),
+    boton("boton-link", t("comun.cancelar"), cerrar),
+  ]);
+}
+
 const fechaLarga = (iso: string) => new Date(`${iso.slice(0, 10)}T12:00:00Z`).toLocaleDateString("es", { timeZone: "UTC", day: "numeric", month: "long" });
 const errorDe = (r: Fallo & { renovacion?: string }): string =>
-  r.error === "tope_global" ? `${t("ia.pausa")}.` : r.error === "tope_cuenta" ? `${t("ia.no_entra")} ${t("ia.renovacion", { fecha: fechaLarga(r.renovacion ?? "") })}` : r.error === "no_publicable" ? t("ia.capitulo.no_publicable") : r.error === "sin_red" ? t("ia.corte") : t("ia.error");
+  r.error === "tope_global" ? `${t("ia.pausa")}.` : r.error === "tope_cuenta" ? `${t("ia.no_entra")} ${t("ia.renovacion", { fecha: fechaLarga(r.renovacion ?? "") })}` : r.error === "no_publicable" ? t("ia.capitulo.no_publicable") : r.error === "sin_red" ? t("ia.corte") : r.error === "corte_propia" ? t("ia.corte.propia") : r.error === "clave_invalida" ? t("ia.clave.invalida") : r.error === "sin_saldo" ? t("ia.clave.sin_saldo") : t("ia.error");
 
 // Escribir un capítulo: un solo pedido que redacta y verifica. Mientras dura, la pantalla queda encendida y se puede cancelar;
 // cancelado o cortado, el capítulo queda sin publicar (E3-largo).
