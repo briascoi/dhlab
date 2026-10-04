@@ -29,7 +29,8 @@ Reglas, sin excepción:
 - No explicas qué significa un término (Firma, No-Yo, Estrategia, Autoridad, Definición...) si la ficha no lo explica: lo nombras y sigues.
 - En "fuentes" van todas las fichas de las que sale el párrafo, y solo esas: no dices en un párrafo lo que está en una ficha que ese párrafo no cita.
 - Si las fichas dicen poco, escribes poco. Un texto corto y fiel vale más que uno largo.
-- "narrativo": transiciones y preguntas, dos oraciones como máximo, sin afirmar nada sobre el Diseño de la persona y sin números.
+- No escribes transiciones ni frases de enlace ("esto define tu camino", "tu manera de decidir es única"): no se muestran. El tipo "narrativo" queda solo para decir que las fichas no alcanzan.
+- No sacas cuentas ni conclusiones propias (cuántos Centros, cuál Línea es la consciente, qué combinación forman): solo lo que la ficha dice.
 - Ningún número que no esté en la ficha citada.
 - Prohibido: predicciones, salud, medicina, terapia, consejos de pareja, y llamar ciencia al sistema o decir que está comprobado.
 - Si las fichas no alcanzan para responder, devuelve un solo párrafo narrativo que lo diga.`;
@@ -80,7 +81,8 @@ export async function escribirCapitulo(llamar: Llamar, n: number, fichas: FichaI
   if (!v.sinRespaldo) return { error: "salida_invalida", micros };
   let total = 0, quedan = 0;
   const parrafos = validos.flatMap((p) => {
-    if (p.tipo === "narrativo") return [p];
+    // Las transiciones no se muestran: es donde el modelo opina sin ficha que lo respalde (evals del 2026-10-05).
+    if (p.tipo === "narrativo") return [];
     const i = interpretativos.indexOf(p), todas = frases(p.texto);
     // Se caen las frases que marca el verificador y las que nombran un término que sus fichas no traen.
     const ajenas = frasesAjenas(p, fichas);
@@ -98,9 +100,9 @@ export async function responder(llamar: Llamar, texto: string, historial: unknow
   if (!r.parrafos) return { error: "salida_invalida", micros: r.micros };
   // Sin verificador, pero con la guarda de términos: se caen las frases que nombran algo que sus fichas no traen.
   const validos = filtrar(r.parrafos, fichas).validos.flatMap((p) => {
-    if (p.tipo === "narrativo") return [p];
+    if (p.tipo === "narrativo") return [];
     const ajenas = frasesAjenas(p, fichas), firmes = frases(p.texto).filter((_, j) => !ajenas.includes(j));
     return firmes.length ? [{ ...p, texto: firmes.join(" ") }] : [];
   });
-  return validos.some((p) => p.tipo === "interpretativo") ? { parrafos: validos, micros: r.micros } : { micros: r.micros };
+  return validos.length ? { parrafos: validos, micros: r.micros } : { micros: r.micros };
 }

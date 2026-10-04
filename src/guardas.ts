@@ -70,7 +70,9 @@ const terminos = (frase: string) => frase.split(/\s+/).slice(1).map((x) => x.rep
 export function frasesAjenas(p: Parrafo, fichas: FichaIA[]): number[] {
   const citado = sinTildes(fichas.filter((f) => p.fuentes?.includes(f.id)).map((f) => f.texto).join(" "));
   return frases(p.texto).flatMap((frase, i) => {
-    return terminos(frase).some((x) => !new RegExp(`\\b${sinTildes(x)}`).test(citado)) ? [i] : [];
+    // También las cantidades en palabras ("cuatro Centros"): si la ficha no las dice, son una cuenta del modelo.
+    const cantidades = sinTildes(frase).match(/\b(dos|tres|cuatro|cinco|seis|siete|ocho|nueve)\b/g) ?? [];
+    return [...terminos(frase), ...cantidades].some((x) => !new RegExp(`\\b${sinTildes(x)}`).test(citado)) ? [i] : [];
   });
 }
 

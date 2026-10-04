@@ -139,7 +139,7 @@ async function puntaAPunta() {
         else if (m) citasInvalidas++;
       }
       const interpretativos = r.parrafos.filter((p) => p.tipo === "interpretativo");
-      frasesMostradas += interpretativos.reduce((x, p) => x + frases(p.texto).length, 0);
+      frasesMostradas += r.parrafos.reduce((x, p) => x + frases(p.texto).length, 0);
       // El auditor ve todo lo que se muestra, también las transiciones.
       const a = await pedir(AUDITOR, AUDITAR, JSON.stringify({ fichas, parrafos: r.parrafos.map((p, i) => ({ numero: i, texto: p.texto, fuentes: p.fuentes })) }));
       let hallazgos: { frase?: string; en_otra_ficha?: boolean }[] | null = null;

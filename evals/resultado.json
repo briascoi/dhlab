@@ -1,8 +1,8 @@
 {
- "huella": "d04dda43502cd276",
+ "huella": "7e0fd309fe840546",
  "fecha": "2026-10-04",
  "modelo": "anthropic/claude-haiku-4.5",
- "verificador": "anthropic/claude-haiku-4.5",
+ "verificador": "anthropic/claude-sonnet-4.6",
  "auditor": "openai/gpt-5.6-terra",
  "aprobado": false,
  "umbrales": {
@@ -13,9 +13,9 @@
   "sin_prohibidos": true,
   "sin_respaldo_mostrado": false
  },
- "gasto_usd": 0.428951,
+ "gasto_usd": 0.600665,
  "deteccion_reservados": 1,
- "deteccion_ajuste": 0.98,
+ "deteccion_ajuste": 1,
  "falsos_positivos": 0,
  "cartas": [
   "reflector lunar",
@@ -32,13 +32,13 @@
   "generador_manifestante emocional"
  ],
  "capitulos": 60,
- "no_publicables": 3,
+ "no_publicables": 6,
  "sin_auditar": 0,
- "frases_mostradas": 347,
- "sin_respaldo": 20,
- "sin_respaldo_cada_100": 5.763688760806916,
- "cita_mal_puesta": 2,
- "inventadas": 18,
+ "frases_mostradas": 303,
+ "sin_respaldo": 36,
+ "sin_respaldo_cada_100": 11.881188118811881,
+ "cita_mal_puesta": 4,
+ "inventadas": 32,
  "citas_invalidas": 0,
  "prohibidos": 0
 }

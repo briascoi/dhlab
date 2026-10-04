@@ -97,7 +97,8 @@ test("capítulo: el pedido lleva solo las fichas del catálogo y proveedores sin
   const recibido = openrouter(capitulo, { sin_respaldo: [] });
   const r = await pedir(cookie, { accion: "capitulo", n: 1, atributos });
   expect(r.status).toBe(200);
-  expect(await r.json()).toMatchObject({ parrafos: capitulo.parrafos, modelo: "anthropic/claude-haiku-4.5", fichas: [{ id: "tipo.proyector", version: 1 }, { id: "estrategia.invitacion", version: 1 }, { id: "firma_no_yo.invitacion", version: 1 }] });
+  // La transición ("Vamos de a poco.") no se muestra: solo lo que cita fichas.
+  expect(await r.json()).toMatchObject({ parrafos: capitulo.parrafos.filter((p) => p.tipo === "interpretativo"), modelo: "anthropic/claude-haiku-4.5", fichas: [{ id: "tipo.proyector", version: 1 }, { id: "estrategia.invitacion", version: 1 }, { id: "firma_no_yo.invitacion", version: 1 }] });
   expect(recibido).toHaveLength(2);
   expect(recibido[0]).toMatchObject({ provider: { zdr: true, data_collection: "deny" } });
   expect(recibido[0]!.messages[1]!.content).toContain("Texto de la ficha tipo.proyector");
