@@ -8,6 +8,7 @@ import "./ui/tintas";
 import { abrirAlmacen, borrarAlmacen, contenidoCarta, ID_CARTA, type CartaGuardada } from "./almacen";
 import { crearDiario } from "./cifrado";
 import { api, claveApi, documentosApi, type Cuenta } from "./cuenta-api";
+import { clasificar, clave, leerArchivo, otraVersion } from "./importar";
 import { motor } from "./motor";
 import { crearSync } from "./sync";
 import { estallido, flecha, mancha } from "./ui/trazos";
@@ -153,6 +154,33 @@ async function documentosLegibles(c: Cuenta) {
   const entradas = (await d.estado()) === "abierto" ? await Promise.all((await s.listar("diario")).map(async ({ tipo, id }) => ({ tipo, id, contenido: await d.leer(id) }))) : [];
   return [...legibles, ...entradas.filter((e) => e.contenido !== null)];
 }
+// Importar (DR43): la carta del archivo nunca reemplaza a la de la cuenta (si difiere, se elige en la pantalla de DR38);
+// un capítulo que ya existe se conserva; una entrada del diario que choca queda como otra versión, al lado de la original (DR37).
+async function importar(c: Cuenta, texto: string) {
+  const s = syncDe(c);
+  const d = diario!;
+  const leido = leerArchivo(texto);
+  if ("error" in leido) return leido;
+  // Con el diario cerrado, sus entradas esperan a que se abra.
+  const diarioCerrado = ["cerrado", "anterior"].includes(await d.estado()) && leido.piezas.some((p) => p.tipo === "diario");
+  const piezas = diarioCerrado ? leido.piezas.filter((p) => p.tipo !== "diario") : leido.piezas;
+  const locales = new Map<string, string>();
+  for (const doc of [...(await s.listar("carta")), ...(await s.listar("libro"))]) locales.set(clave(doc), doc.contenido);
+  for (const doc of await s.listar("diario")) locales.set(clave(doc), (await d.leer(doc.id)) ?? "null");
+  const { nuevo, existe, conflicto } = clasificar(piezas, locales);
+  const aplicar = async () => {
+    const entradas = [...nuevo, ...conflicto.map(otraVersion)].filter((p) => p.tipo === "diario");
+    // Lo importado se cifra con la clave del diario; si no había, se crea y al final se muestra su código (DR34).
+    const codigo = entradas.length && (await d.estado()) === "sin_clave" ? await d.crear() : null;
+    for (const p of nuevo.filter((x) => x.tipo !== "diario")) await s.guardar(p.tipo, p.id, p.contenido);
+    for (const p of entradas) await d.escribir(p.id, p.contenido);
+    for (const p of conflicto.filter((x) => x.tipo === "carta")) await s.proponer(p.tipo, p.id, p.contenido);
+    await sincronizar();
+    if (codigo && c.modo === "nube" && (await d.estado()) === "abierto") abrirCodigo(codigo);
+  };
+  return { nuevo: nuevo.length, existe: existe.length, conflicto: conflicto.length, diarioCerrado, aplicar };
+}
+
 // En otro dispositivo de una cuenta que pasó a solo local: lo que hay acá se queda acá y, si había cambios sin subir, se ofrece exportarlos (CEO2-O4).
 async function avisarModo(c: Cuenta) {
   if (!avisoModo || !marco) return;
@@ -400,6 +428,10 @@ async function libro(tipo: TipoId, contenido: HTMLElement, repintar: () => void)
       estado: c.d.estado,
       entradas: async () => (await Promise.all((await c.s.listar("diario")).map(async ({ id }) => ({ id, texto: await c.d.leer(id) })))).flatMap(({ id, texto }) => (texto === null ? [] : [{ ...(JSON.parse(texto) as Omit<Entrada, "id">), id }])),
       escribir: c.escribir,
+      quedarse: async ({ id, versionDe: _v, ...resto }) => {
+        await c.d.escribir(id, JSON.stringify(resto));
+        void sincronizar();
+      },
     },
     () => filaDiarioCerrado(repintar),
   );
@@ -538,7 +570,7 @@ async function app(carta: CartaGuardada, inicial: Pestana = "mapa") {
         for (const clave of ["dhlab.nacimiento", "dhlab.precuenta", "dhlab.codigo_pendiente", MODO]) localStorage.removeItem(clave);
         alSalir();
       };
-      nuevo.mostrar(t("ajustes.titulo"), dibujarAjustes({ cuenta: c, carta, api, alSalir, alCorregir: () => corregir(1), diario: { estado: d.estado, escribirCodigo: (alCambiar) => void abrirDiarioCerrado(diarioCerrado(), alCambiar), nuevoCodigo }, documentos, alBorrar, pasarALocal, pasarALaNube }));
+      nuevo.mostrar(t("ajustes.titulo"), dibujarAjustes({ cuenta: c, carta, api, alSalir, alCorregir: () => corregir(1), importar: (texto) => importar(c, texto), diario: { estado: d.estado, escribirCodigo: (alCambiar) => void abrirDiarioCerrado(diarioCerrado(), alCambiar), nuevoCodigo }, documentos, alBorrar, pasarALocal, pasarALaNube }));
     },
     detalleDeMarca,
     { izquierda: pegatina(), derecha: notaDelTitulo() },

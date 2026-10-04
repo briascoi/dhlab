@@ -62,6 +62,13 @@ export function crearSync(almacen: Almacen, api: DocumentosApi, modo: Modo) {
       await almacen.aplicar(poner, cola.map((o) => ["cola", o.n!]));
     });
 
+  // Deja una propuesta junto a un documento que ya existe, sin tocarlo ni subir nada: la persona elige después (carta importada, DR38).
+  const proponer = (tipo: Tipo, id: string, contenido: string) =>
+    enTurno(async () => {
+      const previo = await leer(tipo, id);
+      if (previo) await almacen.aplicar([["documentos", { ...previo, rechazado: contenido } satisfies Local]]);
+    });
+
   const listar = async (tipo: Tipo) => (await almacen.todos<Local>("documentos")).filter((d) => d.tipo === tipo);
 
   // Sube la cola de a una operación, la más vieja primero. Devuelve "al_dia" o el error que la frenó; frenada, la cola queda intacta.
@@ -115,5 +122,5 @@ export function crearSync(almacen: Almacen, api: DocumentosApi, modo: Modo) {
 
   // Cuántos cambios esperan para subir (DR36).
   const pendientes = async () => (await almacen.todos<Operacion>("cola")).length;
-  return { guardar, leer, listar, olvidar, subirTodo, sincronizar, pendientes };
+  return { guardar, leer, listar, olvidar, proponer, subirTodo, sincronizar, pendientes };
 }

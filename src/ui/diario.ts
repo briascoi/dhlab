@@ -119,12 +119,15 @@ async function abrirDesbloqueo(d: DiarioCerrado, alAbrir: () => void) {
 }
 
 // Una entrada del diario, ya descifrada. `atributo` dice a qué se refiere, para cuando una corrección de la carta lo cambie (R12).
-export interface Entrada { id: string; texto: string; fecha: string; capitulo: number; atributo: string }
+// `versionDe`: la entrada chocó con otra del mismo id y quedó a su lado como versión de otro dispositivo (DR37).
+export interface Entrada { id: string; texto: string; fecha: string; capitulo: number; atributo: string; versionDe?: string }
 export interface DiarioAbierto {
   estado: () => Promise<string>;
   entradas: () => Promise<Entrada[]>;
   // Guarda la entrada; devuelve el código de recuperación si con ella nació el diario y ya quedó registrado en la cuenta (DR34).
   escribir: (texto: string) => Promise<string | null>;
+  // "Quedarme con las dos": la otra versión pasa a ser una entrada más.
+  quedarse: (entrada: Entrada) => Promise<void>;
 }
 
 // El diario dentro del capítulo: las entradas junto a la sección y el campo para sumar una (DR11, tercer tiempo).
@@ -141,10 +144,19 @@ export function dibujarDiario(d: DiarioAbierto, filaCerrado: () => HTMLElement):
     const rotulo = el("label", "rotulo-campo", t("diario.rotulo"));
     rotulo.htmlFor = campo.id;
     const lista = el("ol", "diario-entradas");
-    for (const e of (await d.entradas()).sort((a, b) => b.fecha.localeCompare(a.fecha))) {
+    // La más nueva arriba; una versión de otro dispositivo va justo debajo de su original, cada una con su fecha y hora.
+    const todas = await d.entradas();
+    const orden = (e: Entrada) => `${todas.find((x) => x.id === e.versionDe)?.fecha ?? e.fecha}${e.versionDe ? "0" : "1"}`;
+    for (const e of todas.sort((a, b) => orden(b).localeCompare(orden(a)))) {
       const cuando = el("time", "", new Date(e.fecha).toLocaleString("es", { dateStyle: "long", timeStyle: "short" }));
       cuando.dateTime = e.fecha;
-      lista.append(el("li", "", cuando, e.texto));
+      const item = el("li", "", cuando, e.texto);
+      if (e.versionDe) {
+        item.classList.add("otra-version");
+        item.prepend(el("strong", "", t("conflicto.etiqueta")));
+        item.append(el("p", "ajustes-nota", t("conflicto.explicacion")), boton("boton-link", t("conflicto.quedarme_dos"), async () => (await d.quedarse(e), void pintar())));
+      }
+      lista.append(item);
     }
     const guardar = boton("boton-principal", t("diario.guardar"), async (b) => {
       if (!campo.value.trim()) return campo.focus();

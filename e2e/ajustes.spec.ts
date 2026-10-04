@@ -1,4 +1,5 @@
 // Ajustes (DR30), tema (DR16), salir y borrar cuenta (DR44).
+import { existsSync } from "node:fs";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { CARTA, simularServidor } from "./servidor";
@@ -280,4 +281,59 @@ test("Corregir mis datos vuelve al formulario con lo guardado, y la carta correg
   await page.getByRole("button", { name: "Saltar" }).click();
   await expect.poll(() => servidor.documentos.find((d) => d.tipo === "carta")!.version).toBe(2);
   expect(JSON.parse(servidor.documentos.find((d) => d.tipo === "carta")!.contenido)).toMatchObject({ nacimiento: { fecha: "1990-05-16" } });
+});
+
+test("Importar: valida, muestra la vista previa y combina sin duplicar; una carta distinta se compara en vez de reemplazar (DR43)", async ({ page }) => {
+  const servidor = await abrirAjustes(page);
+  const archivo = (documentos: unknown[]) => ({ name: "dhlab-mis-datos.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify({ esquema: 1, documentos })) });
+  const capitulo = { tipo: "libro", id: "capitulo-1", contenido: { esquema: 1, experimento: "observacion.firma_no_yo", elegido: "2026-10-01T10:00:00.000Z", atributo: "Estrategia: Esperar la invitación", fichas: [] } };
+  const entrada = { tipo: "diario", id: "entrada-1", contenido: JSON.stringify({ texto: "Escrita en otro navegador.", fecha: "2026-10-02T09:00:00.000Z", capitulo: 1, atributo: "Estrategia: Esperar la invitación" }) };
+  const carta = { tipo: "carta", id: "principal", contenido: CARTA };
+
+  await page.getByRole("button", { name: "Importar un archivo" }).click();
+  const hoja = page.getByRole("dialog").filter({ hasText: "Importar un archivo" });
+  await expect(hoja.getByRole("heading", { name: "Importar un archivo" })).toBeFocused();
+  await hoja.getByLabel("Elegir archivo").setInputFiles({ name: "otro.json", mimeType: "application/json", buffer: Buffer.from("{}") });
+  await expect(hoja.getByRole("alert")).toHaveText("Este archivo no es una exportación de DH Lab.");
+  expect((await new AxeBuilder({ page }).analyze()).violations.map((v) => v.id)).toEqual([]);
+
+  const filas = hoja.locator(".importar-vista .fila");
+  await hoja.getByLabel("Elegir archivo").setInputFiles(archivo([carta, capitulo, entrada]));
+  await expect(filas).toHaveText(["Nuevo2", "Ya existe1", "En conflicto0"]);
+  expect((await new AxeBuilder({ page }).analyze()).violations.map((v) => v.id)).toEqual([]);
+  expect(servidor.documentos).toHaveLength(1);
+  await hoja.getByRole("button", { name: "Combinar" }).click();
+  await expect(hoja.getByRole("status")).toHaveText("Listo: se combinó con tus datos.");
+  // El diario importado se cifra con una clave nueva, y su código se muestra.
+  const codigo = page.getByRole("dialog").filter({ hasText: "Tu código de recuperación" });
+  await codigo.getByRole("button", { name: "Ahora no" }).click();
+  await expect.poll(() => servidor.documentos.map((d) => `${d.tipo}/${d.id}`).sort()).toEqual(["carta/principal", "diario/entrada-1", "libro/capitulo-1"]);
+  expect(servidor.documentos.find((d) => d.tipo === "diario")!.contenido).not.toContain("Escrita en otro navegador");
+
+  // El mismo archivo otra vez: todo existe. Con otra carta y otra versión de la entrada: dos choques, y nada se reemplaza.
+  await hoja.getByLabel("Elegir archivo").setInputFiles(archivo([carta, capitulo, entrada]));
+  await expect(filas).toHaveText(["Nuevo0", "Ya existe3", "En conflicto0"]);
+  const otraCarta = { ...carta, contenido: { ...CARTA, nacimiento: { ...CARTA.nacimiento, hora: "09:00" } } };
+  const otraEntrada = { ...entrada, contenido: JSON.stringify({ ...JSON.parse(entrada.contenido), texto: "La misma entrada, con otro texto." }) };
+  await hoja.getByLabel("Elegir archivo").setInputFiles(archivo([otraCarta, otraEntrada]));
+  await expect(filas).toHaveText(["Nuevo0", "Ya existe0", "En conflicto2"]);
+  await expect(hoja.getByText("Si una entrada choca, quedan las dos versiones.")).toBeVisible();
+  await hoja.getByRole("button", { name: "Combinar" }).click();
+  const comparacion = page.getByRole("dialog").filter({ hasText: "Tu carta cambió desde otro dispositivo" });
+  await expect(comparacion.locator("section").filter({ hasText: "Tu corrección" })).toContainText("09:00");
+  await comparacion.getByRole("button", { name: "Dejar la actual" }).click();
+  await expect.poll(() => servidor.documentos.filter((d) => d.tipo === "diario").map((d) => d.id).sort()).toEqual(["entrada-1", "entrada-1~otra"]);
+  expect(JSON.parse(servidor.documentos.find((d) => d.tipo === "carta")!.contenido)).toMatchObject({ nacimiento: { hora: "14:30" } });
+
+  // En el Libro, las dos versiones van juntas; "Quedarme con las dos" quita la etiqueta (DR37).
+  test.skip(!existsSync("contenido/capitulo-1.json"), "sin la carpeta de contenido");
+  await page.getByRole("button", { name: "Libro" }).click();
+  const entradas = page.locator(".diario-entradas li");
+  await expect(entradas).toHaveCount(2);
+  await expect(entradas.nth(1)).toContainText("Versión de otro dispositivo");
+  await expect(entradas.nth(1)).toContainText("La misma entrada, con otro texto.");
+  expect((await new AxeBuilder({ page }).analyze()).violations.map((v) => v.id)).toEqual([]);
+  await page.getByRole("button", { name: "Quedarme con las dos" }).click();
+  await expect(page.getByText("Versión de otro dispositivo")).toHaveCount(0);
+  await expect(entradas).toHaveCount(2);
 });

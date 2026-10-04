@@ -23,3 +23,6 @@
 .etapas { margin: 0; padding: 0; list-style: none; font: 400 0.875rem/1.6 "Martian Mono Variable", ui-monospace, monospace; }
 .etapas:empty { display: none; }
 .etapas li::before { content: "> "; }
+.importar-vista { width: 100%; margin: 0; }
+.importar-vista .fila { display: flex; justify-content: space-between; min-height: 44px; align-items: center; border-top: 1px dotted var(--text-muted); }
+.importar-vista dd { margin: 0; }

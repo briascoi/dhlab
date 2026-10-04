@@ -36,6 +36,8 @@ export interface OpcionesAjustes {
   alCorregir: () => void;
   // El diario en este dispositivo: sin clave (todavía no hay diario), abierto o cerrado (DR32).
   diario: { estado: () => Promise<"sin_clave" | "abierto" | "cerrado" | "anterior">; escribirCodigo: (alCambiar: () => void) => void; nuevoCodigo: () => Promise<{ codigo: string } | { error: string }> };
+  // Lee un archivo exportado y dice qué pasaría al combinarlo; `aplicar` lo combina (DR43).
+  importar: (texto: string) => Promise<{ error: "invalido" | "esquema_nuevo" } | { nuevo: number; existe: number; conflicto: number; diarioCerrado: boolean; aplicar: () => Promise<void> }>;
   // Nube a "solo en este dispositivo" (DR39): avisa cada etapa y dice cómo terminó. "sin_confirmar": la respuesta se perdió y el estado no se pudo consultar.
   pasarALocal: Cambio;
   // Solo local a la nube: el servidor cambia el modo y este dispositivo sube lo suyo. "parcial": la subida se cortó y sigue sola.
@@ -47,7 +49,7 @@ export interface OpcionesAjustes {
 }
 
 export function dibujarAjustes(opciones: OpcionesAjustes): HTMLElement {
-  const { cuenta, carta, api, alSalir, alCorregir, diario, documentos, alBorrar, pasarALocal, pasarALaNube } = opciones;
+  const { cuenta, carta, api, alSalir, alCorregir, diario, documentos, importar, alBorrar, pasarALocal, pasarALaNube } = opciones;
   // Al terminar un cambio de modo, Ajustes se vuelve a dibujar con la cuenta ya cambiada.
   const conModo = (modo: Cuenta["modo"]) => () => panel.replaceWith(dibujarAjustes({ ...opciones, cuenta: { ...cuenta, modo } }));
   const exportar = () => abrirExportar(documentos, diario.estado);
@@ -131,7 +133,7 @@ export function dibujarAjustes(opciones: OpcionesAjustes): HTMLElement {
     ),
     grupoDiario,
     grupo("ajustes.grupo.apariencia", temas),
-    grupo("ajustes.grupo.datos", boton("boton-secundario", t("ajustes.datos.exportar"), exportar), boton("boton-destructivo", t("ajustes.datos.borrar"), () => confirmarBorrado(api, exportar, alBorrar))),
+    grupo("ajustes.grupo.datos", boton("boton-secundario", t("ajustes.datos.exportar"), exportar), boton("boton-secundario", t("ajustes.datos.importar"), () => abrirImportar(importar)), boton("boton-destructivo", t("ajustes.datos.borrar"), () => confirmarBorrado(api, exportar, alBorrar))),
   );
   return panel;
 }
@@ -226,6 +228,40 @@ export function abrirExportar(documentos: () => Promise<object[]>, estadoDiario:
     estado.textContent = t("datos.exportar.listo");
   });
   completa("datos.exportar.titulo", (cerrar) => [el("p", "", t("datos.exportar.incluye")), avisoDiario, exportar, estado, boton("boton-link", t("comun.cerrar"), cerrar)]);
+}
+
+// Importar (DR43): se elige el archivo, se valida y se muestra qué es nuevo, qué ya existe y qué choca, antes de combinar. Nunca reemplaza en silencio.
+function abrirImportar(importar: OpcionesAjustes["importar"]) {
+  const archivo = el("input", "campo");
+  Object.assign(archivo, { id: "importar-archivo", type: "file", accept: "application/json,.json" });
+  const rotulo = el("label", "rotulo-campo", t("datos.importar.elegir"));
+  rotulo.htmlFor = archivo.id;
+  const estado = anuncio("", "status");
+  const error = anuncio("error", "alert");
+  const vista = el("div", "");
+  archivo.addEventListener("change", async () => {
+    vista.replaceChildren();
+    error.textContent = "";
+    const elegido = archivo.files?.[0];
+    if (!elegido) return;
+    estado.textContent = t("datos.importar.validando");
+    const r = await importar(await elegido.text());
+    estado.textContent = "";
+    if ("error" in r) return void (error.textContent = t(r.error === "invalido" ? "datos.importar.invalido" : "rescate.esquema_nuevo"));
+    const cuenta = (rotulo: TextoId, n: number) => el("div", "fila", el("dt", "", t(rotulo)), el("dd", "", String(n)));
+    vista.append(
+      el("dl", "importar-vista", cuenta("datos.importar.nuevo", r.nuevo), cuenta("datos.importar.existe", r.existe), cuenta("datos.importar.conflicto", r.conflicto)),
+      ...(r.conflicto ? [el("p", "ajustes-nota", t("datos.importar.conflicto_nota"))] : []),
+      ...(r.diarioCerrado ? [el("p", "ajustes-nota", t("datos.importar.diario_cerrado"))] : []),
+      boton("boton-principal", t("datos.importar.combinar"), async (b) => {
+        b.disabled = true;
+        await r.aplicar();
+        vista.replaceChildren();
+        estado.textContent = t("datos.importar.listo");
+      }),
+    );
+  });
+  completa("datos.importar.titulo", (cerrar) => [rotulo, archivo, estado, error, vista, boton("boton-link", t("comun.cerrar"), cerrar)]);
 }
 
 // "Tu carta cambió desde otro dispositivo" (DR38): la carta de la cuenta frente a la corrección hecha acá. Lo escrito se conserva hasta elegir.

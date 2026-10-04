@@ -15,3 +15,5 @@
 .diario-entradas { width: 100%; margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
 .diario-entradas li { padding: 8px 12px; border-left: 4px solid var(--accent-text); white-space: pre-wrap; overflow-wrap: anywhere; }
 .diario-entradas time { display: block; font-size: 0.875rem; color: var(--text-muted); }
+.diario-entradas .otra-version { margin-left: 16px; border-left-style: dashed; }
+.diario-entradas .otra-version strong { display: block; }
