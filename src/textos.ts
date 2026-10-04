@@ -15,6 +15,7 @@ const TEXTOS = {
   "anotacion.manual.cierre": { texto: "Léelo. Vívelo. Compártelo.", aprobado: true },
   "capitulo.en_curso": { texto: "Capítulo {numero} · {titulo}", aprobado: true },
   "capitulo.1.titulo": { texto: "Tu Tipo", aprobado: true },
+  "capitulo.cambio": { texto: "Tu carta cambió por una corrección. Antes: {antes}. Ahora: {ahora}. Este capítulo se abre otra vez.", aprobado: true },
   "capitulo.2.titulo": { texto: "Tu Autoridad", aprobado: true },
   "capitulo.3.titulo": { texto: "Tu Perfil", aprobado: true },
   "capitulo.bloqueado": { texto: "El Capítulo {numero} · {titulo} se abre cuando completes el anterior.", aprobado: true },

@@ -27,6 +27,8 @@ Leído y escrito el 2026-10-03.
 
 Todas leídas el 2026-10-03. De J1 a J4 la lectura fue por extracción automática de la página; las citas son breves y conviene que Isma las confirme a ojo antes de usarlas en una ficha.
 
+**Verificación del 2026-10-04.** La extracción automática puede inventar cifras y citas (pasó con porcentajes de Definición, que se descartaron). Por eso, todas las citas y cifras que usan las fichas de los Capítulos 1 y 2 se cotejaron contra el texto crudo de J1 y de las ocho páginas de Autoridad, bajado sin resumir: aparecen todas tal cual, salvo una que estaba con la puntuación cambiada y se corrigió. Regla desde ahora: ninguna cita entra a una ficha sin aparecer literalmente en el texto crudo de la página.
+
 ## Tipos
 
 **Hay cuatro Tipos, y el Generador Manifestante es un subgrupo del Generador.** El diccionario oficial lo dice así: "The manifesting Generator is neither a Manifestor nor a separate Type, it is a sub group of Generator" [J2]. DH Lab lo muestra como quinto nombre porque así lo conoce la gente, pero comparte Estrategia, Firma y No-Yo con el Generador [J1].
@@ -66,7 +68,7 @@ Es lo que necesitan los interruptores del mapa.
 |---|---|---|---|
 | Generador y Generador Manifestante | Su Estrategia es responder; "not here to initiate" [J1] | Sí, con fuente | No, con fuente |
 | Manifestador | "Here to initiate, to get things started" [J1] | Sin fuente | Sí, con fuente |
-| Proyector | "Wait for the invitation"; "not here to do, they are here to guide" [J1] | Sin fuente | Sin fuente |
+| Proyector | "Wait for the invitation"; "not here to do" y "they are here to guide" (la fuente las une con una raya) [J1] | Sin fuente | Sin fuente |
 | Reflector | Espera un ciclo lunar [J1] | Sin fuente | Sin fuente |
 
 **Conclusión.** Isma confirmó la tabla el 2026-10-03: Generador y Generador Manifestante, responder sí e iniciar no; Manifestador, responder no e iniciar sí; Proyector y Reflector, los dos en no. Es su decisión de contenido. Lo que la fuente respalda de esa tabla son las celdas marcadas "con fuente"; las demás son la lectura de Isma y no una cita.

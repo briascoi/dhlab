@@ -5,6 +5,8 @@ import { anuncio, boton, completa, el } from "./pantalla";
 // "Ahora no" deja pendiente guardar el código; el código no se guarda en ningún lado, así que completarlo es generar uno nuevo (E4-codigo).
 const PENDIENTE = "dhlab.codigo_pendiente";
 export const codigoPendiente = () => localStorage.getItem(PENDIENTE) !== null;
+// El diario nació pero su código no se pudo mostrar (sin red, por ejemplo): queda el recordatorio, que lleva a generar uno.
+export const marcarCodigoPendiente = () => localStorage.setItem(PENDIENTE, "1");
 const soloHex = (s: string) => s.replace(/[^0-9a-f]/gi, "").toUpperCase();
 
 // El código como texto real, con Copiar y Compartir; para terminar hay que escribir el último grupo.
@@ -124,6 +126,8 @@ export interface Entrada { id: string; texto: string; fecha: string; capitulo: n
 export interface DiarioAbierto {
   // Para el campo: hay un diario por capítulo en la misma pantalla.
   id: string;
+  // El atributo vigente de la sección: una entrada escrita con otro valor lo lleva a la vista (R12).
+  atributo: string;
   estado: () => Promise<string>;
   entradas: () => Promise<Entrada[]>;
   // Guarda la entrada; devuelve el código de recuperación si con ella nació el diario y ya quedó registrado en la cuenta (DR34).
@@ -153,6 +157,7 @@ export function dibujarDiario(d: DiarioAbierto, filaCerrado: () => HTMLElement):
       const cuando = el("time", "", new Date(e.fecha).toLocaleString("es", { dateStyle: "long", timeStyle: "short" }));
       cuando.dateTime = e.fecha;
       const item = el("li", "", cuando, e.texto);
+      if (e.atributo !== d.atributo) item.append(el("p", "ajustes-nota", e.atributo));
       if (e.versionDe) {
         item.classList.add("otra-version");
         item.prepend(el("strong", "", t("conflicto.etiqueta")));

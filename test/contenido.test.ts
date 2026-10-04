@@ -45,3 +45,8 @@ test.skipIf(!archivos.some((a) => a.includes("capitulo-2")))("el Capítulo 2 tie
     for (const id of [`autoridad.${a}`, `autoridad_como.${a}`, `experimento.autoridad.${a}`]) expect(ids.has(id), id).toBe(true);
   }
 });
+
+test.skipIf(!archivos.some((a) => a.includes("capitulo-3")))("el Capítulo 3 tiene la ficha y el experimento de las seis Líneas y los tres ángulos", () => {
+  const ids = new Set(entradas.map((e) => e.id));
+  for (const id of ["perfil.calculo", "observacion.perfil", ...[1, 2, 3, 4, 5, 6].flatMap((n) => [`linea.${n}`, `experimento.linea.${n}`]), ...["derecho", "yuxtaposicion", "izquierdo"].map((g) => `perfil.grupo.${g}`)]) expect(ids.has(id), id).toBe(true);
+});

@@ -22,19 +22,28 @@ const capitulos = Object.values(import.meta.glob<Capitulo>("../contenido/capitul
 // Una ficha sin la aprobación de Isma o sin el chequeo de originalidad se muestra, pero marcada como borrador.
 export const revisada = (f: Ficha) => f.aprobado_por !== "" && f.originalidad_chequeada;
 
-// Lo que la carta le pide a cada capítulo.
-export interface Atributos { tipo: keyof typeof DEL_TIPO; autoridad: string }
+// Lo que la carta le pide a cada capítulo. El Perfil va como "1/3".
+export interface Atributos { tipo: keyof typeof DEL_TIPO; autoridad: string; perfil: string }
 // Cuántos capítulos tienen contenido; se abren en orden, cada uno al completar el anterior (plan, "Mapa de capítulos").
 export const ESCRITOS = capitulos.length ? Math.max(...capitulos.map((c) => c.capitulo)) : 0;
 
-// Las fichas y las opciones para probar que le tocan a esta carta en el capítulo `n`:
-// 1, "Tu Tipo" (Tipo, Estrategia, Firma y No-Yo); 2, "Tu Autoridad" (qué la define y cómo decide).
-export function capitulo(n: number, { tipo, autoridad }: Atributos): { fichas: Ficha[]; experimentos: Ficha[] } | null {
+// Qué fichas y qué experimentos le tocan a esta carta en cada capítulo:
+// 1, "Tu Tipo" (Tipo, Estrategia, Firma y No-Yo); 2, "Tu Autoridad" (qué la define y cómo decide); 3, "Tu Perfil" (sus dos Líneas y su ángulo).
+function piezas(n: number, { tipo, autoridad, perfil }: Atributos): [string[], string[]] {
+  const { estrategia } = DEL_TIPO[tipo];
+  if (n === 1) return [[`tipo.${tipo}`, `estrategia.${estrategia}`, `firma_no_yo.${estrategia}`], [`experimento.${estrategia}`]];
+  if (n === 2) return [[`autoridad.${autoridad}`, `autoridad_como.${autoridad}`], [`experimento.autoridad.${autoridad}`]];
+  const [a, b] = perfil.split("/");
+  // Ángulo Derecho, Yuxtaposición (solo el 4/1) o Ángulo Izquierdo, según la página oficial de Perfil.
+  const grupo = perfil === "4/1" ? "yuxtaposicion" : ["5/1", "5/2", "6/2", "6/3"].includes(perfil) ? "izquierdo" : "derecho";
+  return [["perfil.calculo", `linea.${a}`, `linea.${b}`, `perfil.grupo.${grupo}`], [`experimento.linea.${a}`, `experimento.linea.${b}`]];
+}
+
+export function capitulo(n: number, atributos: Atributos): { fichas: Ficha[]; experimentos: Ficha[] } | null {
   const c = capitulos.find((x) => x.capitulo === n);
   if (!c) return null;
-  const { estrategia } = DEL_TIPO[tipo];
-  const [ids, experimento] = n === 1 ? [[`tipo.${tipo}`, `estrategia.${estrategia}`, `firma_no_yo.${estrategia}`], `experimento.${estrategia}`] : [[`autoridad.${autoridad}`, `autoridad_como.${autoridad}`], `experimento.autoridad.${autoridad}`];
-  return { fichas: ids.flatMap((id) => c.fichas.filter((f) => f.id === id)), experimentos: c.experimentos.filter((e) => e.id === experimento || e.clase === "observacion") };
+  const [fichas, experimentos] = piezas(n, atributos);
+  return { fichas: fichas.flatMap((id) => c.fichas.filter((f) => f.id === id)), experimentos: c.experimentos.filter((e) => experimentos.includes(e.id) || e.clase === "observacion") };
 }
 
 // Lo que se guarda de un capítulo en el Libro: qué se eligió, cuándo, a qué atributo se refiere (R12), qué versión de cada ficha se leyó

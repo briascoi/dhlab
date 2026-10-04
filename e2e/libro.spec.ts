@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 import { desenvolver } from "../src/cifrado";
-import { simularServidor } from "./servidor";
+import { CARTA, simularServidor } from "./servidor";
 
 test.skip(!existsSync("contenido/capitulo-1.json"), "sin la carpeta de contenido");
 
@@ -107,10 +107,52 @@ test("completar el Capítulo 1 abre el Capítulo 2 con las fichas de la Autorida
   await expect(page.locator(".capitulo").first().locator(".diario-entradas li")).toHaveCount(0);
 
   await segundo.getByRole("button", { name: "Elegir este" }).first().click();
-  await expect(page.getByText("El Capítulo 3 · Tu Perfil se abre cuando completes el anterior.")).toBeVisible();
+  // El Capítulo 3: la carta de prueba es 1/3, así que trae sus dos Líneas, el cálculo y el ángulo, y un experimento por Línea.
+  const tercero = page.locator(".capitulo").nth(2);
+  await expect(tercero.getByRole("heading", { name: "Capítulo 3 · Tu Perfil" })).toBeVisible();
+  await expect(tercero.locator(":scope > .ficha")).toHaveCount(4);
+  await expect(tercero.getByText(/^La Línea 1 es El Investigador/)).toBeVisible();
+  await expect(tercero.getByText(/^La Línea 3 es El Mártir/)).toBeVisible();
+  await expect(tercero.getByText(/^Tu Perfil es de Ángulo Derecho/)).toBeVisible();
+  await expect(tercero.getByRole("button", { name: "Elegir este" })).toHaveCount(3);
+  await tercero.getByRole("button", { name: "Elegir este" }).first().click();
+  await expect(page.getByText("El Capítulo 4 · Tus Centros se abre cuando completes el anterior.")).toBeVisible();
   await page.getByRole("button", { name: "Mapa" }).click();
-  await expect(page.getByText("Capítulo 3 · Tu Perfil")).toBeVisible();
-  await expect(page.getByText("3/5")).toBeVisible();
+  await expect(page.getByText("Capítulo 4 · Tus Centros")).toBeVisible();
+  await expect(page.getByText("4/5")).toBeVisible();
   await page.getByRole("button", { name: "Experimentos" }).click();
-  await expect(page.locator(".capitulo")).toHaveCount(2);
+  await expect(page.locator(".capitulo")).toHaveCount(3);
+});
+
+test("si una corrección cambia la Autoridad, su capítulo se abre otra vez con el antes y el después, las entradas quedan con el valor anterior y el resto del progreso sigue (R12)", async ({ page }) => {
+  const servidor = await simularServidor(page, { conSesion: true, carta: true });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Libro" }).click();
+  await page.getByRole("button", { name: "Elegir este" }).first().click();
+  const segundo = page.locator(".capitulo").nth(1);
+  await segundo.getByRole("button", { name: "Elegir este" }).first().click();
+  await expect(segundo.getByRole("heading", { name: "Capítulo completado" })).toBeVisible();
+  await segundo.getByLabel("Anota algo en tu diario").fill("Escrita con la Autoridad anterior.");
+  await segundo.getByRole("button", { name: "Guardar en mi diario" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Ahora no" }).click();
+  await expect.poll(() => servidor.documentos.length).toBe(4);
+
+  // La carta se corrige: mismo Tipo (Proyector), otra Autoridad (de Emocional a Esplénica).
+  const carta = servidor.documentos.find((d) => d.tipo === "carta")!;
+  carta.contenido = JSON.stringify({ ...CARTA, instante: "1985-01-20T04:00:00.000Z", inicio: "1985-01-20T03:55:00.000Z", fin: "1985-01-20T04:05:00.000Z" });
+  carta.version += 1;
+  await page.reload();
+  await page.getByRole("button", { name: "Libro" }).click();
+  await expect(page.locator(".capitulo").first().getByRole("heading", { name: "Capítulo completado" })).toBeVisible();
+  await expect(page.locator(".capitulo").first().locator(".capitulo-cambio")).toHaveCount(0);
+  await expect(segundo.locator(".capitulo-cambio")).toHaveText("Tu carta cambió por una corrección. Antes: Autoridad: Emocional. Ahora: Autoridad: Esplénica. Este capítulo se abre otra vez.");
+  await expect(segundo.getByRole("heading", { name: "Elige cómo probarlo" })).toBeVisible();
+  await expect(segundo.getByText(/^Tu Autoridad es Esplénica/)).toBeVisible();
+  await expect(segundo.locator(".diario-entradas li")).toContainText("Autoridad: Emocional");
+  await expect(page.locator(".capitulo").nth(2).getByRole("heading", { name: "Capítulo 3 · Tu Perfil" })).toBeVisible();
+  expect((await new AxeBuilder({ page }).analyze()).violations.map((v) => v.id)).toEqual([]);
+  // Elegir otra vez cierra el aviso.
+  await segundo.getByRole("button", { name: "Elegir este" }).first().click();
+  await expect(segundo.locator(".capitulo-cambio")).toHaveCount(0);
+  await expect(segundo.getByRole("heading", { name: "Capítulo completado" })).toBeVisible();
 });

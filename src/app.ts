@@ -20,7 +20,7 @@ import { dibujarDetalle } from "./ui/detalle-centro";
 import { capitulo, chequeoPendiente, ESCRITOS, type Atributos, type EstadoCapitulo } from "./contenido";
 import { DEL_TIPO } from "./engine/tipos";
 import { dibujarCapitulo, dibujarExperimento } from "./ui/capitulo";
-import { abrirCodigo, abrirDiarioCerrado, dibujarDiario, type DiarioCerrado, type Entrada } from "./ui/diario";
+import { abrirCodigo, abrirDiarioCerrado, dibujarDiario, marcarCodigoPendiente, type DiarioCerrado, type Entrada } from "./ui/diario";
 import { avisarHoraInexistente, bannerHoraIncierta, dibujarPendienteDeHora, preguntarHoraRepetida } from "./ui/hora";
 import { dibujarMapa, rotuloMapa } from "./ui/mapa";
 import { dibujarMarco, icono, type Marco, type Pestana } from "./ui/marco";
@@ -397,15 +397,19 @@ async function capituloDe(n: number, a: Atributos) {
   const d = diario!;
   const id = `capitulo-${n}`;
   const guardado = await s.leer("libro", id);
+  const previo = guardado ? (JSON.parse(guardado.contenido) as EstadoCapitulo) : null;
   // El atributo al que se refiere lo que se guarde, para cuando una corrección de la carta lo cambie (R12).
-  const atributo = n === 1 ? `${t("configuracion.estrategia")}: ${t(`estrategia.${DEL_TIPO[a.tipo].estrategia}` as TextoId)}` : `${t("configuracion.autoridad")}: ${t(`autoridad.${a.autoridad}` as TextoId)}`;
+  const atributo =
+    n === 1 ? `${t("configuracion.estrategia")}: ${t(`estrategia.${DEL_TIPO[a.tipo].estrategia}` as TextoId)}` : n === 2 ? `${t("configuracion.autoridad")}: ${t(`autoridad.${a.autoridad}` as TextoId)}` : `${t("configuracion.perfil")}: ${a.perfil}`;
   return {
     ...capitulo(n, a)!,
     n,
     s,
     d,
     atributo,
-    estado: guardado ? (JSON.parse(guardado.contenido) as EstadoCapitulo) : null,
+    // Si una corrección de la carta cambió el atributo, el capítulo se abre otra vez: lo elegido antes ya no cuenta, y se avisa con el antes y el después (R12).
+    estado: previo?.atributo === atributo ? previo : null,
+    cambio: previo && previo.atributo !== atributo ? { antes: previo.atributo, ahora: atributo } : null,
     guardar: async (estado: EstadoCapitulo) => {
       await s.guardar("libro", id, JSON.stringify(estado));
       void sincronizar();
@@ -415,8 +419,15 @@ async function capituloDe(n: number, a: Atributos) {
       const codigo = (await d.estado()) === "sin_clave" ? await d.crear() : null;
       await d.escribir(crypto.randomUUID(), JSON.stringify({ texto, fecha: new Date().toISOString(), capitulo: n, atributo } satisfies Omit<Entrada, "id">));
       await sincronizar();
+      // Una sincronización que ya venía en curso pudo terminar antes de ver esta entrada: se repite una vez.
+      if (await s.pendientes()) await sincronizar();
+      if (!codigo || cuenta?.modo !== "nube") return null;
       // Si otro dispositivo registró su clave antes, rige la de ese y este código no sirve (E3-dosclaves).
-      return codigo && cuenta?.modo === "nube" && (await d.estado()) === "abierto" && !(await s.pendientes()) ? codigo : null;
+      if ((await d.estado()) !== "abierto") return null;
+      if (!(await s.pendientes())) return codigo;
+      // La clave todavía no llegó a la cuenta (sin red): el código no se muestra ahora, y queda el recordatorio para generar uno.
+      marcarCodigoPendiente();
+      return null;
     },
   };
 }
@@ -425,7 +436,8 @@ async function abiertos(a: Atributos) {
   const lista: Awaited<ReturnType<typeof capituloDe>>[] = [];
   for (let n = 1; n <= ESCRITOS; n++) {
     lista.push(await capituloDe(n, a));
-    if (!lista.at(-1)!.estado) break;
+    // Un capítulo reabierto por una corrección no cierra los que ya estaban abiertos: el resto del progreso queda intacto.
+    if (!lista.at(-1)!.estado && !lista.at(-1)!.cambio) break;
   }
   return lista;
 }
@@ -437,6 +449,7 @@ async function libro(a: Atributos, contenido: HTMLElement, repintar: () => void)
     const zonaDiario = dibujarDiario(
       {
         id: `diario-${c.n}`,
+        atributo: c.atributo,
         estado: c.d.estado,
         entradas: async () =>
           (await Promise.all((await c.s.listar("diario")).map(async ({ id }) => ({ id, texto: await c.d.leer(id) }))))
@@ -456,6 +469,7 @@ async function libro(a: Atributos, contenido: HTMLElement, repintar: () => void)
         fichas: c.fichas,
         experimentos: c.experimentos,
         estado: c.estado,
+        cambio: c.cambio,
         alElegir: async (e) => {
           await c.guardar({ esquema: 1, experimento: e.id, elegido: new Date().toISOString(), atributo: c.atributo, fichas: [...c.fichas, e].map(({ id, version }) => ({ id, version })) });
           repintar();
@@ -466,7 +480,7 @@ async function libro(a: Atributos, contenido: HTMLElement, repintar: () => void)
   }
   // El que sigue, todavía cerrado: su nombre y qué lo abre, sin contenido.
   const sigue = lista.length + 1;
-  if (lista.at(-1)!.estado && sigue <= CAPITULOS) contenido.append(el("p", "marco-vacio", t("capitulo.bloqueado", { numero: sigue, titulo: t(`capitulo.${sigue}.titulo` as TextoId) })));
+  if ((lista.at(-1)!.estado || lista.at(-1)!.cambio) && sigue <= CAPITULOS) contenido.append(el("p", "marco-vacio", t("capitulo.bloqueado", { numero: sigue, titulo: t(`capitulo.${sigue}.titulo` as TextoId) })));
 }
 
 // Experimentos: lo que la persona eligió probar en cada capítulo y, los días 3 y 7, el chequeo "¿cómo te fue?" (DR11). Devuelve false si todavía no eligió nada.
@@ -503,8 +517,8 @@ async function app(carta: CartaGuardada, inicial: Pestana = "mapa") {
   if ((carta.esquema as number) > 1) return void escena().append(el("h1", "frase", t("rescate.esquema_nuevo")), boton("boton-principal", t("comun.reintentar"), () => location.reload()));
   const m = await motor();
   const analisis = m.analizarRango(new Date(carta.inicio), new Date(carta.fin));
-  const { puertas, tipo, autoridad } = m.calcularCarta(new Date(carta.instante));
-  const atributos: Atributos = { tipo, autoridad };
+  const { puertas, tipo, autoridad, perfil } = m.calcularCarta(new Date(carta.instante));
+  const atributos: Atributos = { tipo, autoridad, perfil: perfil.join("/") };
   document.querySelectorAll(".saltear, .sonido, .hoja").forEach((e) => e.remove());
   // Corregir la carta: el formulario arranca con los datos guardados; al terminar, la carta nueva reemplaza a la anterior.
   const corregir = (paso: number) => {
@@ -545,7 +559,8 @@ async function app(carta: CartaGuardada, inicial: Pestana = "mapa") {
       if (ESCRITOS) {
         void abiertos(atributos).then((lista) => {
           // El capítulo en curso es el último abierto, y la barra avanza con él.
-          const actual = lista.at(-1)!.n + (lista.at(-1)!.estado && lista.length < CAPITULOS ? 1 : 0);
+          const pendiente = lista.find((x) => !x.estado);
+          const actual = pendiente ? pendiente.n : Math.min(lista.length + 1, CAPITULOS);
           enCurso.textContent = t("capitulo.en_curso", { numero: actual, titulo: t(`capitulo.${actual}.titulo` as TextoId) });
           cuenta.textContent = `${actual}/${CAPITULOS}`;
           (barra.firstElementChild as HTMLElement).style.width = `${(100 * actual) / CAPITULOS}%`;
