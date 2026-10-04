@@ -19,6 +19,7 @@ interface Env {
   IA_MODELO?: string;
   IA_TOPE_CUENTA?: string;
   IA_TOPE_GLOBAL?: string;
+  IA_PAUSA?: string;
 }
 
 const REMITENTE = "acceso@dhlab.app";

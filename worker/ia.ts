@@ -13,6 +13,8 @@ export interface EnvIA extends EnvCuenta {
   IA_MODELO?: string;
   IA_TOPE_CUENTA?: string;
   IA_TOPE_GLOBAL?: string;
+  // "1" pone la IA incluida en pausa para todos, sin tocar la clave: se usa mientras los evals no aprueban (test/evals.test.ts).
+  IA_PAUSA?: string;
   catalogo: () => Promise<Catalogo>;
 }
 const TOPE_CUENTA = 500_000;
@@ -46,15 +48,18 @@ export async function ia(request: Request, env: EnvIA, ahora = Date.now()): Prom
   const topeCuenta = Number(env.IA_TOPE_CUENTA) || TOPE_CUENTA;
   const topeGlobal = Number(env.IA_TOPE_GLOBAL) || TOPE_GLOBAL;
   const gastado = async (clave: string) => (await env.DB.prepare("SELECT micros FROM gasto_ia WHERE clave = ? AND mes = ?").bind(clave, mes).first<{ micros: number }>())?.micros ?? 0;
+  const enPausa = env.IA_PAUSA === "1";
   const catalogo = await env.catalogo();
   const configurada = Boolean(env.OPENROUTER_API_KEY) && Object.keys(catalogo.fichas).length > 0;
 
   if (request.method === "GET") {
     const [usado, global] = await Promise.all([gastado(sesion.id), gastado("global")]);
-    return json({ configurada, usado, tope: topeCuenta, pausa: global >= topeGlobal, renovacion: renovacion(ahora), reserva: RESERVA });
+    return json({ configurada, usado, tope: topeCuenta, pausa: enPausa || global >= topeGlobal, renovacion: renovacion(ahora), reserva: RESERVA });
   }
   if (request.method !== "POST") return fallo("no_encontrado", 404);
   if (!configurada) return fallo("no_configurada", 503);
+  // En pausa a mano: la app lo muestra igual que cuando se alcanza el tope global.
+  if (enPausa) return fallo("tope_global", 429, { renovacion: renovacion(ahora) });
 
   // Solo dos acciones, cada una con sus campos; cualquier otra cosa se rechaza.
   const cuerpo = (await request.json().catch(() => ({}))) as Record<string, unknown>;

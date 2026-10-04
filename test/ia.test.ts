@@ -67,6 +67,16 @@ test("sin la clave la IA dice que no está configurada, y el estado lo informa c
   expect((await ia(pedido("POST", "/v1/ia", { accion: "capitulo", n: 1, atributos }), env(), T0)).status).toBe(401);
 });
 
+test("con la pausa puesta a mano, la IA incluida no llama al modelo y el estado dice que está en pausa", async () => {
+  const cookie = await entrar();
+  const recibido = openrouter(capitulo);
+  const r = await pedir(cookie, { accion: "capitulo", n: 1, atributos }, { IA_PAUSA: "1" });
+  expect(r.status).toBe(429);
+  expect(await r.json()).toMatchObject({ error: "tope_global" });
+  expect(recibido).toHaveLength(0);
+  expect(await (await ia(pedido("GET", "/v1/ia", undefined, cookie), env({ IA_PAUSA: "1" }), T0)).json()).toMatchObject({ configurada: true, pausa: true });
+});
+
 test("solo entran las dos acciones con sus campos: un prompt, una acción ajena o atributos con texto libre se rechazan sin llamar al modelo", async () => {
   const cookie = await entrar();
   const recibido = openrouter(capitulo);

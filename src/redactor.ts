@@ -44,6 +44,19 @@ async function redactar(llamar: Llamar, pedido: string) {
   return { parrafos: null, micros };
 }
 
+// El verificador: una segunda llamada que dice qué párrafos están respaldados por las fichas que citan (por posición en la lista).
+// Devuelve null en `respaldados` si no respondió con el formato pedido. Lo usan el capítulo y los evals (scripts/evals.ts).
+export async function verificar(llamar: Llamar, fichas: FichaIA[], parrafos: Parrafo[]): Promise<{ respaldados: unknown[] | null; micros: number }> {
+  const v = await llamar(VERIFICADOR, JSON.stringify({ fichas, parrafos: parrafos.map((p, i) => ({ numero: i, texto: p.texto, fuentes: p.fuentes })) }));
+  let respaldados: unknown;
+  try {
+    respaldados = (JSON.parse(v!.texto.replace(/^\s*```(?:json)?\s*|\s*```\s*$/g, "")) as { respaldados?: unknown }).respaldados;
+  } catch {
+    respaldados = null;
+  }
+  return { respaldados: Array.isArray(respaldados) ? respaldados : null, micros: v?.micros ?? 0 };
+}
+
 // Un capítulo: redactar, guardas y verificador. El verificador quita lo interpretativo que no está respaldado;
 // si entre las guardas y el verificador se cae más del 40% de lo interpretativo, no se publica.
 export async function escribirCapitulo(llamar: Llamar, n: number, fichas: FichaIA[]): Promise<{ parrafos?: Parrafo[]; error?: "salida_invalida" | "no_publicable"; micros: number }> {
@@ -51,17 +64,12 @@ export async function escribirCapitulo(llamar: Llamar, n: number, fichas: FichaI
   if (!r.parrafos) return { error: "salida_invalida", micros: r.micros };
   let { validos, publicable } = filtrar(r.parrafos, fichas);
   if (!publicable) return { error: "no_publicable", micros: r.micros };
-  const v = await llamar(VERIFICADOR, JSON.stringify({ fichas, parrafos: validos.map((p, i) => ({ numero: i, texto: p.texto, fuentes: p.fuentes })) }));
-  let respaldados: unknown;
-  try {
-    respaldados = (JSON.parse(v!.texto.replace(/^\s*```(?:json)?\s*|\s*```\s*$/g, "")) as { respaldados?: unknown }).respaldados;
-  } catch {
-    respaldados = null;
-  }
-  const micros = r.micros + (v?.micros ?? 0);
-  if (!Array.isArray(respaldados)) return { error: "salida_invalida", micros };
+  const v = await verificar(llamar, fichas, validos);
+  const respaldados = v.respaldados;
+  const micros = r.micros + v.micros;
+  if (!respaldados) return { error: "salida_invalida", micros };
   const total = r.parrafos.filter((p) => p.tipo === "interpretativo").length;
-  validos = validos.filter((p, i) => p.tipo === "narrativo" || (respaldados as unknown[]).includes(i));
+  validos = validos.filter((p, i) => p.tipo === "narrativo" || respaldados.includes(i));
   const quedan = validos.filter((p) => p.tipo === "interpretativo").length;
   return quedan > 0 && (total - quedan) / total <= 0.4 ? { parrafos: validos, micros } : { error: "no_publicable", micros };
 }

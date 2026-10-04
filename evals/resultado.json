@@ -1,0 +1,41 @@
+{
+ "huella": "bebceda678f4bcd0",
+ "fecha": "2026-10-04",
+ "modelo": "anthropic/claude-haiku-4.5",
+ "auditor": "openai/gpt-5.6-terra",
+ "aprobado": false,
+ "umbrales": {
+  "deteccion_reservados": false,
+  "falsos_positivos": true,
+  "verificador_respondio": true,
+  "citas_validas": true,
+  "sin_prohibidos": true,
+  "sin_respaldo_mostrado": false
+ },
+ "gasto_usd": 0.586907,
+ "deteccion_reservados": 0.36,
+ "deteccion_ajuste": 0.28,
+ "falsos_positivos": 0,
+ "cartas": [
+  "reflector lunar",
+  "proyector mental",
+  "proyector autoproyectada",
+  "generador sacral",
+  "proyector emocional",
+  "proyector esplenica",
+  "proyector ego_proyectado",
+  "manifestador ego_manifestado",
+  "generador_manifestante sacral",
+  "manifestador emocional",
+  "generador emocional",
+  "generador_manifestante emocional"
+ ],
+ "capitulos": 60,
+ "no_publicables": 1,
+ "sin_auditar": 0,
+ "frases_mostradas": 463,
+ "sin_respaldo": 182,
+ "sin_respaldo_cada_100": 39.30885529157668,
+ "citas_invalidas": 0,
+ "prohibidos": 0
+}

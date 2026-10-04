@@ -11,5 +11,7 @@
   },
   // D1 creada con --jurisdiction=us: se guarda y se ejecuta solo en Estados Unidos (T69).
   "d1_databases": [{ "binding": "DB", "database_name": "dhlab", "database_id": "7d723169-af05-4e5f-bc29-86f66eb560f3", "migrations_dir": "migrations" }],
+  // La IA incluida queda en pausa hasta que los evals aprueben (evals/resultado.json); la clave propia sigue funcionando.
+  "vars": { "IA_PAUSA": "1" },
   "routes": [{ "pattern": "dhlab.app", "custom_domain": true }]
 }
