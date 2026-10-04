@@ -25,3 +25,16 @@
 .coach-charla li.persona { border-left-color: var(--accent-text); }
 .coach-charla p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 .coach textarea { width: 100%; min-height: 5rem; resize: vertical; }
+.glosario { width: min(100%, 38rem); }
+.glosario summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-weight: 700; }
+.glosario p { margin: 4px 0; }
+.coach-charla details summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; }
+/* Impresión del libro: solo los capítulos, sin navegación, botones, diario ni tramas costosas. */
+@media print {
+  .marco-pestanas, .marco-ajustes, .marco-zona-marca, .marco-adorno, .imprimir, .glosario, .diario, .banner, button, .hoja { display: none !important; }
+  .marco { padding: 0; }
+  .panel, .panel::after, .capitulo-opciones .ficha, .seccion-ia { filter: none !important; box-shadow: none !important; }
+  .capitulo { break-inside: auto; width: 100%; }
+  .ficha, .seccion-ia { break-inside: avoid; }
+  body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}

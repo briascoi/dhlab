@@ -333,7 +333,16 @@ test("Importar: valida, muestra la vista previa y combina sin duplicar; una cart
   await expect(entradas.nth(1)).toContainText("Versión de otro dispositivo");
   await expect(entradas.nth(1)).toContainText("La misma entrada, con otro texto.");
   expect((await new AxeBuilder({ page }).analyze()).violations.map((v) => v.id)).toEqual([]);
-  await page.getByRole("button", { name: "Quedarme con las dos" }).click();
-  await expect(page.getByText("Versión de otro dispositivo")).toHaveCount(0);
-  await expect(entradas).toHaveCount(2);
+  // "Borrar esta" la oculta y deja deshacer unos segundos; deshecho, vuelve y nada se borró.
+  await page.getByRole("button", { name: "Borrar esta" }).click();
+  await expect(page.getByText("Entrada borrada")).toBeVisible();
+  await expect(entradas.filter({ hasText: "La misma entrada, con otro texto." })).toHaveCount(0);
+  await page.getByRole("button", { name: "Deshacer" }).click();
+  await expect(entradas.nth(1)).toContainText("La misma entrada, con otro texto.");
+  expect(servidor.documentos.filter((d) => d.tipo === "diario")).toHaveLength(2);
+  // Sin deshacer, pasado el plazo se borra del dispositivo y de la cuenta.
+  await page.getByRole("button", { name: "Borrar esta" }).click();
+  await expect.poll(() => servidor.documentos.filter((d) => d.tipo === "diario").map((d) => d.id), { timeout: 15_000 }).toEqual(["entrada-1"]);
+  await expect(page.getByText("Entrada borrada")).toHaveCount(0);
+  await expect(entradas).toHaveCount(1);
 });

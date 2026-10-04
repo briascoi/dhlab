@@ -107,7 +107,7 @@ export function dibujarSeccion(seccion: Seccion, temaDe: (id: string) => string,
 
 const FIJAS: Record<string, TextoId> = { sensible: "coach.sensible", ciencia: "coach.ciencia", sin_biblioteca: "coach.sin_biblioteca" };
 // El coach: sin streaming, la respuesta aparece entera cuando pasó las guardas. Lo que se escribe no se guarda en ningún lado.
-export function dibujarCoach(o: { preguntar: (texto: string, historial: Turno[]) => Promise<Respuesta | Fallo>; temaDe: (id: string) => string; anotar?: (texto: string) => Promise<void> }): HTMLElement {
+export function dibujarCoach(o: { fichaDe: (id: string) => { tema: string; texto: string; fuente: string } | undefined; alCapitulo: () => void; preguntar: (texto: string, historial: Turno[]) => Promise<Respuesta | Fallo>; temaDe: (id: string) => string; anotar?: (texto: string) => Promise<void> }): HTMLElement {
   const panel = el("section", "panel capitulo coach");
   const charla = el("ol", "coach-charla");
   const estado = anuncio("estado", "status");
@@ -137,6 +137,10 @@ export function dibujarCoach(o: { preguntar: (texto: string, historial: Turno[])
       item.append(el("p", "", p.texto));
       if (p.tipo === "interpretativo") item.append(el("p", "ficha-fuente", t("capitulo.fuente", { fuentes: (p.fuentes ?? []).map(o.temaDe).join("; ") })));
     }
+    // Acciones bajo la respuesta (DR12): ver las fichas que la respaldan y volver al capítulo.
+    const citadas = [...new Set(r.parrafos.flatMap((p) => p.fuentes ?? []))].flatMap((id) => o.fichaDe(id) ?? []);
+    if (citadas.length) item.append(el("details", "", el("summary", "boton-link", t("coach.ver_fuente")), ...citadas.flatMap((f) => [el("p", "", el("strong", "", `${f.tema}. `), f.texto), el("p", "ficha-fuente", f.fuente)])));
+    item.append(boton("boton-link", t("coach.al_capitulo"), o.alCapitulo));
     const anotar = o.anotar;
     if (anotar) item.append(boton("boton-link", t("coach.anotar"), async (a) => (await anotar(respuesta), a.replaceWith(el("p", "ficha-fuente", t("coach.anotado"))))));
   });

@@ -120,6 +120,8 @@ async function abrirDesbloqueo(d: DiarioCerrado, alAbrir: () => void) {
   });
 }
 
+// Cuánto dura el "Deshacer" de una entrada borrada.
+const PLAZO_DESHACER = 6000;
 // Una entrada del diario, ya descifrada. `atributo` dice a qué se refiere, para cuando una corrección de la carta lo cambie (R12).
 // `versionDe`: la entrada chocó con otra del mismo id y quedó a su lado como versión de otro dispositivo (DR37).
 export interface Entrada { id: string; texto: string; fecha: string; capitulo: number; atributo: string; versionDe?: string }
@@ -134,6 +136,8 @@ export interface DiarioAbierto {
   escribir: (texto: string) => Promise<string | null>;
   // "Quedarme con las dos": la otra versión pasa a ser una entrada más.
   quedarse: (entrada: Entrada) => Promise<void>;
+  // "Borrar esta": se va de este dispositivo y, al sincronizar, de la cuenta.
+  borrar: (entrada: Entrada) => Promise<void>;
 }
 
 // El diario dentro del capítulo: las entradas junto a la sección y el campo para sumar una (DR11, tercer tiempo).
@@ -161,7 +165,18 @@ export function dibujarDiario(d: DiarioAbierto, filaCerrado: () => HTMLElement):
       if (e.versionDe) {
         item.classList.add("otra-version");
         item.prepend(el("strong", "", t("conflicto.etiqueta")));
-        item.append(el("p", "ajustes-nota", t("conflicto.explicacion")), boton("boton-link", t("conflicto.quedarme_dos"), async () => (await d.quedarse(e), void pintar())));
+        item.append(
+          el("p", "ajustes-nota", t("conflicto.explicacion")),
+          boton("boton-link", t("conflicto.quedarme_dos"), async () => (await d.quedarse(e), void pintar())),
+          // Borrar con deshacer: la entrada se oculta y recién se borra si pasan unos segundos sin que la persona se arrepienta (DR37).
+          boton("boton-link", t("conflicto.borrar_esta"), () => {
+            const aviso = el("li", "aviso-borrado");
+            aviso.setAttribute("role", "status");
+            const plazo = setTimeout(async () => (await d.borrar(e), aviso.remove()), PLAZO_DESHACER);
+            aviso.append(t("conflicto.borrada"), " ", boton("boton-link", t("comun.deshacer"), () => (clearTimeout(plazo), aviso.replaceWith(item))));
+            item.replaceWith(aviso);
+          }),
+        );
       }
       lista.append(item);
     }

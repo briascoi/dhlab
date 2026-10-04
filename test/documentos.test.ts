@@ -122,6 +122,7 @@ function memoria(): Almacen {
 const apiDe = (cookie: string): DocumentosApi => ({
   listar: async () => (await doc("GET", "/v1/documentos", undefined, cookie)).json(),
   guardar: async (tipo, id, cambio) => (await doc("PUT", `/v1/documentos/${tipo}/${id}`, cambio, cookie)).json(),
+  borrar: async (tipo, id, cambio) => (await doc("DELETE", `/v1/documentos/${tipo}/${id}`, cambio, cookie)).json(),
 });
 const enServidor = async () => (await db.prepare("SELECT contenido, version FROM documentos").all()).results;
 
@@ -404,4 +405,18 @@ test("pasar a solo en este dispositivo borra la copia del servidor, y desde ahí
   await celu.sync.subirTodo();
   expect(await celu.sync.sincronizar()).toBe("clave_reemplazada");
   expect([await enServidor(), await celu.sync.pendientes()]).toEqual([[{ contenido: "la carta", version: 1 }], 0]);
+});
+
+test("sync: borrar un documento lo quita del dispositivo ya y del servidor al sincronizar; lo que nunca subió no deja nada pendiente", async () => {
+  const sync = crearSync(memoria(), apiDe(await entrar("ana@ejemplo.com")), "nube");
+  await sync.guardar("libro", "a", "uno");
+  await sync.guardar("libro", "b", "dos");
+  await sync.sincronizar();
+  await sync.guardar("libro", "c", "sin subir");
+  await sync.borrar("libro", "c");
+  await sync.borrar("libro", "a");
+  expect([(await sync.listar("libro")).map((d) => d.id), await sync.leer("libro", "a"), await sync.pendientes()]).toEqual([["b"], undefined, 1]);
+  expect(await enServidor()).toHaveLength(2);
+  expect(await sync.sincronizar()).toBe("al_dia");
+  expect([await enServidor(), await sync.pendientes(), (await sync.listar("libro")).map((d) => d.id)]).toEqual([[{ contenido: "dos", version: 1 }], 0, ["b"]]);
 });

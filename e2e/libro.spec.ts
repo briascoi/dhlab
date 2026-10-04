@@ -21,6 +21,18 @@ test("Capítulo 1: fichas con su fuente, elegir un experimento lo completa, y la
   await expect(page.getByText("Un experimento no reemplaza el asesoramiento profesional")).toBeVisible();
   expect((await new AxeBuilder({ page }).analyze()).violations.map((v) => v.id)).toEqual([]);
 
+  // El libro se puede imprimir, y trae un glosario de una línea por objeto (DR22).
+  await page.evaluate(() => (window.print = () => document.body.setAttribute("data-impreso", "si")));
+  await page.getByRole("button", { name: "Imprimir o guardar en PDF" }).click();
+  await expect(page.locator("body")).toHaveAttribute("data-impreso", "si");
+  await page.getByText("Glosario").click();
+  await expect(page.getByText("Ficha: una entrada de la base, con su fuente.")).toBeVisible();
+  await page.emulateMedia({ media: "print" });
+  await expect(page.getByRole("navigation")).toBeHidden();
+  await expect(page.getByRole("button", { name: "Elegir este" }).first()).toBeHidden();
+  await expect(fichas.first()).toBeVisible();
+  await page.emulateMedia({ media: "screen" });
+
   await expect(page.getByRole("heading", { name: "Elige cómo probarlo" })).toBeVisible();
   await page.getByRole("button", { name: "Elegir este" }).first().click();
   await expect(primero.getByRole("heading", { name: "Capítulo completado" })).toBeVisible();
@@ -41,6 +53,9 @@ test("Capítulo 1: fichas con su fuente, elegir un experimento lo completa, y la
   await expect(primero.locator(".diario-entradas li")).toContainText("Hoy respondí a algo que me llegó.");
   await expect(primero.getByText("Todavía no guardaste tu código de recuperación.")).toBeVisible();
   expect((await new AxeBuilder({ page }).analyze()).violations.map((v) => v.id)).toEqual([]);
+
+  // Los contadores de uso llevan solo el nombre de lo que pasó.
+  expect(servidor.eventos).toEqual(expect.arrayContaining(["capitulo_elegido", "entrada_escrita"]));
 
   // La segunda entrada no vuelve a mostrar el código, y todo sigue ahí al recargar.
   await primero.getByLabel("Anota algo en tu diario").fill("Segunda nota.");

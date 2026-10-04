@@ -92,6 +92,12 @@ test("coach: responde con sus fuentes, tiene respuestas fijas para lo sensible y
   expect(servidor.pedidosIA[0]).toMatchObject({ accion: "mensaje", texto: "¿Qué hago cuando me invitan a algo?", historial: [] });
   await sinFallas(page);
 
+  // "Ver la fuente" abre las fichas que respaldan la respuesta, con su fuente.
+  await charla.nth(1).getByText("Ver la fuente").click();
+  await expect(charla.nth(1).locator("details")).toContainText("Tu Estrategia es esperar la invitación (\"Wait for the invitation\")");
+  await expect(charla.nth(1).locator("details")).toContainText("Fuente: Jovian Archive, Type and Strategy in Human Design");
+  await sinFallas(page);
+
   // "Anotar en mi diario" guarda la respuesta cifrada; el diario no viaja a la IA.
   await charla.nth(1).getByRole("button", { name: "Anotar en mi diario" }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Ahora no" }).click();
@@ -164,4 +170,18 @@ test("con la clave propia la IA va directo a OpenRouter, sin pasar por nuestro s
   await page.getByRole("button", { name: "Desconectar" }).click();
   await expect(page.getByRole("button", { name: "Usar tu clave de OpenRouter" })).toBeVisible();
   expect(await page.evaluate(() => localStorage.getItem("dhlab.clave_openrouter"))).toBeNull();
+});
+
+test("Llévame al capítulo: desde una respuesta del coach se vuelve al Libro", async ({ page }) => {
+  const servidor = await simularServidor(page, { conSesion: true, carta: true });
+  servidor.ia.configurada = true;
+  await page.addInitScript(() => localStorage.setItem("dhlab.ia_consentida", "2026-10-04"));
+  await page.goto("/");
+  await page.getByRole("button", { name: "Coach" }).click();
+  servidor.respuestasIA.push({ cuerpo: { parrafos: seccion.parrafos } });
+  await page.getByLabel("Escribe tu pregunta").fill("¿Qué hago cuando me invitan a algo?");
+  await page.getByRole("button", { name: "Enviar" }).click();
+  await page.getByRole("button", { name: "Llévame al capítulo" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Libro" })).toBeFocused();
+  await expect(page.getByRole("heading", { name: "Capítulo 1 · Tu Tipo" })).toBeVisible();
 });

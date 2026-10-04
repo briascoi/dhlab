@@ -3,6 +3,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { afterAll, afterEach, beforeAll, beforeEach, expect, test, vi } from "vitest";
 import { getPlatformProxy } from "wrangler";
 import { cuenta } from "../worker/cuenta";
+import { eventos } from "../worker/eventos";
 import { ia, type Catalogo } from "../worker/ia";
 import { piezas, type Atributos } from "../src/piezas";
 
@@ -26,7 +27,7 @@ beforeAll(async () => {
 });
 afterAll(() => cerrar());
 beforeEach(async () => {
-  for (const tabla of ["gasto_ia", "sesiones", "cuentas", "codigos", "envios", "invitaciones"]) await db.prepare(`DELETE FROM ${tabla}`).run();
+  for (const tabla of ["contadores", "gasto_ia", "sesiones", "cuentas", "codigos", "envios", "invitaciones"]) await db.prepare(`DELETE FROM ${tabla}`).run();
 });
 afterEach(() => vi.unstubAllGlobals());
 
@@ -139,4 +140,11 @@ test("si OpenRouter no responde, el pedido falla y la reserva se devuelve; borra
   expect(await gasto()).toEqual({ cuenta: 0, global: 0 });
   await cuenta(pedido("DELETE", "/v1/cuenta", undefined, cookie), { DB: db } as never, T0);
   expect(Object.keys(await gasto())).toEqual(["global"]);
+});
+
+test("contadores de uso: suman por nombre y por día sin guardar quién fue, y solo aceptan nombres del catálogo", async () => {
+  const contar = (nombre: unknown, origen = ORIGEN) => eventos(new Request(`${ORIGEN}/v1/evento`, { method: "POST", headers: { Origin: origen }, body: JSON.stringify({ nombre }) }) as never, { DB: db }, T0);
+  expect([(await contar("carta_calculada")).status, (await contar("carta_calculada")).status, (await contar("capitulo_elegido")).status]).toEqual([200, 200, 200]);
+  expect([(await contar("lo que escribí en mi diario")).status, (await contar("carta_calculada", "https://otro.sitio")).status]).toEqual([400, 404]);
+  expect((await db.prepare("SELECT * FROM contadores ORDER BY nombre").all()).results).toEqual([{ nombre: "capitulo_elegido", dia: "2026-10-04", n: 1 }, { nombre: "carta_calculada", dia: "2026-10-04", n: 2 }]);
 });

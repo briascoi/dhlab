@@ -37,11 +37,13 @@ export interface Cambio { contenido: string; cifrado: boolean; versionBase: numb
 export interface DocumentosApi {
   listar(): Promise<{ documentos: Documento[] } | Fallo>;
   guardar(tipo: Tipo, id: string, cambio: Cambio): Promise<{ documento: Documento } | (Fallo & { actual?: Documento | null })>;
+  borrar(tipo: Tipo, id: string, cambio: Pick<Cambio, "versionBase" | "idOperacion">): Promise<{ ok: true } | (Fallo & { actual?: Documento | null })>;
 }
 
 export const documentosApi: DocumentosApi = {
   listar: () => enviar("/v1/documentos"),
   guardar: (tipo, id, cambio) => enviar(`/v1/documentos/${tipo}/${id}`, cambio, "PUT"),
+  borrar: (tipo, id, cambio) => enviar(`/v1/documentos/${tipo}/${id}`, cambio, "DELETE"),
 };
 
 // Cliente de la clave del diario (/v1/clave): el servidor guarda solo la clave envuelta (T65).

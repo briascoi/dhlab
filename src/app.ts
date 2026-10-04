@@ -7,6 +7,7 @@ import "./estilos.css";
 import "./ui/tintas";
 import { abrirAlmacen, borrarAlmacen, contenidoCarta, ID_CARTA, type CartaGuardada } from "./almacen";
 import { crearDiario } from "./cifrado";
+import { contar } from "./contar";
 import { api, claveApi, documentosApi, type Cuenta } from "./cuenta-api";
 import { iaApi, type EstadoIA, type Seccion } from "./ia";
 import { clavePropia, conectarClave, iaPropia, quitarClave } from "./ia-propia";
@@ -293,6 +294,7 @@ async function mostrar(datos: Nacimiento, centro: Date, inicio: Date, fin: Date)
   const m = await motor();
   const analisis = m.analizarRango(inicio, fin);
   if (analisis.estado === "pendiente_de_hora") return dibujarPendienteDeHora(escena(), analisis, datos.ciudad![4], () => formulario(2));
+  contar("carta_calculada");
   const panel = escena("panel panel-mapa");
   const carta = contenidoCarta(datos, { centro, inicio, fin }, m.VERSION_TZDB);
   const guardar = async (c: Cuenta) => {
@@ -304,6 +306,7 @@ async function mostrar(datos: Nacimiento, centro: Date, inicio: Date, fin: Date)
     if (analisis.estado === "incierta") panel.after(bannerHoraIncierta(() => formulario(2)));
     const cierre = el("p", "tras-carta revelacion-cierre");
     const pedirCuenta = () => {
+      contar("cuenta_pedida");
       const hoja = abrirCuenta({
         api,
         variante: "guardar",
@@ -390,6 +393,8 @@ const diarioCerrado = (): DiarioCerrado => {
   };
 };
 function filaDiarioCerrado(alAbrir: () => void): HTMLElement {
+  // Cuántas veces alguien se encuentra con su diario cerrado: con ese dato se decide si hace falta prevenir el borrado en iPhone (DR33).
+  contar("diario_cerrado");
   const fila = el("div", "banner");
   fila.append(el("p", "", t("diario.cerrado.fila")), boton("boton-link", t("diario.cerrado.accion"), () => void abrirDiarioCerrado(diarioCerrado(), alAbrir)));
   return fila;
@@ -422,6 +427,7 @@ async function capituloDe(n: number, a: Atributos) {
     escribir: async (texto: string) => {
       const codigo = (await d.estado()) === "sin_clave" ? await d.crear() : null;
       await d.escribir(crypto.randomUUID(), JSON.stringify({ texto, fecha: new Date().toISOString(), capitulo: n, atributo } satisfies Omit<Entrada, "id">));
+      contar("entrada_escrita");
       await sincronizar();
       // Una sincronización que ya venía en curso pudo terminar antes de ver esta entrada: se repite una vez.
       if (await s.pendientes()) await sincronizar();
@@ -484,6 +490,10 @@ async function libro(a: Atributos, contenido: HTMLElement, repintar: () => void)
           await c.d.escribir(id, JSON.stringify(resto));
           void sincronizar();
         },
+        borrar: async ({ id }) => {
+          await c.s.borrar("diario", id);
+          void sincronizar();
+        },
       },
       () => filaDiarioCerrado(repintar),
     );
@@ -502,7 +512,13 @@ async function libro(a: Atributos, contenido: HTMLElement, repintar: () => void)
           conConsentimiento(() =>
             abrirEscritura(
               estado,
-              (senal) => iaActiva().capitulo(c.n, a, senal),
+              async (senal) => {
+                const r = await iaActiva().capitulo(c.n, a, senal);
+                // Un capítulo que se cortó a mitad se cuenta: de eso depende pasar a una generación que sobreviva al corte (E3-largo).
+                if (!("error" in r)) contar("capitulo_escrito");
+                else if (["sin_red", "corte_propia"].includes(r.error)) contar("capitulo_cortado");
+                return r;
+              },
               async (r) => {
                 // Solo se guarda un capítulo que pasó las verificaciones: uno incompleto nunca queda como estable.
                 await c.s.guardar("libro", `seccion-${c.n}`, JSON.stringify({ ...(r as Omit<Seccion, "esquema" | "escrita">), esquema: 1, escrita: new Date().toISOString() } satisfies Seccion));
@@ -525,12 +541,17 @@ async function libro(a: Atributos, contenido: HTMLElement, repintar: () => void)
         cambio: c.cambio,
         alElegir: async (e) => {
           await c.guardar({ esquema: 1, experimento: e.id, elegido: new Date().toISOString(), atributo: c.atributo, fichas: [...c.fichas, e].map(({ id, version }) => ({ id, version })) });
+          contar("capitulo_elegido");
           repintar();
         },
         diario: zonaDiario,
       }),
     );
   }
+  // El libro se puede imprimir o guardar en PDF desde el navegador, y abajo va el glosario de una línea por objeto (DR22).
+  const glosario = el("details", "glosario");
+  glosario.append(el("summary", "", t("glosario.titulo")), ...(["capitulo", "seccion", "ficha", "experimento", "diario", "sello"] as const).map((g) => el("p", "", t(`glosario.${g}`))));
+  contenido.append(boton("boton-secundario imprimir", t("libro.pdf"), () => window.print()), glosario);
   // El que sigue, todavía cerrado: su nombre y qué lo abre, sin contenido.
   const sigue = lista.length + 1;
   if ((lista.at(-1)!.estado || lista.at(-1)!.cambio) && sigue <= CAPITULOS) contenido.append(el("p", "marco-vacio", t("capitulo.bloqueado", { numero: sigue, titulo: t(`capitulo.${sigue}.titulo` as TextoId) })));
@@ -548,7 +569,13 @@ async function pantallaCoach(a: Atributos, contenido: HTMLElement, repintar: () 
   contenido.append(
     dibujarCoach({
       temaDe: temas(a),
+      fichaDe: (id) => {
+        const f = [1, 2, 3, 4, 5].flatMap((n) => capitulo(n, a)?.fichas ?? []).find((x) => x.id === id);
+        return f && { tema: f.tema, texto: f.texto, fuente: t("capitulo.fuente", { fuentes: f.fuentes.map((x) => `${x.autor}, ${x.obra}`).join("; ") }) };
+      },
+      alCapitulo: () => marco?.activar("libro", true),
       preguntar: async (texto, historial) => {
+        contar("coach_mensaje");
         const r = await iaActiva().mensaje(texto, historial, a);
         void leerEstadoIA();
         return r;

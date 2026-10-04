@@ -30,6 +30,15 @@ export async function admin(request: Request, env: EnvAdmin, claves?: JWTVerifyG
   const url = new URL(request.url);
   if (!url.pathname.startsWith("/admin/api/")) return env.ASSETS.fetch(request);
   if (request.method !== "GET" && request.headers.get("Origin") !== url.origin) return json({ error: "origen_no_permitido" }, 403);
+  // Contadores de uso de los últimos 30 días y gasto de IA del mes, para el panel.
+  if (url.pathname === "/admin/api/uso" && request.method === "GET") {
+    const desde = new Date(ahora - 30 * 86_400_000).toISOString().slice(0, 10);
+    const [contadores, gasto] = await env.DB.batch([
+      env.DB.prepare("SELECT nombre, dia, n FROM contadores WHERE dia >= ? ORDER BY dia DESC, nombre").bind(desde),
+      env.DB.prepare("SELECT micros FROM gasto_ia WHERE clave = 'global' AND mes = ?").bind(new Date(ahora).toISOString().slice(0, 7)),
+    ]);
+    return json({ contadores: contadores!.results, gastoIA: (gasto!.results[0] as { micros?: number } | undefined)?.micros ?? 0 });
+  }
   if (url.pathname !== "/admin/api/invitaciones") return json({ error: "no_encontrado" }, 404);
 
   if (request.method === "GET") {

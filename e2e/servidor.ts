@@ -21,6 +21,7 @@ export async function simularServidor(page: Page, { conSesion = false, carta = f
     cortarCambio: false,
     // La IA incluida: apagada salvo que el test la prenda. `respuestas` es lo que contesta cada pedido, en orden.
     ia: { configurada: false, usado: 0, tope: 500_000, pausa: false, renovacion: "2026-11-01", reserva: { capitulo: 60_000, mensaje: 15_000 } },
+    eventos: [] as string[],
     respuestasIA: [] as { status?: number; cuerpo: object }[],
     pedidosIA: [] as Record<string, unknown>[],
     // Cuántas veces falla el cambio a solo local antes de andar, sin haber cambiado nada.
@@ -35,6 +36,8 @@ export async function simularServidor(page: Page, { conSesion = false, carta = f
     const camino = new URL(pedido.url()).pathname;
     const cuerpo = (pedido.postDataJSON() ?? {}) as Record<string, unknown>;
     const json = (body: unknown, status = 200) => ruta.fulfill({ status, contentType: "application/json", body: JSON.stringify(body) });
+    // Los contadores de uso no piden sesión.
+    if (camino === "/v1/evento") return estado.eventos.push(String(cuerpo.nombre)), json({ ok: true });
     if (camino === "/v1/cuenta/acceso") return json({ ok: true, reenviarEn: 15 });
     if (camino === "/v1/cuenta/verificar") {
       if (cuerpo.codigo !== "123456") return json({ error: "codigo_incorrecto", quedan: 4 }, 400);
@@ -82,6 +85,7 @@ export async function simularServidor(page: Page, { conSesion = false, carta = f
     const [, , , tipo, id] = camino.split("/");
     const previo = estado.documentos.find((d) => d.tipo === tipo && d.id === id);
     if ((previo?.version ?? 0) !== cuerpo.versionBase) return json({ error: "conflicto", actual: previo ?? null }, 409);
+    if (pedido.method() === "DELETE") return (estado.documentos = estado.documentos.filter((d) => d !== previo)), json({ ok: true });
     const documento = { tipo: tipo!, id: id!, contenido: String(cuerpo.contenido), cifrado: cuerpo.cifrado === true, version: (previo?.version ?? 0) + 1 };
     estado.documentos = [...estado.documentos.filter((d) => d !== previo), documento];
     return json({ documento });

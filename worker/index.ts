@@ -1,6 +1,7 @@
 import { admin } from "./admin";
 import { cuenta } from "./cuenta";
 import { documentos } from "./documentos";
+import { eventos } from "./eventos";
 import { ia, type Catalogo } from "./ia";
 
 interface Env {
@@ -48,6 +49,10 @@ export default {
     if (pathname.startsWith("/v1/documentos") || pathname === "/v1/clave") {
       if (!env.DB) return Response.json({ error: "no_disponible" }, { status: 503 });
       return documentos(request, { DB: env.DB }, Date.now(), (tarea) => ctx.waitUntil(tarea));
+    }
+    if (pathname === "/v1/evento") {
+      if (!env.DB) return Response.json({ error: "no_disponible" }, { status: 503 });
+      return eventos(request, { DB: env.DB });
     }
     if (pathname === "/v1/ia") {
       if (!env.DB) return Response.json({ error: "no_disponible" }, { status: 503 });
