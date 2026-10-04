@@ -199,3 +199,14 @@ body {
 .zona-cuenta .error { flex-basis: 100%; margin: 0; }
 .cuenta-email { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
 .salida-dev { margin: 12px; overflow: auto; font-size: 0.8rem; white-space: pre-wrap; }
+
+/* Movimiento (DESIGN.md, Motion). El nivel va en la raíz: completo, suave (sin reposo) o mínimo (cortes directos). */
+:root[data-mov="minimo"] *, :root[data-mov="minimo"] *::before, :root[data-mov="minimo"] *::after { animation: none !important; transition: none !important; }
+/* Respuesta al toque: el botón se hunde hacia su sombra. */
+.boton-principal, .boton-secundario, .coach-accion { transition: transform 80ms ease-out; }
+.boton-principal:active { transform: translate(2px, 2px); }
+.boton-secundario:active, .coach-accion:active { transform: translate(1px, 1px); }
+/* El sello se estampa al aparecer. */
+.sello, .capitulo-sello { animation: sella 380ms ease-in backwards; }
+.sello { animation-delay: 240ms; }
+@keyframes sella { from { scale: 2.2; rotate: -24deg; opacity: 0; } 70% { scale: 0.94; opacity: 1; } }

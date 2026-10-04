@@ -2,6 +2,7 @@
 // abajo en celular y en columna a la izquierda desde 1024 px. Landmarks: encabezado, navegación y contenido principal (DR18).
 import "./marco.css";
 import { t, type TextoId } from "../textos";
+import { REBOTE, anima } from "./movimiento";
 import { prepararTintas } from "./tintas";
 import { subrayado } from "./trazos";
 
@@ -98,12 +99,19 @@ export function dibujarMarco(alCambiar: (pestana: Pestana, contenido: HTMLElemen
     contenido.replaceChildren();
     if (conFoco) titulo.focus();
   }
+  let ultima: Pestana | null = null;
   function activar(pestana: Pestana, conFoco = false) {
     pantalla(pestana, t(TITULOS[pestana]), conFoco);
+    // Solo al cambiar de pestaña (no al repintar la misma): la pestaña entra como un sello y los módulos se enchufan (marco.css).
+    contenido.classList.toggle("entra", pestana !== ultima);
+    if (pestana !== ultima) anima(botones[PESTANAS.indexOf(pestana)], [{ transform: "scale(1.15) rotate(-3deg)" }, { transform: "none" }], { duration: 200, easing: REBOTE });
+    ultima = pestana;
     alCambiar(pestana, contenido);
   }
   function mostrar(texto: string, ...nodos: Node[]) {
     pantalla(null, texto, true);
+    contenido.classList.add("entra");
+    ultima = null;
     contenido.append(...nodos);
   }
 

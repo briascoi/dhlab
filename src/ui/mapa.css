@@ -5,7 +5,8 @@
 .mapa-trama { fill: url(#semitono); color: color-mix(in srgb, var(--light), var(--on-light) 38%); mask: url(#sombreado); pointer-events: none; }
 #semitono circle { fill: color-mix(in srgb, var(--light), var(--on-light) 38%); }
 /* Todo lo que es línea lleva el pulso de la tinta a mano. */
-.mapa-contorno, .mapa-canal, .mapa-cable, .mapa-enchufe, .mapa-guia { filter: url(#pulso); }
+/* El contorno de las piezas no: su pulso va en la geometría (trazos.ts), para poder alternar variantes sin rehacer un filtro. */
+.mapa-canal, .mapa-cable, .mapa-enchufe, .mapa-guia { filter: url(#pulso); }
 .mapa-contorno { fill: none; stroke: var(--border); stroke-width: 1.75; stroke-linejoin: round; }
 /* La luz: un punto claro con su halo, sobre la tinta de luz. */
 .mapa-halo, .mapa-luz { fill: color-mix(in srgb, var(--light), white 82%); }
@@ -48,3 +49,25 @@
 /* La nota a mano del mapa, en unidades del dibujo. */
 .mapa-anotacion { fill: var(--action); font-size: 30px; }
 .mapa .trazo { stroke-width: 2.5; }
+
+/* Movimiento del mapa (DESIGN.md, Motion). Las piezas, las luces y los halos se mueven sobre su propio centro. */
+.mapa-pieza, .mapa-contorno, .mapa-halo, .mapa-luz { transform-box: fill-box; transform-origin: center; }
+/* El cable del coach: un trazo en la segunda tinta, sin enchufes. */
+.mapa-coach { fill: none; stroke: var(--action); stroke-width: 3; stroke-linecap: round; pointer-events: none; }
+/* Capa propia para lo que se repinta en cada cuadro: medido con CPU 4x, sin esto la señal obliga a rehacer los filtros del mapa. */
+.mapa-senales, .mapa-contornos { will-change: transform; }
+.mapa-senal { fill: none; stroke: var(--light); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 0.07 0.93; opacity: 0; pointer-events: none; }
+/* En reposo, solo con movimiento completo: las luces laten y una señal corta viaja por cada cable. */
+:root[data-mov="completo"] .mapa-luz { animation: late 2.6s ease-in-out infinite; animation-delay: calc(var(--i) * -0.5s); }
+:root[data-mov="completo"] .mapa-halo { animation: halo 2.6s ease-in-out infinite; animation-delay: calc(var(--i) * -0.5s); }
+:root[data-mov="completo"] .mapa-senal { opacity: 1; animation: senal 2.4s linear infinite; }
+@keyframes late { 50% { transform: scale(1.3); } }
+@keyframes halo { 50% { transform: scale(1.45); opacity: 0.12; } }
+@keyframes senal { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+/* Tinta que respira: tres variantes del contorno, una visible por vez, a unos 8 cuadros por segundo. Quieta, queda la primera. */
+.mapa-contorno > path:nth-child(n + 2) { visibility: hidden; }
+:root[data-mov="completo"] .mapa-contorno > path { animation: respira 0.39s steps(1) infinite; }
+:root[data-mov="completo"] .mapa-contorno > path:nth-child(2) { animation-delay: -0.13s; }
+:root[data-mov="completo"] .mapa-contorno > path:nth-child(3) { animation-delay: -0.26s; }
+@keyframes respira { 0% { visibility: visible; } 33.34%, 100% { visibility: hidden; } }
+@media print { .mapa-contorno > path, .mapa-senal { animation: none !important; } }

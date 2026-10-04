@@ -2,6 +2,7 @@ import "./configuracion.css";
 import type { Analisis } from "../engine/interval";
 import { DEL_TIPO } from "../engine/tipos";
 import { t, type TextoId } from "../textos";
+import { REBOTE, anima } from "./movimiento";
 import { prepararTintas } from "./tintas";
 
 // Panel "Tu configuración": los datos reales de la carta, una fila por dato, con perillas decorativas (sin escalas ni datos).
@@ -30,7 +31,11 @@ function perilla(giro: number): SVGElement {
   const marcas = document.createElementNS(SVG, "path");
   marcas.setAttribute("class", "marcas");
   marcas.setAttribute("d", "M4.8 19.2L3.7 20.3M2.1 14.6L0.6 15.1M2.1 9.4L0.6 8.9M4.8 4.8L3.7 3.7M9.4 2.1L8.9 0.6M14.6 2.1L15.1 0.6M19.2 4.8L20.3 3.7M21.9 9.4L23.4 8.9M21.9 14.6L23.4 15.1M19.2 19.2L20.3 20.3");
-  svg.append(marcas, circulo(8.6, "aro"), circulo(7, "cuerpo"), marca);
+  // El cuerpo y su marca giran juntos (al tocar la fila y, apenas, en reposo).
+  const eje = document.createElementNS(SVG, "g");
+  eje.setAttribute("class", "giro");
+  eje.append(circulo(7, "cuerpo"), marca);
+  svg.append(marcas, circulo(8.6, "aro"), eje);
   return svg;
 }
 
@@ -64,6 +69,9 @@ export function dibujarConfiguracion(a: Analisis): HTMLElement {
   filasDeConfiguracion(a).forEach(({ rotulo, valores }, i) => {
     const fila = document.createElement("div");
     fila.className = valores.length > 1 ? "fila incierta" : "fila";
+    fila.style.setProperty("--i", String(i));
+    // Respuesta al toque: la perilla da una vuelta, con rebote.
+    fila.addEventListener("click", () => anima(fila.querySelector(".giro"), [{ transform: "rotate(0)" }, { transform: "rotate(360deg)" }], { duration: 520, easing: REBOTE }));
     const dt = document.createElement("dt");
     dt.append(perilla(-2.2 + (i * 1.7) % 4.4), rotulo);
     const dd = document.createElement("dd");

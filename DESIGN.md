@@ -209,13 +209,14 @@ components:
 
 **Creative North Star:** tu carta es un instrumento que entendés y podés tocar. Una consola de sintetizador (paneles, tornillos, perillas, cables) impresa en dos tintas de risografía sobre papel; de noche, un póster serigrafiado.
 **Product context:** DH Lab, laboratorio de Diseño Humano (`dhlab.app`): coach de Diseño Humano jugable para Isma y su círculo (unas 50 personas, por invitación), que se abre sobre todo desde links de WhatsApp en el celular. App web con cuenta por email: carta, libro y diario en la nube por defecto (el diario, cifrado en el dispositivo), con la opción "solo en este dispositivo". Se puede agregar a la pantalla de inicio (manifest, sin service worker). Plan y decisiones: `docs/designs/coach-diseno-humano.md` (design review DR1 a DR26 y ronda 2, DR27 a DR50).
-**Mode per surface:** Operate en mapa, capítulos, coach, cuenta y ajustes; Read en el libro; un solo momento Experience en la revelación (DR10).
-**Reference sites:** sin investigación de rubro (decisión D1 de la consulta); referencias propias: mockups aprobados en `~/.gstack/projects/briascoi-Dise-o-Humano/designs/` (mockup-20260930, coach-20261001, design-system-20261001, guarda-tu-carta-20261002, codigo-recuperacion-20261002; conexion-20261001 vuelve con el QR e instalar-iphone-20261001 con los avisos).
+**Mode per surface:** Operate en mapa, capítulos, coach, cuenta y ajustes; Read en el libro; Experience en los momentos de autor (la revelación, DR10, y los que suma la sección Motion). La consola está encendida: se mueve en reposo, responde al toque y cambia de pantalla enchufando módulos.
+**Reference sites:** sin investigación de rubro (decisión D1 de la consulta); referencias propias: mockups aprobados en `~/.gstack/projects/briascoi-Dise-o-Humano/designs/` (mockup-20260930, coach-20261001, design-system-20261001, guarda-tu-carta-20261002, codigo-recuperacion-20261002, motion-20261004 (prototipo animado "Consola encendida"); conexion-20261001 vuelve con el QR e instalar-iphone-20261001 con los avisos).
 **Key characteristics:**
 - Todo parece impreso en dos tintas sobre papel, con piezas que se tocan.
 - Rótulos de hardware: etiquetas de control condensadas y en mayúsculas, como la serigrafía de un sintetizador.
 - Profundidad como sombra de impresión: un bloque de tinta corrido, nunca un halo.
 - La noche no es la inversión del día: es un póster con luces en oro y cables en salmón.
+- Está encendida: la tinta respira, las luces laten y la señal viaja por los cables, sin dejar de parecer impresa.
 
 ## Colors
 
@@ -260,7 +261,7 @@ Escala: los niveles difieren por tamaño, no solo por peso. El cuerpo nunca baja
 
 ## Elevation & Depth
 
-Una sola forma de profundidad: la sombra de impresión, un bloque de tinta sólida desplazado 3 px abajo y a la derecha, sin desenfoque (`print-shadow` de día, `night-print-shadow` de noche). Nada de halos ni brillos alrededor de elementos. Las texturas (grano de papel, pulso de la tinta, motas de riso, trama de semitono y desfasaje leve de tinta) son filtros SVG o CSS estáticos, sin animación, para no trabar celulares de gama baja, el PDF ni la tarjeta (DR14).
+Una sola forma de profundidad: la sombra de impresión, un bloque de tinta sólida desplazado 3 px abajo y a la derecha, sin desenfoque (`print-shadow` de día, `night-print-shadow` de noche). Nada de halos ni brillos alrededor de elementos. Las texturas (grano de papel, pulso de la tinta, motas de riso, trama de semitono y desfasaje leve de tinta) son filtros SVG o CSS estáticos, para no trabar celulares de gama baja, el PDF ni la tarjeta (DR14). El filtro nunca se anima; lo que se mueve es la pieza (ver Motion), y nunca se anima nada que tenga un filtro encima sin medirlo antes.
 
 ## Shapes
 
@@ -272,7 +273,7 @@ Paneles con esquinas de 9 px y doble línea en el borde, como el canto de un mó
 - **Perilla:** aro, cuerpo en tinta llena, marca clara y marcas cortas alrededor. Todo decorativo: nunca números ni datos.
 - **Tarjeta de una línea:** borde a pulso en la tinta de luz (experimento) o en la segunda tinta (coach), con su ícono en un círculo.
 - **Barra de pestañas:** panel a todo el ancho, íconos a dos tintas con trazo a pulso; la pestaña activa es un bloque de tinta de luz con trama de puntos y texto en `on-light`, además de `aria-current`.
-- **Mapa:** piezas con contorno a pulso; las definidas, en tinta de luz con motas, trama de semitono y un punto de luz, apenas fuera de registro; Canales en líneas finas; un cable en `cable` con enchufes por cada Canal definido; rótulos en Architects Daughter y guías punteadas en la segunda tinta. Las Puertas no se dibujan en esta vista.
+- **Mapa:** piezas con contorno a pulso (tres variantes del trazo que se alternan cuando el movimiento es completo); las definidas, en tinta de luz con motas, trama de semitono y un punto de luz, apenas fuera de registro; Canales en líneas finas; un cable en `cable` con enchufes por cada Canal definido; rótulos en Architects Daughter y guías punteadas en la segunda tinta. Las Puertas no se dibujan en esta vista. El Centro elegido, o el que señala el coach, se resalta con un contorno grueso en la segunda tinta (`action`): sobre un Centro definido, la tinta de luz no se vería.
 - **Botón principal:** fondo `action` con texto `on-action` (de día, azul riso; de noche, oro con texto azul noche). Hover y activo: la sombra de impresión se reduce a 1 px (el botón "se hunde"). Deshabilitado: borde punteado y texto `text-muted`, sin sombra.
 - **Botón secundario:** contorno de 2 px en `border` y texto `text`, como en los mockups aprobados de instalación y del código de recuperación.
 - **Botón destructivo:** fondo `error` con texto `on-error`; solo para borrar cuenta, empezar un diario nuevo y borrar una versión del diario, siempre al final de su grupo.
@@ -288,7 +289,7 @@ Paneles con esquinas de 9 px y doble línea en el borde, como el canto de un mó
   - Banner o insignia en línea, dentro del flujo: desactualizado, pendiente de hora, espera tu hora, versión nueva, aviso de corrección del motor, sesión vencida, IA en pausa, cerca del tope, key propia perdida, cuenta pasada a solo local desde otro dispositivo, código de recuperación pendiente y capítulo en curso.
   - Fuera de la v1 (vuelven con su función, TODOS.md): consentimiento del QR, instalar y avisos, algunos avisos no llegaron. La advertencia del respaldo pasó a la pantalla previa de exportar (DR43).
 - **Anotación a mano (DR13):** Caveat (notas en minúscula) o Architects Daughter (notas en mayúsculas), en tinta o azul, con flecha curva dibujada a mano cuando señala algo, sin tope fijo desde el 2026-10-03 (antes, dos por pantalla): las que pida la composición, sin tapar controles ni competir con el contenido; orientan, hacen humor sin afirmar nada sobre la persona o citan una ficha aprobada. También pueden ir en una pegatina (mancha de tinta de luz con nota en mayúsculas).
-- **Coach (DR12):** pantallita de osciloscopio con rejilla de parlante dentro de un panel; la onda es `fluor` de día y `night-salmon` de noche; acciones en píldoras.
+- **Coach (DR12):** pantallita de osciloscopio con rejilla de parlante dentro de un panel; la onda usa el token `--onda` (`fluor` de día y `night-salmon` de noche) y corre en todos los niveles de movimiento salvo mínimo, porque comunica el estado; acciones en píldoras.
 - **Símbolos (DR22):** candado solo para progreso; reloj para lo que espera la hora; "Conectar" es un botón, no un candado.
 
 ## Do's and Don'ts
@@ -296,7 +297,7 @@ Paneles con esquinas de 9 px y doble línea en el borde, como el canto de un mó
 - Do: verificar el contraste de cada par de texto y fondo nuevo contra 4,5:1 (3:1 en texto de 24 px o más).
 - Do: diseñar cada pantalla en los dos temas desde el principio (DR16).
 - Do: usar el rosa fluorescente como tinta de luz, onda, pestaña activa y pegatina; el azul, para subrayados, guías y anotaciones a mano.
-- Do: dar a tintas y trazos el aspecto de impresión con los filtros estáticos de `src/ui/tintas.ts` (pulso, motas de riso, semitono, fuera de registro); nunca animados.
+- Do: dar a tintas y trazos el aspecto de impresión con los filtros estáticos de `src/ui/tintas.ts` (pulso, motas de riso, semitono, fuera de registro); los filtros nunca se animan.
 - Do: tomar todo texto de interfaz del registro de textos aprobados (DR20); sin aprobación se ve un marcador.
 - Don't: texto en rosa fluorescente, ni siquiera en títulos grandes.
 - Don't: caras, siluetas o manos (el coach no tiene cara), mascotas, emojis, 3D o degradados.
@@ -306,11 +307,29 @@ Paneles con esquinas de 9 px y doble línea en el borde, como el canto de un mó
 
 ## Motion
 
-- **Approach:** intentional.
-- **Easing:** entrada ease-out, salida ease-in, desplazamiento ease-in-out.
-- **Duration:** micro 80 ms, corto 200 ms, medio 320 ms, largo 6 a 8 s solo en la revelación.
-- **The one authored moment:** la revelación de la carta (DR10). Segundo momento, acotado: el cable del coach hacia el elemento del mapa (DR12).
-- Con `prefers-reduced-motion`, cortes directos: sin onda animada, sin cable, la carta aparece completa con una línea de cierre.
+- **Approach:** consola encendida. El movimiento es parte del instrumento, no un adorno encima: cuatro clases, tres niveles y un presupuesto que se mide (dirección A del prototipo `motion-20261004`, elegida por Isma el 2026-10-04).
+- **Easing:** entrada ease-out, salida ease-in, desplazamiento ease-in-out; rebote `cubic-bezier(.3, 1.6, .5, 1)` para lo que se enchufa, gira o se sella.
+- **Duration:** micro 80 ms, corto 200 ms, medio 320 ms; ciclos de reposo de 2,4 a 3,4 s; largo 6 a 8 s solo en la revelación.
+
+Las cuatro clases:
+- **En reposo:** la tinta respira (tres variantes del mismo trazo, generadas con otra semilla en `src/ui/trazos.ts`, alternadas a unos 8 cuadros por segundo), las luces de los Centros definidos laten, una señal corta viaja por cada cable y las perillas tiemblan apenas. Nunca texto ni controles.
+- **Respuesta al toque:** los botones se hunden (la sombra de impresión pasa a 1 px), el Centro tocado salta y su luz destella, la perilla de una fila gira una vuelta con rebote, la pestaña activa entra como un sello de tinta.
+- **Transiciones entre pantallas:** los módulos de la pantalla que entra se enchufan desde arriba, de a uno, con rebote (320 ms, 80 ms entre uno y otro), solo al cambiar de pestaña y no al repintar la misma. No hay animación de salida: el cambio de pantalla es inmediato y la entrada no bloquea el toque. La entrada usa solo `transform`, para no bajar el contraste a mitad de camino.
+- **Momentos de autor:** la revelación de la carta (DR10: Centros de a uno, cables que se enchufan, filas que aparecen), el sello de un experimento, el chequeo de los días 3 y 7, la apertura de cada capítulo y el cable del coach, que sube por el margen izquierdo del mapa hasta el Centro y lo deja resaltado (DR12). Siempre con "Saltar" si duran más de 2 s; sonido opcional y apagado por defecto.
+
+Niveles (en Ajustes, guardado localmente, como clase en `:root`):
+- **Completo:** las cuatro clases.
+- **Suave:** sin movimiento en reposo, salvo la onda del coach; quedan el toque, las transiciones y los momentos de autor.
+- **Mínimo:** cortes directos, todo quieto y completo; la carta aparece entera con una línea de cierre. `prefers-reduced-motion` equivale a mínimo y es el valor inicial para quien lo tiene activado.
+
+Red de seguridad:
+- Solo se animan `transform`, `opacity`, `stroke-dasharray`/`stroke-dashoffset` y `clip-path`. Nunca los parámetros de un filtro SVG, ni un `filter: url()` distinto por cuadro, ni propiedades de layout.
+- Lo que se repinta en cada cuadro (la señal de los cables, el contorno que respira) va en su propia capa (`will-change: transform`), sin filtros adentro. Medido el 2026-10-04 con CPU 4x: sin capa propia, la señal obligaba a rehacer los filtros del mapa (hasta 1.120 ms de rasterizado cada 3 s); con capa, 10 ms. Las luces, los halos y las perillas (`transform` y `opacity`) no repintan.
+- El contorno de las piezas del mapa lleva el pulso en la geometría (`contorno` en `src/ui/trazos.ts`), no en el filtro `#pulso`, para poder alternar variantes.
+- Sin dependencias nuevas: `@keyframes` y Web Animations API (`element.animate`, vía `anima` en `src/ui/movimiento.ts`, que en mínimo no hace nada).
+- Presupuesto: sin cuadros largos sostenidos con la CPU frenada 4x en Chrome, en reposo, en la revelación y al cambiar de pestaña. Lo que no lo cumple se ajusta o no entra.
+- Cada cosa animada tiene su forma quieta, que es la que va al PDF y a la tarjeta.
+- El movimiento nunca es la única señal de un estado: siempre hay texto o ícono.
 
 ## Decisions Log
 
@@ -326,3 +345,5 @@ Paneles con esquinas de 9 px y doble línea en el borde, como el canto de un mó
 | 2026-10-03 | Nombre: DH Lab | Elegido por Isma; el nombre lleva "Diseño Humano" o "DH" y va siempre junto al rótulo "laboratorio de Diseño Humano"; dominio `dhlab.app` |
 | 2026-10-03 | Pareja manuscrita: Architects Daughter y Caveat | Elegida por Isma entre cinco propuestas (pareja A): emula el aire de plano técnico del mockup riso-consola sin copiarlo; reemplaza a Shantell Sans; los trazos a mano (flechas curvas, subrayado, sello, mancha) son dibujo propio |
 | 2026-10-03 | El mockup riso-consola manda | Pedido de Isma: acercar la app al mockup aprobado lo más posible. Cambian: barra de pestañas abajo en todos los anchos (DR17), paneles de 9 px con doble línea a pulso, marcas decorativas en las perillas, subrayado y guías en azul, cables en tinta, rótulos del mapa en Architects Daughter, Puertas fuera del mapa, filtros de impresión estáticos y anotaciones sin tope fijo. Se mantienen: contraste AA (el rosa fluorescente no es texto), sin caras y sin anotaciones que interpreten la carta |
+| 2026-10-04 | Consola encendida: Motion reabierto | Isma pidió "más movimiento y vida" y reabrió la estética entera; entre tres prototipos animados (A Consola encendida, B Señal, C Póster cinético) eligió A: se mantiene la identidad riso-consola y póster de noche, y Motion pasa de un solo momento de autor a cuatro clases de movimiento con tres niveles (completo, suave, mínimo) y una red de seguridad medible. De paso se anotan el resaltado del Centro en la segunda tinta y el token `--onda` |
+| 2026-10-04 | Consola encendida en la app | Niveles en Ajustes (`dhlab.movimiento`, `data-mov` en la raíz), las cuatro clases de movimiento en mapa, panel, pestañas, capítulos y coach. Cambios respecto del prototipo: sin animación de salida entre pantallas (el cambio de pestaña es síncrono y otros flujos dependen de eso) y capa propia para lo que se repinta, por la medición con filtros |

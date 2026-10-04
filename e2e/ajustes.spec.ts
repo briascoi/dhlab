@@ -32,6 +32,39 @@ test("Ajustes muestra la cuenta y la carta, y el tema elegido se guarda", async 
   expect(await fondo()).not.toBe(dia);
 });
 
+// Movimiento (DESIGN.md, Motion): tres niveles, guardados en el dispositivo; "reducir movimiento" arranca en mínimo.
+const corriendo = (page: Page) => page.evaluate(() => document.getAnimations().filter((x) => x.playState === "running").length);
+test("el nivel de movimiento se elige en Ajustes y se guarda; en mínimo no queda nada animado", async ({ page }) => {
+  await abrirAjustes(page);
+  await expect(page.getByRole("radio", { name: "Completo" })).toBeChecked();
+  await page.getByRole("radio", { name: "Mínimo" }).check();
+  await expect(page.locator("html")).toHaveAttribute("data-mov", "minimo");
+  expect((await new AxeBuilder({ page }).analyze()).violations.map((v) => v.id)).toEqual([]);
+  await page.reload();
+  await expect(page.getByRole("heading", { level: 1, name: "Tu mapa" })).toBeVisible();
+  await expect(page.locator("html")).toHaveAttribute("data-mov", "minimo");
+  expect(await corriendo(page)).toBe(0);
+  // En completo, el mapa está encendido: las luces laten y la señal viaja por los cables.
+  await page.getByRole("button", { name: "Ajustes" }).click();
+  await page.getByRole("radio", { name: "Completo" }).check();
+  await page.getByRole("button", { name: "Mapa" }).click();
+  await expect(page.locator(".mapa-luz").first()).toBeVisible();
+  expect(await corriendo(page)).toBeGreaterThan(0);
+  // En suave no hay movimiento en reposo.
+  await page.evaluate(() => (document.documentElement.dataset.mov = "suave"));
+  await expect.poll(() => corriendo(page)).toBe(0);
+});
+
+test("con reducir movimiento en el sistema, la app arranca en mínimo y la persona puede subirlo", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await abrirAjustes(page);
+  await expect(page.locator("html")).toHaveAttribute("data-mov", "minimo");
+  await expect(page.getByRole("radio", { name: "Mínimo" })).toBeChecked();
+  await page.getByRole("radio", { name: "Suave" }).check();
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("data-mov", "suave");
+});
+
 test("Salir vuelve a la bienvenida y se puede volver a entrar", async ({ page }) => {
   await abrirAjustes(page);
   await page.getByRole("button", { name: "Salir" }).click();

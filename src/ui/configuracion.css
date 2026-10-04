@@ -35,3 +35,7 @@
   /* Con "Guarda tu carta" abierta al costado no entran los dos: se apilan. */
   body:has(.hoja[open]:not(.completa)) .lado-a-lado:has(.configuracion) { grid-template-columns: minmax(0, 1fr); }
 }
+/* La perilla gira sobre su eje; en reposo (movimiento completo) apenas tiembla. */
+.perilla .giro { transform-origin: 12px 12px; }
+:root[data-mov="completo"] .perilla .giro { animation: tiembla 3.4s ease-in-out infinite; animation-delay: calc(var(--i) * -0.6s); }
+@keyframes tiembla { 40% { transform: rotate(7deg); } 70% { transform: rotate(-4deg); } }

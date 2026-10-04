@@ -206,6 +206,8 @@ test("el coach tiene su osciloscopio, que cambia con el estado, y lleva al mapa 
   await accion.click();
   await expect(page.getByRole("heading", { level: 1, name: "Tu mapa" })).toBeFocused();
   await expect(page.locator(".mapa-boton.mapa-resaltado")).toHaveAttribute("aria-label", /^Garganta,/);
+  // El cable del coach queda tendido hasta el Centro (DR12).
+  await expect(page.locator(".mapa-coach")).toHaveCount(1);
   await expect(page.locator(".detalle-titulo")).toHaveText("Garganta");
   await page.getByRole("button", { name: "Coach" }).click();
   await page.getByLabel("Escribe tu pregunta").fill("¿Y mi Cruz?");

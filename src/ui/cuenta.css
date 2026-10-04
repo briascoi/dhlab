@@ -20,7 +20,6 @@
 .hoja.completa { inset: 0; max-width: none; max-height: none; height: 100dvh; border: 0; box-shadow: none; padding: 32px 20px; }
 .hoja.completa > * { max-width: 68ch; margin-inline: auto; }
 @keyframes hoja-sube { from { transform: translateY(100%); } }
-@media (prefers-reduced-motion: reduce) { .hoja { animation: none; } }
 /* Desde 1024 px la hoja va al lado de la carta, sin taparla (DR51). */
 @media (min-width: 1024px) {
   /* La página deja libre el lado derecho mientras la hoja está abierta. */

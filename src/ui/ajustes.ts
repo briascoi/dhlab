@@ -6,6 +6,7 @@ import type { CartaGuardada } from "../almacen";
 import type { Cuenta, CuentaApi, Fallo } from "../cuenta-api";
 import { t, type TextoId } from "../textos";
 import { abrirCodigo, codigoPendiente } from "./diario";
+import { NIVELES, guardarMovimiento, nivelActual } from "./movimiento";
 import type { Nacimiento } from "./nacimiento";
 import { anuncio, boton, completa, el } from "./pantalla";
 
@@ -90,6 +91,18 @@ export function dibujarAjustes(opciones: OpcionesAjustes): HTMLElement {
     temas.append(el("label", "opcion", radio, el("span", "", t(`ajustes.apariencia.${tema}`))));
   }
 
+  // Cuánto se mueve la app (DESIGN.md, Motion): se guarda en el dispositivo, como el tema.
+  const movimientos = el("fieldset", "ajustes-opciones", el("legend", "", t("ajustes.apariencia.movimiento")));
+  for (const nivel of NIVELES) {
+    const radio = el("input");
+    radio.type = "radio";
+    radio.name = "movimiento";
+    radio.value = nivel;
+    radio.checked = nivel === nivelActual();
+    radio.addEventListener("change", () => guardarMovimiento(nivel));
+    movimientos.append(el("label", "opcion", radio, el("span", "", t(`ajustes.apariencia.${nivel}`))));
+  }
+
   // El grupo Diario aparece cuando la cuenta tiene diario.
   const grupoDiario = grupo("ajustes.grupo.diario");
   grupoDiario.hidden = true;
@@ -156,7 +169,7 @@ export function dibujarAjustes(opciones: OpcionesAjustes): HTMLElement {
           ),
         ]
       : []),
-    grupo("ajustes.grupo.apariencia", temas),
+    grupo("ajustes.grupo.apariencia", temas, movimientos),
     grupo("ajustes.grupo.datos", boton("boton-secundario", t("ajustes.datos.exportar"), exportar), boton("boton-secundario", t("ajustes.datos.importar"), () => abrirImportar(importar)), boton("boton-destructivo", t("ajustes.datos.borrar"), () => confirmarBorrado(api, exportar, alBorrar))),
   );
   return panel;

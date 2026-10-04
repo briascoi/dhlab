@@ -27,12 +27,14 @@ import { dibujarCapitulo, dibujarExperimento } from "./ui/capitulo";
 import { abrirCodigo, abrirDiarioCerrado, dibujarDiario, marcarCodigoPendiente, type DiarioCerrado, type Entrada } from "./ui/diario";
 import { avisarHoraInexistente, bannerHoraIncierta, dibujarPendienteDeHora, preguntarHoraRepetida } from "./ui/hora";
 import { abrirClave, abrirEscritura, conConsentimiento, dibujarCoach, dibujarSeccion } from "./ui/ia";
-import { dibujarMapa, rotuloMapa } from "./ui/mapa";
+import { dibujarMapa, rotuloMapa, senalarCentro } from "./ui/mapa";
+import { aplicarMovimiento } from "./ui/movimiento";
 import { dibujarMarco, icono, type Marco, type Pestana } from "./ui/marco";
 import { abrirNacimiento, type Nacimiento } from "./ui/nacimiento";
 import { revelar } from "./ui/revelacion";
 
 aplicarTema();
+aplicarMovimiento();
 const raiz = document.getElementById("app")!;
 const el = <K extends keyof HTMLElementTagNameMap>(nombre: K, clase: string, texto = ""): HTMLElementTagNameMap[K] => {
   const e = document.createElement(nombre);
@@ -586,7 +588,7 @@ async function pantallaCoach(a: Atributos, contenido: HTMLElement, repintar: () 
         return f && { tema: f.tema, texto: f.texto, fuente: t("capitulo.fuente", { fuentes: f.fuentes.map((x) => `${x.autor}, ${x.obra}`).join("; ") }) };
       },
       alCapitulo: () => marco?.activar("libro", true),
-      // Sin el cable animado todavía: el Centro se resalta directo, que es también lo que pide el movimiento reducido (DR12).
+      // Al llegar al mapa, el cable del coach se tiende hasta el Centro y lo resalta (DR12); en mínimo aparece ya tendido.
       alMapa: (centro) => {
         centroPedido = centro;
         marco?.activar("mapa", true);
@@ -732,7 +734,7 @@ async function app(carta: CartaGuardada, inicial: Pestana = "mapa") {
       if (centroPedido && centroPedido in CENTROS) {
         const id = centroPedido as keyof typeof CENTROS;
         centroPedido = null;
-        panel.querySelector(`.mapa-boton[aria-label^="${CENTROS[id]},"]`)?.classList.add("mapa-resaltado");
+        senalarCentro(panel.querySelector(".mapa")!, id);
         detalle = dibujarDetalle(id, capitulosAbiertos, puertas);
         panel.append(detalle);
         panel.scrollIntoView({ block: "center" });

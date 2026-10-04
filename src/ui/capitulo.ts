@@ -38,7 +38,8 @@ export function dibujarCapitulo(o: { titulo: string; fichas: Ficha[]; experiment
 export function dibujarExperimento(o: { id: string; experimento: Ficha; estado: EstadoCapitulo; conNota: boolean; alResponder: (dia: 3 | 7, respuesta: Respuesta, nota: string) => void }): HTMLElement {
   const panel = el("section", "panel capitulo", ficha(o.experimento, t(o.experimento.clase === "observacion" ? "experimento.clase.observacion" : "experimento.clase.experimento"), "h2"));
   const sello = cierre(o.estado);
-  panel.append(el("p", "capitulo-elegido", sello ? t("chequeo.sello", { respuesta: t(`chequeo.${sello.respuesta}`) }) : t("capitulo.elegido", { fecha: fecha(o.estado.elegido) })));
+  // Con el chequeo cerrado, la respuesta queda como sello.
+  panel.append(el("p", sello ? "capitulo-elegido capitulo-sello" : "capitulo-elegido", sello ? t("chequeo.sello", { respuesta: t(`chequeo.${sello.respuesta}`) }) : t("capitulo.elegido", { fecha: fecha(o.estado.elegido) })));
   const dia = chequeoPendiente(o.estado);
   if (!dia) return panel;
   const nota = el("textarea", "campo");

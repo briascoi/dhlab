@@ -66,3 +66,10 @@
 .marco-capitulo .cuenta { font-size: 0.875rem; }
 .marco-capitulo .cuenta.anotacion { font-size: 1.25rem; }
 @media (max-width: 419px) { .marco-pestanas button { font-size: 0.8125rem; } }
+/* Cambio de pantalla: los módulos se enchufan desde arriba, de a uno, con rebote. Solo transform, para no bajar el contraste a mitad de camino. */
+.marco-contenido.entra > * { animation: enchufa 320ms cubic-bezier(.3, 1.6, .5, 1) backwards; }
+.marco-contenido.entra > :nth-child(2) { animation-delay: 80ms; }
+.marco-contenido.entra > :nth-child(3) { animation-delay: 160ms; }
+.marco-contenido.entra > :nth-child(n + 4) { animation-delay: 240ms; }
+/* Sin escala: los controles conservan su tamaño de toque mientras entran. */
+@keyframes enchufa { from { transform: translateY(-18px); } }

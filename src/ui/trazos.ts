@@ -80,3 +80,14 @@ export function mancha(centro: Punto, radio: number, semilla = 1): string {
   });
   return trazo(puntos, 0, r, true);
 }
+
+// Contorno a pulso de una pieza: cada lado en tres tramos, con los puntos apenas corridos. Con otra semilla sale otra variante
+// del mismo contorno; alternarlas es la "tinta que respira" (DESIGN.md, Motion).
+export function contorno(forma: Punto[], temblor: number, semilla = 1): string {
+  const r = azar(semilla);
+  const puntos = forma.flatMap((a, i) => {
+    const b = forma[(i + 1) % forma.length]!;
+    return [0, 1, 2].map((k) => `${n(a.x + ((b.x - a.x) * k) / 3 + (r() - 0.5) * temblor * (k ? 2 : 1))},${n(a.y + ((b.y - a.y) * k) / 3 + (r() - 0.5) * temblor * (k ? 2 : 1))}`);
+  });
+  return `M${puntos.join("L")}Z`;
+}

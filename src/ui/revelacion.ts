@@ -2,6 +2,7 @@
 // con "Saltar" y sonido opcional, y carta completa con una línea de cierre si la persona pidió menos movimiento.
 import { t } from "../textos";
 import { rotuloMapa } from "./mapa";
+import { quieto } from "./movimiento";
 
 export const DURACION = 7000;
 const PASO = 320;
@@ -12,10 +13,10 @@ export const retrasos = (pasos: number, total = DURACION) => Array.from({ length
 // Orden del encendido: los Centros definidos de a uno, los Canales de a uno y las filas del panel de a una.
 function pasosDe(mapa: Element, panel: Element): Element[][] {
   const grupos: Element[][] = [];
-  for (const e of Array.from(mapa.children)) {
-    // En el SVG, la tinta de un Centro va antes que su luz, y cada cable antes que sus enchufes.
+  // En el SVG, la tinta de un Centro va antes que su luz, y cada cable antes que sus enchufes.
+  for (const e of Array.from(mapa.querySelectorAll(".mapa-tinta, .mapa-trama, .mapa-halo, .mapa-luz, .mapa-cable, .mapa-enchufe"))) {
     if (e.matches(".mapa-tinta, .mapa-cable")) grupos.push([]);
-    if (e.matches(".mapa-tinta, .mapa-trama, .mapa-halo, .mapa-luz, .mapa-cable, .mapa-enchufe")) grupos.at(-1)!.push(e);
+    grupos.at(-1)!.push(e);
   }
   return [...grupos, ...Array.from(panel.querySelectorAll(".fila"), (f) => [f])];
 }
@@ -60,7 +61,7 @@ export function revelar(contenedor: HTMLElement, mapa: SVGElement, panel: HTMLEl
   function encender() {
     contenedor.replaceChildren(rotuloMapa(), mapa);
     contenedor.after(panel);
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (quieto()) {
       const cierre = document.createElement("p");
       cierre.className = "revelacion-cierre";
       cierre.textContent = t("revelacion.cierre");

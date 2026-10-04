@@ -3,8 +3,9 @@ import { definicion } from "../engine/definicion";
 import { CANALES, CENTROS, type CentroId } from "../engine/system-data";
 import { t } from "../textos";
 import { FORMAS, PUNTO_DE_PUERTA, ROTULOS, VISTA, centro, haciaRotulo, salida, type Punto } from "./mapa-geometria";
+import { REBOTE, anima } from "./movimiento";
 import { prepararTintas } from "./tintas";
-import { flecha } from "./trazos";
+import { contorno, flecha } from "./trazos";
 
 const SVG = "http://www.w3.org/2000/svg";
 
@@ -33,7 +34,8 @@ function cable(a: Punto, b: Punto): SVGElement[] {
     const n = Math.hypot(c.x - o.x, c.y - o.y);
     return el("line", { x1: o.x, y1: o.y, x2: o.x + ((c.x - o.x) / n) * 10, y2: o.y + ((c.y - o.y) / n) * 10 }, "mapa-enchufe");
   };
-  return [el("path", { d }, "mapa-cable"), enchufe(a), enchufe(b)];
+  // La señal es un tramo corto del mismo trazo, que el CSS hace viajar cuando el movimiento es completo (va última: se junta en su capa).
+  return [el("path", { d }, "mapa-cable"), enchufe(a), enchufe(b), el("path", { d, pathLength: 1 }, "mapa-senal")];
 }
 
 // La etiqueta del panel del mapa.
@@ -62,31 +64,45 @@ export function dibujarMapa(puertasActivas: Iterable<number>, alTocarCentro?: (i
     svg.append(el("line", { x1: a.x, y1: a.y, x2: b.x, y2: b.y }, "mapa-canal"));
   }
 
+  // Los contornos van juntos en su propia capa, encima de las piezas (mapa.css).
+  const contornos = el("g", {}, "mapa-contornos");
   for (const id of ids) {
     const r = ROTULOS[id];
     const desde = haciaRotulo(id);
     const ancho = CENTROS[id].length * 9.6 + 6;
     svg.append(el("line", { x1: desde.x, y1: desde.y, x2: r.ancla === "end" ? r.x - ancho : r.x + ancho, y2: r.y - 4 }, "mapa-guia"));
     const definido = centros.has(id);
-    svg.append(
+    // La pieza entera va en un grupo, para poder moverla de una vez.
+    const pieza = el("g", { "data-centro": id, style: `--i:${ids.indexOf(id)}` }, "mapa-pieza");
+    svg.append(pieza);
+    pieza.append(
       el("polygon", { points: puntos(FORMAS[id]) }, "mapa-centro"),
       // La tinta de luz va apenas corrida respecto del contorno (fuera de registro), con sus motas y su trama de sombra.
       ...(definido ? [el("polygon", { points: puntos(FORMAS[id], 1.8) }, "mapa-tinta"), el("polygon", { points: puntos(FORMAS[id], 1.8) }, "mapa-trama")] : []),
-      el("polygon", { points: puntos(FORMAS[id]) }, "mapa-contorno"),
-      el("text", { x: r.x, y: r.y, "text-anchor": r.ancla }, "mapa-rotulo", CENTROS[id]),
     );
+    // El contorno va a pulso en la geometría, en tres variantes: el CSS muestra una por vez cuando el movimiento es completo.
+    const borde = el("g", { "data-centro": id }, "mapa-contorno");
+    for (const variante of [0, 1, 2]) borde.append(el("path", { d: contorno(FORMAS[id], 1.2, (ids.indexOf(id) + 1) * 7 + variante * 13) }));
+    contornos.append(borde);
+    svg.append(el("text", { x: r.x, y: r.y, "text-anchor": r.ancla }, "mapa-rotulo", CENTROS[id]));
     // La luz: un punto encendido con su halo, solo en los Centros definidos.
     if (definido) {
       const l = centro(FORMAS[id]);
-      svg.append(el("circle", { cx: l.x, cy: l.y, r: 15 }, "mapa-halo"), el("circle", { cx: l.x, cy: l.y, r: 7 }, "mapa-luz"));
+      pieza.append(el("circle", { cx: l.x, cy: l.y, r: 15 }, "mapa-halo"), el("circle", { cx: l.x, cy: l.y, r: 7 }, "mapa-luz"));
     }
   }
+
+  svg.append(contornos);
 
   // Un cable por Canal definido, de borde a borde de sus dos piezas.
   for (const canal of canales) {
     const [a, b] = extremos(canal);
     svg.append(...cable(salida(FORMAS[canal.centros[0]], a, b), salida(FORMAS[canal.centros[1]], b, a)));
   }
+  // Las señales van juntas en su propia capa (mapa.css): se repintan en cada cuadro y así no arrastran los filtros del resto del mapa.
+  const senales = el("g", {}, "mapa-senales");
+  senales.append(...Array.from(svg.querySelectorAll(".mapa-senal")));
+  svg.append(senales);
 
   if (anotacion) {
     // A la izquierda del cuerpo, con la flecha en gancho hacia la Garganta.
@@ -99,7 +115,12 @@ export function dibujarMapa(puertasActivas: Iterable<number>, alTocarCentro?: (i
   for (const id of ids) {
     const estado = t(centros.has(id) ? "mapa.centro.definido" : "mapa.centro.indefinido");
     const boton = el("polygon", { points: puntos(FORMAS[id]), role: "button", tabindex: 0, "aria-label": `${CENTROS[id]}, ${estado}` }, "mapa-boton");
-    boton.addEventListener("click", () => alTocarCentro?.(id));
+    boton.addEventListener("click", () => {
+      // Respuesta al toque: la pieza salta y, si está definida, su luz destella.
+      for (const parte of Array.from(svg.querySelectorAll(`[data-centro="${id}"]`))) anima(parte, [{ transform: "scale(.9)" }, { transform: "scale(1.08)", offset: 0.5 }, { transform: "none" }], { duration: 320 });
+      anima(svg.querySelector(`.mapa-pieza[data-centro="${id}"] .mapa-halo`), [{ transform: "scale(1)", opacity: 0.9 }, { transform: "scale(2.4)", opacity: 0 }], { duration: 480 });
+      alTocarCentro?.(id);
+    });
     boton.addEventListener("keydown", (e) => {
       const tecla = (e as KeyboardEvent).key;
       if (tecla === "Enter" || tecla === " ") {
@@ -110,4 +131,20 @@ export function dibujarMapa(puertasActivas: Iterable<number>, alTocarCentro?: (i
     svg.append(boton);
   }
   return svg;
+}
+
+// El cable del coach (DR12): sube por el margen izquierdo, que está libre, entra al Centro por su costado y lo deja resaltado.
+// En mínimo aparece ya tendido.
+export function senalarCentro(svg: Element, id: CentroId): void {
+  const medio = centro(FORMAS[id]);
+  const desde = { x: 18, y: VISTA.alto - 4 };
+  const codo = { x: 18, y: medio.y + 24 };
+  const hasta = salida(FORMAS[id], medio, codo);
+  const cable = el("path", { d: `M${desde.x},${desde.y} Q${codo.x},${codo.y} ${hasta.x},${hasta.y}`, pathLength: 1 }, "mapa-coach");
+  const boton = svg.querySelector(`.mapa-boton[aria-label^="${CENTROS[id]},"]`);
+  boton?.before(cable);
+  boton?.classList.add("mapa-resaltado");
+  anima(cable, [{ strokeDasharray: "1", strokeDashoffset: 1 }, { strokeDasharray: "1", strokeDashoffset: 0 }], { duration: 520, easing: "ease-in-out" });
+  anima(boton, [{ strokeOpacity: 0 }, { strokeOpacity: 1 }], { duration: 200, delay: 520 });
+  for (const parte of Array.from(svg.querySelectorAll(`[data-centro="${id}"]`))) anima(parte, [{ transform: "scale(1.12)" }, { transform: "none" }], { duration: 320, delay: 520, easing: REBOTE, fill: "none" });
 }
