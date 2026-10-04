@@ -39,6 +39,8 @@ const PROHIBIDOS = [
 const SOBRE_EL_DISENO = /\b(eres|tienes|tu (tipo|autoridad|perfil|estrategia|firma|no-yo|definicion|diseno|carta|sacral|bazo|plexo|garganta|corazon|raiz|ajna|cabeza)|tus (centros|canales|lineas|puertas)|generador|proyector|manifestador|reflector)\b/;
 
 export const esProhibido = (texto: string) => PROHIBIDOS.some((p) => p.test(sinTildes(texto)));
+// Las frases de un texto, cortando después de cada punto, pregunta o exclamación. El verificador las revisa de a una.
+export const frases = (texto: string) => texto.split(/(?<=[.!?])\s+/).map((x) => x.trim()).filter(Boolean);
 const oraciones = (texto: string) => texto.split(/[.!?]+(?:\s|$)/).filter((o) => o.trim()).length;
 const numeros = (texto: string) => texto.match(/\d+(?:[.,]\d+)?/g) ?? [];
 

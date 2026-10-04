@@ -143,7 +143,7 @@ test("con la clave propia la IA va directo a OpenRouter, sin pasar por nuestro s
   await expect(page.getByRole("button", { name: "Desconectar" })).toBeVisible();
 
   // Un capítulo: redacta y verifica, las dos llamadas directo a OpenRouter con proveedores sin retención.
-  respuestas.push({ parrafos: seccion.parrafos }, { respaldados: [0, 1] });
+  respuestas.push({ parrafos: seccion.parrafos }, { sin_respaldo: [] });
   await page.getByRole("button", { name: "Libro" }).click();
   await page.getByRole("button", { name: "Escribir este capítulo con IA" }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Escribir este capítulo con IA" }).click();

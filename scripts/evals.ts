@@ -12,7 +12,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { huella } from "../evals/huella";
 import { autoridadDe, grupos, tipoDe } from "../src/engine/carta";
 import { CANALES, type Canal } from "../src/engine/system-data";
-import { motivo, type FichaIA, type Parrafo } from "../src/guardas";
+import { frases as frasesDe, motivo, type FichaIA, type Parrafo } from "../src/guardas";
 import { piezas, type Atributos } from "../src/piezas";
 import { cuerpoOpenRouter, escribirCapitulo, leerOpenRouter, MODELO, verificar, type Llamar } from "../src/redactor";
 
@@ -39,7 +39,7 @@ const llamar: Llamar = (sistema, usuario) => pedir(modelo, sistema, usuario);
 const catalogo = JSON.parse(readFileSync("public/contenido.json", "utf8")) as { fichas: Record<string, { texto: string }> };
 const FICHAS: FichaIA[] = Object.entries(catalogo.fichas).map(([id, f]) => ({ id, texto: f.texto }));
 if (!FICHAS.length) throw new Error("El catálogo está vacío: corré `node scripts/catalogo.mjs` con la carpeta contenido/.");
-const frases = (texto: string) => texto.split(/(?<=[.!?])\s+/).map((x) => x.trim()).filter(Boolean);
+const frases = frasesDe;
 const azar = (s: number) => () => (s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296;
 
 // --- 1. El verificador ---
@@ -69,20 +69,23 @@ const CONJUNTOS = { ajuste: casos(50, true, 11, pares), reservados: casos(50, tr
 
 // Como en un capítulo, el verificador recibe varios párrafos juntos con las fichas que citan.
 async function medirVerificador(conjunto: Caso[]) {
-  let marcados = 0, sinRespuesta = 0;
+  let marcados = 0, sinRespuesta = 0, deMas = 0;
   const fallos: string[] = [];
   for (let i = 0; i < conjunto.length; i += 5) {
     const lote = conjunto.slice(i, i + 5);
     const fichas = FICHAS.filter((f) => lote.some((c) => c.parrafo.fuentes!.includes(f.id)));
-    const { respaldados } = await verificar(llamar, fichas, lote.map((c) => c.parrafo));
-    if (!respaldados) { sinRespuesta += lote.length; continue; }
+    const { sinRespaldo } = await verificar(llamar, fichas, lote.map((c) => c.parrafo));
+    if (!sinRespaldo) { sinRespuesta += lote.length; continue; }
     lote.forEach((c, j) => {
-      const marcado = !respaldados.includes(j);
+      const marcadas = sinRespaldo.filter((x) => x.parrafo === j).map((x) => frasesDe(c.parrafo.texto)[x.frase]);
+      // Una sembrada cuenta como detectada solo si marcó justo la frase ajena; un limpio falla si marcó cualquier frase.
+      const marcado = c.sembrado ? marcadas.includes(c.ajena) : marcadas.length > 0;
       if (marcado) marcados++;
-      if (marcado !== c.sembrado) fallos.push(c.sembrado ? `no detectó: ${c.ajena}` : `marcó un limpio: ${c.parrafo.texto.slice(0, 120)}`);
+      if (c.sembrado && marcadas.some((m) => m !== c.ajena)) deMas++;
+      if (marcado !== c.sembrado) fallos.push(c.sembrado ? `no detectó: ${c.ajena}` : `marcó un limpio: ${marcadas[0]}`);
     });
   }
-  return { total: conjunto.length, marcados, sinRespuesta, tasa: marcados / (conjunto.length - sinRespuesta || 1), fallos };
+  return { total: conjunto.length, marcados, deMas, sinRespuesta, tasa: marcados / (conjunto.length - sinRespuesta || 1), fallos };
 }
 
 // --- 2. De punta a punta ---

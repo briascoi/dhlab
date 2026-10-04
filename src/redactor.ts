@@ -1,6 +1,6 @@
 // Cómo se le pide un texto al modelo y qué se hace con lo que devuelve. Sin red propia ni DOM: recibe la función que llama al modelo,
 // así el mismo código corre en el Worker (IA incluida) y en el navegador (clave propia), con las mismas guardas (E3-guardas).
-import { filtrar, leerSalida, type FichaIA, type Parrafo } from "./guardas";
+import { filtrar, frases, leerSalida, type FichaIA, type Parrafo } from "./guardas";
 
 export const MODELO = "anthropic/claude-haiku-4.5";
 // Una llamada al modelo: devuelve el texto y lo que costó en millonésimas de dólar, o null si no respondió.
@@ -24,12 +24,14 @@ export function leerOpenRouter(d: unknown): { texto: string; micros: number } | 
 const REGLAS = `Eres el redactor de DH Lab, un laboratorio de Diseño Humano. Escribes en español neutro, de tú, con frases cortas.
 Respondes SOLO con un JSON de esta forma: {"parrafos":[{"tipo":"narrativo","texto":"..."},{"tipo":"interpretativo","texto":"...","fuentes":["id.de.ficha"]}]}
 Reglas, sin excepción:
-- "interpretativo": todo lo que diga algo sobre el Diseño de la persona. Lleva en "fuentes" los ids de las fichas que lo respaldan. Solo puedes afirmar lo que esas fichas dicen; no agregas nada de tu conocimiento.
+- "interpretativo": todo lo que diga algo sobre el Diseño de la persona. Lleva en "fuentes" los ids de las fichas que lo respaldan. Cada frase tiene que poder señalarse en una de esas fichas: reformulas o resumes lo que la ficha dice, y nada más.
+- No agregas nada de tu conocimiento: ni causas, ni consecuencias, ni consejos, ni ejemplos, ni metáforas, ni cómo se siente o qué pasa "cuando" la persona hace algo, salvo que la ficha lo diga.
+- Si las fichas dicen poco, escribes poco. Un texto corto y fiel vale más que uno largo.
 - "narrativo": transiciones y preguntas, dos oraciones como máximo, sin afirmar nada sobre el Diseño de la persona y sin números.
 - Ningún número que no esté en la ficha citada.
 - Prohibido: predicciones, salud, medicina, terapia, consejos de pareja, y llamar ciencia al sistema o decir que está comprobado.
 - Si las fichas no alcanzan para responder, devuelve un solo párrafo narrativo que lo diga.`;
-const VERIFICADOR = 'Eres un verificador. Recibes fichas y párrafos numerados. Para cada párrafo decides si TODO lo que afirma está dicho en las fichas que cita. Respondes SOLO con JSON: {"respaldados":[números de los párrafos respaldados]}';
+const VERIFICADOR = 'Eres un verificador estricto. Recibes párrafos; cada uno trae el texto de las fichas que cita y sus frases numeradas. Para cada frase decides si lo que afirma está dicho en las fichas de ESE párrafo. Reformular o resumir lo que la ficha dice vale. No vale agregar causas, consecuencias, consejos, ejemplos, metáforas o datos que la ficha no dice, aunque suenen razonables. Ante la duda, la frase va sin respaldo. Respondes SOLO con JSON: {"sin_respaldo":[{"parrafo":número,"frase":número}]}';
 
 // La salida se valida contra el esquema, con hasta 2 reintentos.
 async function redactar(llamar: Llamar, pedido: string) {
@@ -44,39 +46,50 @@ async function redactar(llamar: Llamar, pedido: string) {
   return { parrafos: null, micros };
 }
 
-// El verificador: una segunda llamada que dice qué párrafos están respaldados por las fichas que citan (por posición en la lista).
-// Devuelve null en `respaldados` si no respondió con el formato pedido. Lo usan el capítulo y los evals (scripts/evals.ts).
-export async function verificar(llamar: Llamar, fichas: FichaIA[], parrafos: Parrafo[]): Promise<{ respaldados: unknown[] | null; micros: number }> {
-  const v = await llamar(VERIFICADOR, JSON.stringify({ fichas, parrafos: parrafos.map((p, i) => ({ numero: i, texto: p.texto, fuentes: p.fuentes })) }));
-  let respaldados: unknown;
+// El verificador: una segunda llamada que revisa frase por frase los párrafos interpretativos contra las fichas que cada uno cita.
+// Devuelve las frases sin respaldo (párrafo y frase por posición), o null si no respondió con el formato pedido.
+// Lo usan el capítulo y los evals (scripts/evals.ts).
+export interface SinRespaldo { parrafo: number; frase: number }
+export async function verificar(llamar: Llamar, fichas: FichaIA[], parrafos: Parrafo[]): Promise<{ sinRespaldo: SinRespaldo[] | null; micros: number }> {
+  const pedido = parrafos.map((p, i) => ({ numero: i, fichas: fichas.filter((f) => p.fuentes?.includes(f.id)).map((f) => f.texto), frases: frases(p.texto).map((texto, j) => ({ numero: j, texto })) }));
+  const v = await llamar(VERIFICADOR, JSON.stringify({ parrafos: pedido }));
+  let lista: unknown;
   try {
-    respaldados = (JSON.parse(v!.texto.replace(/^\s*```(?:json)?\s*|\s*```\s*$/g, "")) as { respaldados?: unknown }).respaldados;
+    lista = (JSON.parse(v!.texto.replace(/^\s*```(?:json)?\s*|\s*```\s*$/g, "")) as { sin_respaldo?: unknown }).sin_respaldo;
   } catch {
-    respaldados = null;
+    lista = null;
   }
-  return { respaldados: Array.isArray(respaldados) ? respaldados : null, micros: v?.micros ?? 0 };
+  const valida = Array.isArray(lista) && lista.every((x) => Number.isInteger((x as SinRespaldo)?.parrafo) && Number.isInteger((x as SinRespaldo)?.frase));
+  return { sinRespaldo: valida ? (lista as SinRespaldo[]) : null, micros: v?.micros ?? 0 };
 }
 
-// Un capítulo: redactar, guardas y verificador. El verificador quita lo interpretativo que no está respaldado;
-// si entre las guardas y el verificador se cae más del 40% de lo interpretativo, no se publica.
+// Un capítulo: redactar, guardas y verificador. El verificador quita las frases interpretativas sin respaldo (y el párrafo, si se
+// queda sin frases). No se publica si las guardas descartan más del 40% de los párrafos interpretativos o el verificador más del
+// 40% de sus frases.
 export async function escribirCapitulo(llamar: Llamar, n: number, fichas: FichaIA[]): Promise<{ parrafos?: Parrafo[]; error?: "salida_invalida" | "no_publicable"; micros: number }> {
-  const r = await redactar(llamar, `${JSON.stringify({ fichas })}\nEscribe la sección del capítulo ${n} del libro de esta persona, de hasta 250 palabras, usando solo estas fichas.`);
+  const r = await redactar(llamar, `${JSON.stringify({ fichas })}\nEscribe la sección del capítulo ${n} del libro de esta persona usando solo estas fichas. No tiene que ser más larga que las fichas juntas, y nunca más de 250 palabras.`);
   if (!r.parrafos) return { error: "salida_invalida", micros: r.micros };
-  let { validos, publicable } = filtrar(r.parrafos, fichas);
+  const { validos, publicable } = filtrar(r.parrafos, fichas);
   if (!publicable) return { error: "no_publicable", micros: r.micros };
-  const v = await verificar(llamar, fichas, validos);
-  const respaldados = v.respaldados;
+  const interpretativos = validos.filter((p) => p.tipo === "interpretativo");
+  const v = await verificar(llamar, fichas, interpretativos);
   const micros = r.micros + v.micros;
-  if (!respaldados) return { error: "salida_invalida", micros };
-  const total = r.parrafos.filter((p) => p.tipo === "interpretativo").length;
-  validos = validos.filter((p, i) => p.tipo === "narrativo" || respaldados.includes(i));
-  const quedan = validos.filter((p) => p.tipo === "interpretativo").length;
-  return quedan > 0 && (total - quedan) / total <= 0.4 ? { parrafos: validos, micros } : { error: "no_publicable", micros };
+  if (!v.sinRespaldo) return { error: "salida_invalida", micros };
+  let total = 0, quedan = 0;
+  const parrafos = validos.flatMap((p) => {
+    if (p.tipo === "narrativo") return [p];
+    const i = interpretativos.indexOf(p), todas = frases(p.texto);
+    const firmes = todas.filter((_, j) => !v.sinRespaldo!.some((s) => s.parrafo === i && s.frase === j));
+    total += todas.length;
+    quedan += firmes.length;
+    return firmes.length ? [{ ...p, texto: firmes.join(" ") }] : [];
+  });
+  return quedan > 0 && (total - quedan) / total <= 0.4 ? { parrafos, micros } : { error: "no_publicable", micros };
 }
 
 // Un mensaje del coach: una llamada, sin verificador. Sin ningún párrafo interpretativo válido, no hay respuesta del modelo que mostrar.
 export async function responder(llamar: Llamar, texto: string, historial: unknown[], fichas: FichaIA[]): Promise<{ parrafos?: Parrafo[]; error?: "salida_invalida"; micros: number }> {
-  const r = await redactar(llamar, `${JSON.stringify({ fichas })}\nConversación hasta ahora: ${JSON.stringify(historial)}\nLa persona pregunta: ${JSON.stringify(texto)}\nResponde en hasta 120 palabras, usando solo estas fichas.`);
+  const r = await redactar(llamar, `${JSON.stringify({ fichas })}\nConversación hasta ahora: ${JSON.stringify(historial)}\nLa persona pregunta: ${JSON.stringify(texto)}\nResponde usando solo estas fichas, en 120 palabras como máximo; si las fichas dicen poco, responde corto.`);
   if (!r.parrafos) return { error: "salida_invalida", micros: r.micros };
   const { validos, conInterpretacion } = filtrar(r.parrafos, fichas);
   return conInterpretacion ? { parrafos: validos, micros: r.micros } : { micros: r.micros };

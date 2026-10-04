@@ -94,7 +94,7 @@ test("solo entran las dos acciones con sus campos: un prompt, una acción ajena 
 
 test("capítulo: el pedido lleva solo las fichas del catálogo y proveedores sin retención; lo publicado trae sus fichas y el gasto real", async () => {
   const cookie = await entrar();
-  const recibido = openrouter(capitulo, { respaldados: [0, 1, 2] });
+  const recibido = openrouter(capitulo, { sin_respaldo: [] });
   const r = await pedir(cookie, { accion: "capitulo", n: 1, atributos });
   expect(r.status).toBe(200);
   expect(await r.json()).toMatchObject({ parrafos: capitulo.parrafos, modelo: "anthropic/claude-haiku-4.5", fichas: [{ id: "tipo.proyector", version: 1 }, { id: "estrategia.invitacion", version: 1 }, { id: "firma_no_yo.invitacion", version: 1 }] });
@@ -110,8 +110,13 @@ test("capítulo: si se descarta más del 40% de lo interpretativo (por las guard
   const cookie = await entrar();
   openrouter({ parrafos: [interp("Esperas la invitación.", ["estrategia.invitacion"]), interp("Sin respaldo.", ["ficha.inventada"])] });
   expect([(await pedir(cookie, { accion: "capitulo", n: 1, atributos })).status]).toEqual([422]);
-  openrouter(capitulo, { respaldados: [0, 1] });
+  // El verificador marca una de las dos frases interpretativas: se cae la mitad, más del 40%.
+  openrouter(capitulo, { sin_respaldo: [{ parrafo: 1, frase: 0 }] });
   expect((await pedir(cookie, { accion: "capitulo", n: 1, atributos })).status).toBe(422);
+  // Con una sola frase sin respaldo entre varias, el capítulo sale sin esa frase.
+  openrouter({ parrafos: [interp("Esperas la invitación. La vida te trae giros inesperados. Eso es tu Estrategia.", ["estrategia.invitacion"]), interp("Tu Firma es el Éxito.", ["firma_no_yo.invitacion"])] }, { sin_respaldo: [{ parrafo: 0, frase: 1 }] });
+  const limpio = (await (await pedir(cookie, { accion: "capitulo", n: 1, atributos })).json()) as { parrafos: { texto: string }[] };
+  expect(limpio.parrafos.map((p) => p.texto)).toEqual(["Esperas la invitación. Eso es tu Estrategia.", "Tu Firma es el Éxito."]);
   // Una salida que no cumple el esquema se reintenta dos veces y después falla.
   const recibido = openrouter({ otra: "cosa" });
   expect([(await pedir(cookie, { accion: "capitulo", n: 1, atributos })).status, recibido.length]).toEqual([502, 3]);
@@ -131,7 +136,7 @@ test("mensaje: los temas sensibles y la pregunta por la ciencia tienen respuesta
 
 test("dos pedidos simultáneos al borde del tope: entra uno solo; el tope global pone la IA en pausa para todos", async () => {
   const cookie = await entrar();
-  openrouter(capitulo, { respaldados: [0, 1, 2] });
+  openrouter(capitulo, { sin_respaldo: [] });
   // El tope de la cuenta alcanza para una sola reserva de capítulo.
   const tope = { IA_TOPE_CUENTA: "90000" };
   const estados = (await Promise.all([pedir(cookie, { accion: "capitulo", n: 1, atributos }, tope), pedir(cookie, { accion: "capitulo", n: 2, atributos }, tope)])).map((r) => r.status).sort();
