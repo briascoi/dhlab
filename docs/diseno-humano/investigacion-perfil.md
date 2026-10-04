@@ -2,6 +2,9 @@
 
 Fecha de lectura: 2026-10-04. Todo lo de abajo sale de páginas leídas en esta sesión. Las páginas se leyeron con WebFetch (un modelo chico resume el contenido), así que las citas se pidieron de nuevo en una segunda lectura; las que no se pudieron reconfirmar están marcadas. Las citas son fragmentos de menos de 12 palabras; las redacciones son mías. Derechos de las fuentes: Jovian Archive.
 
+
+**Aviso (2026-10-04).** Este documento se armó con lecturas resumidas por un modelo, que pueden inventar citas. Se cotejaron contra el texto crudo solo las de la página de Perfil y las de la página de las seis Líneas, que son las que usan las fichas del Capítulo 3. Las citas de las páginas de producto de cada Perfil, del blog, del diccionario y de la colección NO están cotejadas: no se usan en ninguna ficha hasta cotejarlas.
+
 ## Fuentes leídas
 
 | Marca | Título | URL | Qué es |

@@ -29,6 +29,15 @@ Todas leídas el 2026-10-03. De J1 a J4 la lectura fue por extracción automáti
 
 **Verificación del 2026-10-04.** La extracción automática puede inventar cifras y citas (pasó con porcentajes de Definición, que se descartaron). Por eso, todas las citas y cifras que usan las fichas de los Capítulos 1 y 2 se cotejaron contra el texto crudo de J1 y de las ocho páginas de Autoridad, bajado sin resumir: aparecen todas tal cual, salvo una que estaba con la puntuación cambiada y se corrigió. Regla desde ahora: ninguna cita entra a una ficha sin aparecer literalmente en el texto crudo de la página.
 
+**Cómo se hace cumplir.** No depende de acordarse:
+
+1. `node scripts/bajar-fuentes.mjs` baja cada página que citan las fichas y guarda su texto tal cual, sin resumir ni pasar por ningún modelo, en `contenido/fuentes/` (carpeta privada: es texto con derechos reservados y solo se usa para cotejar).
+2. El control automático (`test/contenido.test.ts`, corre con `npm test` y en la CI del repo privado) falla si una ficha cita una página sin texto guardado, si una cita entre comillas no aparece literal en el texto de una de sus fuentes, o si un porcentaje o una cantidad de días no figura en la fuente como tal. Se probó con una cita y dos cifras inventadas, y las frena.
+3. Las fichas se escriben leyendo ese texto crudo. Un resumen automático de una página sirve para ubicar qué leer, nunca como fuente de una cita, de una cifra ni de una afirmación.
+4. Lo que el control no puede ver son las afirmaciones parafraseadas sin comillas. Para esas, la regla es de redacción: cada frase de una ficha tiene que poder señalarse en el texto crudo, y lo que no, no se escribe. La revisión de Isma antes de aprobar cada ficha es la segunda barrera.
+
+Las citas en inglés de este documento también se cotejaron contra los textos guardados el 2026-10-04: aparecen todas.
+
 ## Tipos
 
 **Hay cuatro Tipos, y el Generador Manifestante es un subgrupo del Generador.** El diccionario oficial lo dice así: "The manifesting Generator is neither a Manifestor nor a separate Type, it is a sub group of Generator" [J2]. DH Lab lo muestra como quinto nombre porque así lo conoce la gente, pero comparte Estrategia, Firma y No-Yo con el Generador [J1].
