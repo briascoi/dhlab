@@ -54,8 +54,9 @@
 @keyframes onda-modula { 50% { scale: 1 0.45; } }
 /* Acciones del coach: píldoras (DESIGN.md, coach-action). */
 .coach-accion { min-height: 44px; padding: 6px 16px; font: inherit; font-weight: 600; color: var(--text); background: var(--surface-panel); border: 2px solid var(--border); border-radius: 999px; cursor: pointer; }
-/* El Centro al que llevó el coach, resaltado en el mapa con la segunda tinta: sobre un Centro definido, la de luz no se vería. */
-.mapa-boton.mapa-resaltado { stroke: var(--action); stroke-width: 5; stroke-linejoin: round; }
+/* El Centro al que llevó el coach, resaltado con un aro en la segunda tinta alrededor de la pieza: queda sobre el fondo del panel,
+   así se ve también de noche, cuando la segunda tinta y la de luz son el mismo oro. */
+.mapa-boton.mapa-resaltado { stroke: var(--action); stroke-width: 4; stroke-linejoin: round; vector-effect: non-scaling-stroke; transform-box: fill-box; transform-origin: center; transform: scale(1.24); }
 /* Apertura de capítulo: el título y las fichas entran en secuencia. */
 .marco-contenido.entra .capitulo > * { animation: enchufa 320ms ease-out backwards; animation-delay: calc(120ms + var(--orden, 0) * 60ms); }
 .marco-contenido.entra .capitulo > :nth-child(2) { --orden: 1; }

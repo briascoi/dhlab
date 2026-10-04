@@ -206,7 +206,7 @@ body {
 .boton-principal, .boton-secundario, .coach-accion { transition: transform 80ms ease-out; }
 .boton-principal:active { transform: translate(2px, 2px); }
 .boton-secundario:active, .coach-accion:active { transform: translate(1px, 1px); }
-/* El sello se estampa al aparecer. */
-.sello, .capitulo-sello { animation: sella 380ms ease-in backwards; }
+/* El sello se estampa: el de la tarjeta, al entrar a la pantalla; el de un experimento, solo cuando se acaba de cerrar. */
+.sello, .capitulo-sello.nuevo { animation: sella 380ms ease-in backwards; }
 .sello { animation-delay: 240ms; }
 @keyframes sella { from { scale: 2.2; rotate: -24deg; opacity: 0; } 70% { scale: 0.94; opacity: 1; } }

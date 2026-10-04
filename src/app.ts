@@ -612,6 +612,7 @@ async function pantallaCoach(a: Atributos, contenido: HTMLElement, repintar: () 
   );
 }
 
+let recienRespondido = false;
 // Experimentos: lo que la persona eligió probar en cada capítulo y, los días 3 y 7, el chequeo "¿cómo te fue?" (DR11). Devuelve false si todavía no eligió nada.
 async function experimentos(a: Atributos, contenido: HTMLElement, repintar: () => void): Promise<boolean> {
   const abierto = ["abierto", "sin_clave"].includes(await diario!.estado());
@@ -632,11 +633,15 @@ async function experimentos(a: Atributos, contenido: HTMLElement, repintar: () =
           await c.guardar({ ...estado, chequeos: [...(estado.chequeos ?? []), { dia, respuesta, fecha: new Date().toISOString() }] });
           const codigo = nota ? await c.escribir(nota) : null;
           if (codigo) abrirCodigo(codigo);
+          recienRespondido = true;
           repintar();
         },
       }),
     );
   }
+  // El sello se estampa una sola vez, cuando la respuesta lo acaba de cerrar; al volver a la pantalla ya está puesto.
+  if (recienRespondido) contenido.querySelector(".capitulo-sello")?.classList.add("nuevo");
+  recienRespondido = false;
   return hay;
 }
 
