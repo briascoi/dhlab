@@ -32,14 +32,14 @@ export function dibujarCapitulo(o: { titulo: string; fichas: Ficha[]; experiment
 }
 
 // El experimento en curso, con su chequeo de los días 3 y 7 (DR11): tres respuestas y una nota opcional al diario. Sin rachas.
-export function dibujarExperimento(o: { experimento: Ficha; estado: EstadoCapitulo; conNota: boolean; alResponder: (dia: 3 | 7, respuesta: Respuesta, nota: string) => void }): HTMLElement {
+export function dibujarExperimento(o: { id: string; experimento: Ficha; estado: EstadoCapitulo; conNota: boolean; alResponder: (dia: 3 | 7, respuesta: Respuesta, nota: string) => void }): HTMLElement {
   const panel = el("section", "panel capitulo", ficha(o.experimento, t(o.experimento.clase === "observacion" ? "experimento.clase.observacion" : "experimento.clase.experimento"), "h2"));
   const sello = cierre(o.estado);
   panel.append(el("p", "capitulo-elegido", sello ? t("chequeo.sello", { respuesta: t(`chequeo.${sello.respuesta}`) }) : t("capitulo.elegido", { fecha: fecha(o.estado.elegido) })));
   const dia = chequeoPendiente(o.estado);
   if (!dia) return panel;
   const nota = el("textarea", "campo");
-  nota.id = "chequeo-nota";
+  nota.id = o.id;
   const rotulo = el("label", "rotulo-campo", t("chequeo.nota"));
   rotulo.htmlFor = nota.id;
   const respuestas = el("div", "zona-cuenta", ...(["me_representa", "no_me_representa", "no_probe"] as const).map((r) => boton("boton-secundario", t(`chequeo.${r}`), () => o.alResponder(dia, r, nota.value.trim()))));

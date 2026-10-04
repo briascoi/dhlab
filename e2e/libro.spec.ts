@@ -13,7 +13,8 @@ test("Capítulo 1: fichas con su fuente, elegir un experimento lo completa, y la
   await page.getByRole("button", { name: "Libro" }).click();
   await expect(page.getByRole("heading", { name: "Capítulo 1 · Tu Tipo" })).toBeVisible();
   // La carta de prueba es de un solo Tipo: tres fichas, cada una con su fuente y marcada como borrador hasta que Isma la revise.
-  const fichas = page.locator(".capitulo > .ficha");
+  const primero = page.locator(".capitulo").first();
+  const fichas = primero.locator(":scope > .ficha");
   await expect(fichas).toHaveCount(3);
   await expect(fichas.first().getByText(/^Fuente: /)).toBeVisible();
   await expect(fichas.first().getByText("Borrador sin revisar")).toBeVisible();
@@ -22,14 +23,14 @@ test("Capítulo 1: fichas con su fuente, elegir un experimento lo completa, y la
 
   await expect(page.getByRole("heading", { name: "Elige cómo probarlo" })).toBeVisible();
   await page.getByRole("button", { name: "Elegir este" }).first().click();
-  await expect(page.getByRole("heading", { name: "Capítulo completado" })).toBeVisible();
-  await expect(page.getByText(/^Lo elegiste el /)).toBeVisible();
+  await expect(primero.getByRole("heading", { name: "Capítulo completado" })).toBeVisible();
+  await expect(primero.getByText(/^Lo elegiste el /)).toBeVisible();
   await expect.poll(() => servidor.documentos.map((d) => `${d.tipo}/${d.id}`).sort()).toEqual(["carta/principal", "libro/capitulo-1"]);
   expect(JSON.parse(servidor.documentos.find((d) => d.tipo === "libro")!.contenido)).toMatchObject({ esquema: 1, atributo: expect.stringMatching(/^Estrategia: /) });
 
   // La entrada se guarda primero; después aparece el código. "Ahora no" no la pierde y deja el aviso pendiente.
-  await page.getByLabel("Anota algo en tu diario").fill("Hoy respondí a algo que me llegó.");
-  await page.getByRole("button", { name: "Guardar en mi diario" }).click();
+  await primero.getByLabel("Anota algo en tu diario").fill("Hoy respondí a algo que me llegó.");
+  await primero.getByRole("button", { name: "Guardar en mi diario" }).click();
   const hoja = page.getByRole("dialog");
   await expect(hoja.getByRole("heading", { name: "Tu código de recuperación" })).toBeVisible();
   const codigo = (await hoja.locator("p.codigo-recuperacion").textContent())!;
@@ -37,19 +38,19 @@ test("Capítulo 1: fichas con su fuente, elegir un experimento lo completa, y la
   expect([entrada.cifrado, entrada.contenido.includes("respondí")]).toEqual([true, false]);
   expect(await desenvolver(servidor.clave!.envuelta, codigo)).not.toBeNull();
   await hoja.getByRole("button", { name: "Ahora no" }).click();
-  await expect(page.locator(".diario-entradas li")).toContainText("Hoy respondí a algo que me llegó.");
-  await expect(page.getByText("Todavía no guardaste tu código de recuperación.")).toBeVisible();
+  await expect(primero.locator(".diario-entradas li")).toContainText("Hoy respondí a algo que me llegó.");
+  await expect(primero.getByText("Todavía no guardaste tu código de recuperación.")).toBeVisible();
   expect((await new AxeBuilder({ page }).analyze()).violations.map((v) => v.id)).toEqual([]);
 
   // La segunda entrada no vuelve a mostrar el código, y todo sigue ahí al recargar.
-  await page.getByLabel("Anota algo en tu diario").fill("Segunda nota.");
-  await page.getByRole("button", { name: "Guardar en mi diario" }).click();
-  await expect(page.locator(".diario-entradas li")).toHaveCount(2);
+  await primero.getByLabel("Anota algo en tu diario").fill("Segunda nota.");
+  await primero.getByRole("button", { name: "Guardar en mi diario" }).click();
+  await expect(primero.locator(".diario-entradas li")).toHaveCount(2);
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await page.reload();
   await page.getByRole("button", { name: "Libro" }).click();
-  await expect(page.locator(".diario-entradas li")).toHaveCount(2);
-  await expect(page.getByRole("heading", { name: "Capítulo completado" })).toBeVisible();
+  await expect(primero.locator(".diario-entradas li")).toHaveCount(2);
+  await expect(primero.getByRole("heading", { name: "Capítulo completado" })).toBeVisible();
 });
 
 test("chequeo de los días 3 y 7: la app pregunta cómo te fue, la respuesta del día 7 cierra el experimento con su sello (DR11)", async ({ page }) => {
@@ -83,4 +84,33 @@ test("chequeo de los días 3 y 7: la app pregunta cómo te fue, la respuesta del
   await expect(page.getByRole("heading", { name: "¿Cómo te fue?" })).toHaveCount(0);
   await page.getByRole("button", { name: "Libro" }).click();
   await expect(page.getByText("Cerrado: Me representa")).toBeVisible();
+});
+
+test("completar el Capítulo 1 abre el Capítulo 2 con las fichas de la Autoridad; el siguiente queda nombrado y cerrado", async ({ page }) => {
+  await simularServidor(page, { conSesion: true, carta: true });
+  await page.goto("/");
+  await expect(page.getByText("Capítulo 1 · Tu Tipo")).toBeVisible();
+  await page.getByRole("button", { name: "Libro" }).click();
+  await expect(page.getByRole("heading", { name: "Capítulo 2 · Tu Autoridad" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Elegir este" }).first().click();
+  const segundo = page.locator(".capitulo").nth(1);
+  await expect(segundo.getByRole("heading", { name: "Capítulo 2 · Tu Autoridad" })).toBeVisible();
+  await expect(segundo.locator(":scope > .ficha")).toHaveCount(2);
+  await expect(segundo.getByText(/^Tu Autoridad es /)).toBeVisible();
+  expect((await new AxeBuilder({ page }).analyze()).violations.map((v) => v.id)).toEqual([]);
+
+  // Una entrada escrita en el Capítulo 2 queda junto a esa sección, no en la del 1.
+  await segundo.getByLabel("Anota algo en tu diario").fill("Nota del capítulo dos.");
+  await segundo.getByRole("button", { name: "Guardar en mi diario" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Ahora no" }).click();
+  await expect(segundo.locator(".diario-entradas li")).toHaveCount(1);
+  await expect(page.locator(".capitulo").first().locator(".diario-entradas li")).toHaveCount(0);
+
+  await segundo.getByRole("button", { name: "Elegir este" }).first().click();
+  await expect(page.getByText("El Capítulo 3 · Tu Perfil se abre cuando completes el anterior.")).toBeVisible();
+  await page.getByRole("button", { name: "Mapa" }).click();
+  await expect(page.getByText("Capítulo 3 · Tu Perfil")).toBeVisible();
+  await expect(page.getByText("3/5")).toBeVisible();
+  await page.getByRole("button", { name: "Experimentos" }).click();
+  await expect(page.locator(".capitulo")).toHaveCount(2);
 });

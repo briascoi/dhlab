@@ -38,3 +38,10 @@ test("el chequeo toca el día 3 y el día 7, una vez cada uno, y el del 7 no esp
   expect([0, 2, 3, 6, 7, 30].map((d) => chequeoPendiente(base, d * DIA))).toEqual([null, null, 3, 3, 7, 7]);
   expect([chequeoPendiente(con(3), 5 * DIA), chequeoPendiente(con(3), 7 * DIA), chequeoPendiente(con(7), 9 * DIA)]).toEqual([null, 7, null]);
 });
+
+test.skipIf(!archivos.some((a) => a.includes("capitulo-2")))("el Capítulo 2 tiene sus dos fichas y su experimento para cada Autoridad", () => {
+  const ids = new Set(entradas.map((e) => e.id));
+  for (const a of ["emocional", "sacral", "esplenica", "ego_manifestado", "ego_proyectado", "autoproyectada", "mental", "lunar"]) {
+    for (const id of [`autoridad.${a}`, `autoridad_como.${a}`, `experimento.autoridad.${a}`]) expect(ids.has(id), id).toBe(true);
+  }
+});

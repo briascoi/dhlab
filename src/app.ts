@@ -12,12 +12,12 @@ import { clasificar, clave, leerArchivo, otraVersion } from "./importar";
 import { motor } from "./motor";
 import { crearSync } from "./sync";
 import { estallido, flecha, mancha } from "./ui/trazos";
-import { t } from "./textos";
+import { t, type TextoId } from "./textos";
 import { abrirCartaCambio, abrirExportar, aplicarTema, dibujarAjustes } from "./ui/ajustes";
 import { dibujarConfiguracion } from "./ui/configuracion";
 import { abrirCuenta } from "./ui/cuenta";
 import { dibujarDetalle } from "./ui/detalle-centro";
-import { capitulo1, chequeoPendiente, type EstadoCapitulo } from "./contenido";
+import { capitulo, chequeoPendiente, ESCRITOS, type Atributos, type EstadoCapitulo } from "./contenido";
 import { DEL_TIPO } from "./engine/tipos";
 import { dibujarCapitulo, dibujarExperimento } from "./ui/capitulo";
 import { abrirCodigo, abrirDiarioCerrado, dibujarDiario, type DiarioCerrado, type Entrada } from "./ui/diario";
@@ -391,86 +391,110 @@ function filaDiarioCerrado(alAbrir: () => void): HTMLElement {
   return fila;
 }
 
-// El Capítulo 1 de la cuenta abierta: su contenido para el Tipo, lo guardado en el Libro y cómo escribir en el diario.
-const ID_CAPITULO = "capitulo-1";
-type TipoId = keyof typeof DEL_TIPO;
-async function capituloDe(tipo: TipoId) {
+// Un capítulo de la cuenta abierta: su contenido para esta carta, lo guardado en el Libro y cómo escribir en el diario.
+async function capituloDe(n: number, a: Atributos) {
   const s = syncDe(cuenta!);
   const d = diario!;
-  const guardado = await s.leer("libro", ID_CAPITULO);
-  const atributo = `${t("configuracion.estrategia")}: ${t(`estrategia.${DEL_TIPO[tipo].estrategia}` as Parameters<typeof t>[0])}`;
+  const id = `capitulo-${n}`;
+  const guardado = await s.leer("libro", id);
+  // El atributo al que se refiere lo que se guarde, para cuando una corrección de la carta lo cambie (R12).
+  const atributo = n === 1 ? `${t("configuracion.estrategia")}: ${t(`estrategia.${DEL_TIPO[a.tipo].estrategia}` as TextoId)}` : `${t("configuracion.autoridad")}: ${t(`autoridad.${a.autoridad}` as TextoId)}`;
   return {
-    ...capitulo1(tipo)!,
+    ...capitulo(n, a)!,
+    n,
     s,
     d,
     atributo,
     estado: guardado ? (JSON.parse(guardado.contenido) as EstadoCapitulo) : null,
     guardar: async (estado: EstadoCapitulo) => {
-      await s.guardar("libro", ID_CAPITULO, JSON.stringify(estado));
+      await s.guardar("libro", id, JSON.stringify(estado));
       void sincronizar();
     },
     // Guarda la entrada; devuelve el código de recuperación si con ella nació el diario y su clave ya quedó registrada en la cuenta (DR34).
     escribir: async (texto: string) => {
       const codigo = (await d.estado()) === "sin_clave" ? await d.crear() : null;
-      await d.escribir(crypto.randomUUID(), JSON.stringify({ texto, fecha: new Date().toISOString(), capitulo: 1, atributo } satisfies Omit<Entrada, "id">));
+      await d.escribir(crypto.randomUUID(), JSON.stringify({ texto, fecha: new Date().toISOString(), capitulo: n, atributo } satisfies Omit<Entrada, "id">));
       await sincronizar();
       // Si otro dispositivo registró su clave antes, rige la de ese y este código no sirve (E3-dosclaves).
       return codigo && cuenta?.modo === "nube" && (await d.estado()) === "abierto" && !(await s.pendientes()) ? codigo : null;
     },
   };
 }
-
-// El Libro: por ahora, el Capítulo 1 con sus fichas, lo elegido para probar y el diario junto a la sección.
-async function libro(tipo: TipoId, contenido: HTMLElement, repintar: () => void) {
-  const c = await capituloDe(tipo);
-  const zonaDiario = dibujarDiario(
-    {
-      estado: c.d.estado,
-      entradas: async () => (await Promise.all((await c.s.listar("diario")).map(async ({ id }) => ({ id, texto: await c.d.leer(id) })))).flatMap(({ id, texto }) => (texto === null ? [] : [{ ...(JSON.parse(texto) as Omit<Entrada, "id">), id }])),
-      escribir: c.escribir,
-      quedarse: async ({ id, versionDe: _v, ...resto }) => {
-        await c.d.escribir(id, JSON.stringify(resto));
-        void sincronizar();
-      },
-    },
-    () => filaDiarioCerrado(repintar),
-  );
-  contenido.append(
-    dibujarCapitulo({
-      titulo: t("capitulo.en_curso", { numero: 1, titulo: t("capitulo.1.titulo") }),
-      fichas: c.fichas,
-      experimentos: c.experimentos,
-      estado: c.estado,
-      alElegir: async (e) => {
-        await c.guardar({ esquema: 1, experimento: e.id, elegido: new Date().toISOString(), atributo: c.atributo, fichas: [...c.fichas, e].map(({ id, version }) => ({ id, version })) });
-        repintar();
-      },
-      diario: zonaDiario,
-    }),
-  );
+// Los capítulos abiertos, en orden: el primero, y cada siguiente cuando el anterior está completado (elegido su experimento).
+async function abiertos(a: Atributos) {
+  const lista: Awaited<ReturnType<typeof capituloDe>>[] = [];
+  for (let n = 1; n <= ESCRITOS; n++) {
+    lista.push(await capituloDe(n, a));
+    if (!lista.at(-1)!.estado) break;
+  }
+  return lista;
 }
 
-// Experimentos: lo que la persona eligió probar y, los días 3 y 7, el chequeo "¿cómo te fue?" (DR11). Devuelve false si todavía no eligió nada.
-async function experimentos(tipo: TipoId, contenido: HTMLElement, repintar: () => void): Promise<boolean> {
-  const c = await capituloDe(tipo);
-  const experimento = c.experimentos.find((e) => e.id === c.estado?.experimento);
-  if (!c.estado || !experimento) return false;
-  const estado = c.estado;
-  const abierto = ["abierto", "sin_clave"].includes(await c.d.estado());
-  contenido.append(
-    dibujarExperimento({
-      experimento,
-      estado,
-      conNota: abierto,
-      alResponder: async (dia, respuesta, nota) => {
-        await c.guardar({ ...estado, chequeos: [...(estado.chequeos ?? []), { dia, respuesta, fecha: new Date().toISOString() }] });
-        const codigo = nota ? await c.escribir(nota) : null;
-        if (codigo) abrirCodigo(codigo);
-        repintar();
+// El Libro: los capítulos abiertos, cada uno con sus fichas, lo elegido para probar y sus entradas del diario junto a la sección.
+async function libro(a: Atributos, contenido: HTMLElement, repintar: () => void) {
+  const lista = await abiertos(a);
+  for (const c of lista) {
+    const zonaDiario = dibujarDiario(
+      {
+        id: `diario-${c.n}`,
+        estado: c.d.estado,
+        entradas: async () =>
+          (await Promise.all((await c.s.listar("diario")).map(async ({ id }) => ({ id, texto: await c.d.leer(id) }))))
+            .flatMap(({ id, texto }) => (texto === null ? [] : [{ ...(JSON.parse(texto) as Omit<Entrada, "id">), id }]))
+            .filter((e) => e.capitulo === c.n),
+        escribir: c.escribir,
+        quedarse: async ({ id, versionDe: _v, ...resto }) => {
+          await c.d.escribir(id, JSON.stringify(resto));
+          void sincronizar();
+        },
       },
-    }),
-  );
-  return true;
+      () => filaDiarioCerrado(repintar),
+    );
+    contenido.append(
+      dibujarCapitulo({
+        titulo: t("capitulo.en_curso", { numero: c.n, titulo: t(`capitulo.${c.n}.titulo` as TextoId) }),
+        fichas: c.fichas,
+        experimentos: c.experimentos,
+        estado: c.estado,
+        alElegir: async (e) => {
+          await c.guardar({ esquema: 1, experimento: e.id, elegido: new Date().toISOString(), atributo: c.atributo, fichas: [...c.fichas, e].map(({ id, version }) => ({ id, version })) });
+          repintar();
+        },
+        diario: zonaDiario,
+      }),
+    );
+  }
+  // El que sigue, todavía cerrado: su nombre y qué lo abre, sin contenido.
+  const sigue = lista.length + 1;
+  if (lista.at(-1)!.estado && sigue <= CAPITULOS) contenido.append(el("p", "marco-vacio", t("capitulo.bloqueado", { numero: sigue, titulo: t(`capitulo.${sigue}.titulo` as TextoId) })));
+}
+
+// Experimentos: lo que la persona eligió probar en cada capítulo y, los días 3 y 7, el chequeo "¿cómo te fue?" (DR11). Devuelve false si todavía no eligió nada.
+async function experimentos(a: Atributos, contenido: HTMLElement, repintar: () => void): Promise<boolean> {
+  const abierto = ["abierto", "sin_clave"].includes(await diario!.estado());
+  let hay = false;
+  // El más reciente arriba.
+  for (const c of (await abiertos(a)).reverse()) {
+    const experimento = c.experimentos.find((e) => e.id === c.estado?.experimento);
+    if (!c.estado || !experimento) continue;
+    const estado = c.estado;
+    hay = true;
+    contenido.append(
+      dibujarExperimento({
+        id: `chequeo-${c.n}`,
+        experimento,
+        estado,
+        conNota: abierto,
+        alResponder: async (dia, respuesta, nota) => {
+          await c.guardar({ ...estado, chequeos: [...(estado.chequeos ?? []), { dia, respuesta, fecha: new Date().toISOString() }] });
+          const codigo = nota ? await c.escribir(nota) : null;
+          if (codigo) abrirCodigo(codigo);
+          repintar();
+        },
+      }),
+    );
+  }
+  return hay;
 }
 
 // La app con la carta guardada: el marco y sus cuatro pestañas. La carta se recalcula con los datos guardados (R2).
@@ -479,7 +503,8 @@ async function app(carta: CartaGuardada, inicial: Pestana = "mapa") {
   if ((carta.esquema as number) > 1) return void escena().append(el("h1", "frase", t("rescate.esquema_nuevo")), boton("boton-principal", t("comun.reintentar"), () => location.reload()));
   const m = await motor();
   const analisis = m.analizarRango(new Date(carta.inicio), new Date(carta.fin));
-  const { puertas, tipo } = m.calcularCarta(new Date(carta.instante));
+  const { puertas, tipo, autoridad } = m.calcularCarta(new Date(carta.instante));
+  const atributos: Atributos = { tipo, autoridad };
   document.querySelectorAll(".saltear, .sonido, .hoja").forEach((e) => e.remove());
   // Corregir la carta: el formulario arranca con los datos guardados; al terminar, la carta nueva reemplaza a la anterior.
   const corregir = (paso: number) => {
@@ -488,21 +513,23 @@ async function app(carta: CartaGuardada, inicial: Pestana = "mapa") {
   };
   const nuevo = dibujarMarco(
     (pestana, contenido) => {
-      if (pestana === "libro" && capitulo1(tipo)) return void libro(tipo, contenido, () => nuevo.activar("libro"));
+      if (pestana === "libro" && ESCRITOS) return void libro(atributos, contenido, () => nuevo.activar("libro"));
       if (pestana !== "mapa") {
         const vacio = el("p", "marco-vacio", t(`${pestana}.vacio`));
         // Con algo elegido, Experimentos lo muestra con su chequeo; sin nada, queda el estado vacío.
-        if (pestana === "experimentos" && capitulo1(tipo)) return void experimentos(tipo, contenido, () => nuevo.activar("experimentos")).then((hay) => hay || contenido.append(vacio));
+        if (pestana === "experimentos" && ESCRITOS) return void experimentos(atributos, contenido, () => nuevo.activar("experimentos")).then((hay) => hay || contenido.append(vacio));
         contenido.append(vacio);
         // Sin la clave en este navegador, el Libro se lee normal y donde van las entradas hay una fila para escribir el código (DR32).
         if (pestana === "libro") void diario!.estado().then((estado) => (estado === "cerrado" || estado === "anterior") && vacio.isConnected && contenido.append(filaDiarioCerrado(() => nuevo.activar("libro"))));
         return;
       }
       // Bajo el título, el capítulo en curso y cuántos hay (plan, "Mapa de capítulos"): todavía ninguno completado.
-      const capitulo = el("div", "marco-capitulo");
+      const franja = el("div", "marco-capitulo");
       const barra = el("div", "barra");
       barra.append(Object.assign(el("i", ""), { style: `width: ${100 / CAPITULOS}%` }));
-      capitulo.append(el("p", "", t("capitulo.en_curso", { numero: 1, titulo: t("capitulo.1.titulo") })), barra, el("span", "cuenta anotacion", `1/${CAPITULOS}`));
+      const enCurso = el("p", "", t("capitulo.en_curso", { numero: 1, titulo: t("capitulo.1.titulo") }));
+      const cuenta = el("span", "cuenta anotacion", `1/${CAPITULOS}`);
+      franja.append(enCurso, barra, cuenta);
       // Las tarjetas del experimento y del coach, como en el mockup; mientras no existan, dicen su estado vacío.
       const tarjeta = (clase: "experimentos" | "coach", titulo: string) => {
         const caja = el("div", `tarjeta ${clase === "coach" ? "coach" : "experimento"}`);
@@ -515,10 +542,17 @@ async function app(carta: CartaGuardada, inicial: Pestana = "mapa") {
       // El sello del experimento (un estallido con nota en mayúsculas) y el megáfono del coach, a la derecha de cada tarjeta.
       const experimento = tarjeta("experimentos", t("experimentos.tarjeta"));
       // Al volver a la app, si toca un chequeo, la tarjeta lo pregunta y lleva a Experimentos (plan, "Volver sin servidor").
-      if (capitulo1(tipo)) {
-        void capituloDe(tipo).then((c) => {
-          const elegido = c.experimentos.find((e) => e.id === c.estado?.experimento);
-          if (!elegido || !c.estado) return;
+      if (ESCRITOS) {
+        void abiertos(atributos).then((lista) => {
+          // El capítulo en curso es el último abierto, y la barra avanza con él.
+          const actual = lista.at(-1)!.n + (lista.at(-1)!.estado && lista.length < CAPITULOS ? 1 : 0);
+          enCurso.textContent = t("capitulo.en_curso", { numero: actual, titulo: t(`capitulo.${actual}.titulo` as TextoId) });
+          cuenta.textContent = `${actual}/${CAPITULOS}`;
+          (barra.firstElementChild as HTMLElement).style.width = `${(100 * actual) / CAPITULOS}%`;
+          // La tarjeta muestra lo último que se eligió probar.
+          const c = [...lista].reverse().find((x) => x.estado);
+          const elegido = c?.experimentos.find((e) => e.id === c.estado?.experimento);
+          if (!elegido || !c?.estado) return;
           experimento.querySelector("p")!.replaceChildren(el("strong", "", t("experimentos.tarjeta")), elegido.texto);
           if (chequeoPendiente(c.estado)) experimento.querySelector("p")!.append(" ", boton("boton-link", t("chequeo.pregunta"), () => nuevo.activar("experimentos", true)));
         });
@@ -529,7 +563,7 @@ async function app(carta: CartaGuardada, inicial: Pestana = "mapa") {
       experimento.append(sello);
       const coach = tarjeta("coach", t("nav.coach"));
       coach.insertAdjacentHTML("beforeend", MEGAFONO);
-      contenido.append(capitulo, experimento, coach);
+      contenido.append(franja, experimento, coach);
       const panel = el("div", "panel panel-mapa");
       let detalle: HTMLElement | undefined;
       panel.append(

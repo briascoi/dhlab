@@ -122,6 +122,8 @@ async function abrirDesbloqueo(d: DiarioCerrado, alAbrir: () => void) {
 // `versionDe`: la entrada chocó con otra del mismo id y quedó a su lado como versión de otro dispositivo (DR37).
 export interface Entrada { id: string; texto: string; fecha: string; capitulo: number; atributo: string; versionDe?: string }
 export interface DiarioAbierto {
+  // Para el campo: hay un diario por capítulo en la misma pantalla.
+  id: string;
   estado: () => Promise<string>;
   entradas: () => Promise<Entrada[]>;
   // Guarda la entrada; devuelve el código de recuperación si con ella nació el diario y ya quedó registrado en la cuenta (DR34).
@@ -140,7 +142,7 @@ export function dibujarDiario(d: DiarioAbierto, filaCerrado: () => HTMLElement):
     if (estado === "cerrado" || estado === "anterior") return caja.append(filaCerrado());
     if (codigoPendiente()) caja.append(el("p", "ajustes-nota", t("recuperacion.pendiente.banner")));
     const campo = el("textarea", "campo");
-    campo.id = "diario-entrada";
+    campo.id = d.id;
     const rotulo = el("label", "rotulo-campo", t("diario.rotulo"));
     rotulo.htmlFor = campo.id;
     const lista = el("ol", "diario-entradas");

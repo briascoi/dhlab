@@ -104,6 +104,21 @@ Las dos fuentes dan la misma regla. Está implementada en `autoridadDe` (`src/en
 
 **Efecto en el producto.** Si dentro del rango de una hora incierta cambia la Autoridad, la carta queda "pendiente de hora", igual que cuando cambia el Tipo (plan, "Datos de nacimiento inciertos").
 
+**Cómo decide cada Autoridad, según su página oficial** [J4]. Leídas las ocho el 2026-10-04, por extracción automática: las citas son breves y conviene confirmarlas a ojo.
+
+| Autoridad | Cómo decide | Qué señala como error |
+|---|---|---|
+| Emocional | "There is no truth in the now"; la ola emocional sube y baja y hay que esperar a que complete su ciclo | Decidir en un pico o en un bajón; dejar que decida la urgencia |
+| Sacral | Respuesta visceral ("gut-level reaction"), con sonidos como "uh-huh" y "unh-unh"; "The Sacral responds, it does not initiate" | Pasar por encima de la respuesta; preguntas abiertas en lugar de sí o no; consultarlo con la almohada |
+| Esplénica | Registra lo sano y seguro en el instante; "The Spleen speaks once" | Esperar una segunda señal; consultarlo con la almohada; dejar que la mente lo elabore |
+| Ego manifestado | "You need to hear yourself speak": vale lo que se dice de forma espontánea | Decidir en silencio |
+| Ego proyectado | Esperar reconocimiento e invitación clara, y preguntarse si sirve a las propias necesidades e intereses | Iniciar sin invitación; dejar que decida la mente; decir que sí para servir primero a otros; saltearse el descanso |
+| Autoproyectada | "Your truth is expressed through what you say": hablar con alguien de confianza y escuchar la propia voz | Decidir en silencio; un oyente que aconseja; confiar en el argumento mental; tomar por propia la emoción de otros |
+| Mental | Oírse hablar de la decisión con alguien de confianza | Decidir a solas en la cabeza; oyentes con intereses propios o que quieren arreglarlo |
+| Lunar | Cada decisión importante necesita unos 29,5 días; hablarla con personas de confianza para oírse | Decidir antes de terminar el ciclo; tomar las conversaciones como búsqueda de consejo |
+
+Otras cifras de esas páginas: cerca del 51% de las personas tiene el Plexo Solar definido; Generadores y Generadores Manifestantes, "around 70%"; Reflectores, "around 1.3 or 1.4%". Las páginas de Esplénica, Ego proyectado y Mental no dan cifra.
+
 ## Definición
 
 Cinco estados [J2, S1]: sin definición, simple ("a continuous connection"), partida ("two areas of definition separate from each other"), triple partida ("three separated areas") y cuádruple partida ("four separate unconnected definitions"). Se cuentan los grupos de Centros unidos por Canales definidos.
@@ -167,4 +182,4 @@ Nada de esto se puede afirmar en el producto hasta tener fuente:
 - jovianarchive.com/pages/mental-authority-in-human-design-a-projector-process
 - jovianarchive.com/pages/lunar-authority-in-human-design-why-reflectors-need-29-5-days
 
-De estas ocho leí cuatro (Ego manifestado, Ego proyectado, Autoproyectada y Mental) y la página general. Las de Emocional, Sacral, Esplénica y Lunar quedan por leer; su condición mecánica sale de J3 y S1.
+Las ocho están leídas (cuatro el 2026-10-03 y las de Emocional, Sacral, Esplénica y Lunar el 2026-10-04), además de la página general.

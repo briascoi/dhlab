@@ -22,13 +22,19 @@ const capitulos = Object.values(import.meta.glob<Capitulo>("../contenido/capitul
 // Una ficha sin la aprobación de Isma o sin el chequeo de originalidad se muestra, pero marcada como borrador.
 export const revisada = (f: Ficha) => f.aprobado_por !== "" && f.originalidad_chequeada;
 
-// Capítulo 1, "Tu Tipo": Tipo, Estrategia, Firma y No-Yo, y lo que se puede elegir para probarlo.
-export function capitulo1(tipo: keyof typeof DEL_TIPO): { fichas: Ficha[]; experimentos: Ficha[] } | null {
-  const c = capitulos.find((x) => x.capitulo === 1);
+// Lo que la carta le pide a cada capítulo.
+export interface Atributos { tipo: keyof typeof DEL_TIPO; autoridad: string }
+// Cuántos capítulos tienen contenido; se abren en orden, cada uno al completar el anterior (plan, "Mapa de capítulos").
+export const ESCRITOS = capitulos.length ? Math.max(...capitulos.map((c) => c.capitulo)) : 0;
+
+// Las fichas y las opciones para probar que le tocan a esta carta en el capítulo `n`:
+// 1, "Tu Tipo" (Tipo, Estrategia, Firma y No-Yo); 2, "Tu Autoridad" (qué la define y cómo decide).
+export function capitulo(n: number, { tipo, autoridad }: Atributos): { fichas: Ficha[]; experimentos: Ficha[] } | null {
+  const c = capitulos.find((x) => x.capitulo === n);
   if (!c) return null;
   const { estrategia } = DEL_TIPO[tipo];
-  const fichas = [`tipo.${tipo}`, `estrategia.${estrategia}`, `firma_no_yo.${estrategia}`].flatMap((id) => c.fichas.filter((f) => f.id === id));
-  return { fichas, experimentos: c.experimentos.filter((e) => e.id === `experimento.${estrategia}` || e.clase === "observacion") };
+  const [ids, experimento] = n === 1 ? [[`tipo.${tipo}`, `estrategia.${estrategia}`, `firma_no_yo.${estrategia}`], `experimento.${estrategia}`] : [[`autoridad.${autoridad}`, `autoridad_como.${autoridad}`], `experimento.autoridad.${autoridad}`];
+  return { fichas: ids.flatMap((id) => c.fichas.filter((f) => f.id === id)), experimentos: c.experimentos.filter((e) => e.id === experimento || e.clase === "observacion") };
 }
 
 // Lo que se guarda de un capítulo en el Libro: qué se eligió, cuándo, a qué atributo se refiere (R12), qué versión de cada ficha se leyó
