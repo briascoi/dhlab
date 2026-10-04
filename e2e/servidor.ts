@@ -17,6 +17,10 @@ export async function simularServidor(page: Page, { conSesion = false, carta = f
     sinRed: false,
     // Cuántas veces falla el borrado de la cuenta antes de andar (BorradoServidorFallido).
     fallosAlBorrar: 0,
+    // El cambio a solo local se hace, pero la respuesta no llega (corte de transporte).
+    cortarCambio: false,
+    // Cuántas veces falla el cambio a solo local antes de andar, sin haber cambiado nada.
+    fallosAlCambiar: 0,
     // La clave del diario envuelta, como la guarda el servidor.
     clave: null as { idClave: string; envuelta: string; revision: number } | null,
     cuenta: conSesion ? { email: "prueba@ejemplo.com", modo: "nube" } : null,
@@ -34,6 +38,12 @@ export async function simularServidor(page: Page, { conSesion = false, carta = f
       return json({ cuenta: estado.cuenta });
     }
     if (!estado.cuenta) return json({ error: "sesion_vencida" }, 401);
+    if (camino === "/v1/cuenta/modo") {
+      if (estado.fallosAlCambiar-- > 0) return json({ error: "no_disponible" }, 503);
+      estado.cuenta = { ...estado.cuenta, modo: String(cuerpo.modo) };
+      if (cuerpo.modo === "local") [estado.documentos, estado.clave] = [[], null];
+      return estado.cortarCambio ? ruta.abort() : json({ cuenta: estado.cuenta });
+    }
     if (camino === "/v1/cuenta/salir") return (estado.cuenta = null), json({ ok: true });
     if (camino === "/v1/cuenta" && pedido.method() === "DELETE") {
       if (estado.fallosAlBorrar-- > 0) return json({ error: "borrado_fallido" }, 500);
@@ -45,11 +55,20 @@ export async function simularServidor(page: Page, { conSesion = false, carta = f
     if (estado.sinRed && (camino.startsWith("/v1/documentos") || camino === "/v1/clave")) return ruta.abort();
     if (camino === "/v1/clave") {
       if (pedido.method() !== "PUT") return json({ clave: estado.clave });
+      // "Empezar un diario nuevo": la clave vigente se cambia por otra y las entradas anteriores se borran.
+      if (cuerpo.reemplaza !== undefined) {
+        if (estado.clave?.idClave !== cuerpo.reemplaza) return json({ error: "conflicto", actual: estado.clave }, 409);
+        estado.clave = { idClave: String(cuerpo.idClave), envuelta: String(cuerpo.envuelta), revision: estado.clave.revision + 1 };
+        estado.documentos = estado.documentos.filter((d) => d.tipo !== "diario");
+        return json({ clave: estado.clave });
+      }
       if ((estado.clave?.revision ?? 0) !== cuerpo.revisionBase) return json({ error: "conflicto", actual: estado.clave }, 409);
       estado.clave = { idClave: String(cuerpo.idClave), envuelta: String(cuerpo.envuelta), revision: (estado.clave?.revision ?? 0) + 1 };
       return json({ clave: estado.clave });
     }
     if (camino === "/v1/documentos") return json({ documentos: estado.documentos });
+    // Una cuenta solo local no tiene contenido en el servidor.
+    if (estado.cuenta.modo === "local") return json({ error: "escritura_no_permitida" }, 403);
     const [, , , tipo, id] = camino.split("/");
     const previo = estado.documentos.find((d) => d.tipo === tipo && d.id === id);
     if ((previo?.version ?? 0) !== cuerpo.versionBase) return json({ error: "conflicto", actual: previo ?? null }, 409);

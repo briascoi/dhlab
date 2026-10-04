@@ -19,3 +19,7 @@
 .carta-cambio section { padding: 12px; border: 2px solid var(--border); border-radius: 2px; }
 .carta-cambio h3 { margin: 0 0 8px; }
 @media (min-width: 640px) { .carta-cambio { grid-template-columns: 1fr 1fr; } }
+/* Etapas de un proceso, en estilo consola (DR5): una por renglón, en Martian Mono. */
+.etapas { margin: 0; padding: 0; list-style: none; font: 400 0.875rem/1.6 "Martian Mono Variable", ui-monospace, monospace; }
+.etapas:empty { display: none; }
+.etapas li::before { content: "> "; }

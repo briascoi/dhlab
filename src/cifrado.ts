@@ -65,10 +65,41 @@ export function crearDiario(almacen: Almacen, sync: ReturnType<typeof crearSync>
   const registro = async (): Promise<Registro> => (await almacen.todos<Registro>("claves"))[0] ?? { id: "diario", anteriores: [] };
   const guardar = (r: Registro) => almacen.aplicar([["claves", r]]);
 
-  const estado = async () => {
+  // Copias ya sincronizadas del diario anterior que este dispositivo todavía puede abrir, cuando la cuenta ya tiene otra clave (E4-diarioviejo).
+  async function delAnterior(r: Registro) {
+    if (!r.vigente) return [];
+    const mias = new Set([...(r.propia ? [r.propia] : []), ...r.anteriores].map((c) => c.idClave));
+    return (await sync.listar("diario")).filter((d) => d.version > 0 && !d.sinSubir && idClaveDe(d.contenido) !== r.vigente!.idClave && mias.has(idClaveDe(d.contenido)));
+  }
+
+  // anterior: cerrado, y además este dispositivo guarda el diario que se reemplazó; no se vuelve a subir sin que la persona lo pida.
+  const estado = async (): Promise<"sin_clave" | "abierto" | "cerrado" | "anterior"> => {
     const r = await registro();
-    return r.vigente ? "cerrado" : r.propia ? "abierto" : "sin_clave";
+    return r.vigente ? ((await delAnterior(r)).length ? "anterior" : "cerrado") : r.propia ? "abierto" : "sin_clave";
   };
+
+  // "Descartarlo": borra solo las copias de este dispositivo. Lo que tenía sin subir se conserva (E4-reemplazo).
+  const descartarAnterior = async () => sync.olvidar("diario", (await delAnterior(await registro())).map((d) => d.id));
+
+  // "Empezar un diario nuevo" (DR32), para quien perdió el código: una clave nueva reemplaza a la vigente y el servidor borra las entradas anteriores.
+  // Lo que este dispositivo puede abrir se vuelve a cifrar con la clave nueva; lo que no, se quita de acá también.
+  async function empezarNuevo(): Promise<{ codigo: string } | { error: string }> {
+    const r = await registro();
+    if (!r.vigente) return { error: "diario_abierto" };
+    const codigo = generarCodigo();
+    const clave = (await crypto.subtle.generateKey({ name: "AES-GCM", length: 256 }, true, USOS)) as CryptoKey;
+    const idClave = crypto.randomUUID();
+    const pedido = await api.guardar({ idClave, envuelta: await envolver(clave, codigo), revisionBase: r.vigente.revision, reemplaza: r.vigente.idClave });
+    if (!("clave" in pedido)) return { error: pedido.error };
+    const propia = { idClave, clave, envuelta: pedido.clave.envuelta, revision: pedido.clave.revision };
+    const anteriores = [...r.anteriores, ...(r.propia ? [{ idClave: r.propia.idClave, clave: r.propia.clave }] : [])];
+    await guardar({ id: "diario", propia, anteriores });
+    // Lo que ya estaba en la cuenta se borra, como dice la confirmación; solo sigue lo que este dispositivo nunca había subido (E4-reemplazo).
+    await sync.olvidar("diario", (await sync.listar("diario")).filter((d) => d.version > 0 && !d.sinSubir).map((d) => d.id));
+    await resubir(propia, anteriores);
+    await sync.olvidar("diario", (await sync.listar("diario")).filter((d) => idClaveDe(d.contenido) !== idClave).map((d) => d.id));
+    return { codigo };
+  }
 
   // Con la primera entrada: crea la clave y devuelve el código para mostrarlo. La clave queda en el dispositivo antes de cualquier pedido de red.
   // Con red, la pantalla del código (DR34) se muestra recién cuando `sincronizar()` deja el estado en "abierto":
@@ -102,7 +133,8 @@ export function crearDiario(almacen: Almacen, sync: ReturnType<typeof crearSync>
         continue;
       }
       const texto = await descifrar(anteriores, doc.id, doc.contenido);
-      if (texto !== null) await sync.guardar("diario", doc.id, await cifrar(propia, doc.id, texto), true);
+      // Lo cifrado con una clave que ya no rige no está en el servidor: entra como entrada nueva.
+      if (texto !== null) await sync.guardar("diario", doc.id, await cifrar(propia, doc.id, texto), true, true);
     }
   }
 
@@ -151,5 +183,5 @@ export function crearDiario(almacen: Almacen, sync: ReturnType<typeof crearSync>
     return { codigo };
   }
 
-  return { estado, crear, escribir, leer, sincronizar, abrir, nuevoCodigo };
+  return { estado, crear, escribir, leer, sincronizar, abrir, nuevoCodigo, empezarNuevo, descartarAnterior };
 }

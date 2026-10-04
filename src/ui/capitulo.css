@@ -1,0 +1,17 @@
+/* Capítulo (DR11): fichas en columna, cada una con su fuente; las opciones para probar, como tarjetas. */
+.capitulo { width: min(100%, 38rem); padding: 32px 24px; display: grid; gap: 16px; }
+.capitulo-titulo { margin: 8px 0 0; font-weight: 800; font-stretch: 112%; font-size: 1.375rem; line-height: 1.15; }
+.ficha { display: grid; gap: 6px; padding: 12px 0; border-top: 1px dotted var(--text-muted); }
+.ficha p, .ficha h3 { margin: 0; }
+.ficha-fuente, .ficha-borrador { font-size: 0.875rem; color: var(--text-muted); }
+.ficha-borrador { font-weight: 600; }
+.capitulo-opciones { display: grid; gap: 12px; }
+.capitulo-opciones .ficha { padding: 12px; border: 2px solid var(--border); border-radius: 4px; justify-items: start; }
+.capitulo-elegido { font-weight: 600; }
+/* Diario: las entradas van junto a la sección, la más nueva arriba. */
+.diario { display: grid; gap: 12px; padding-top: 16px; border-top: 2px solid var(--border); justify-items: start; }
+.diario h2, .diario p { margin: 0; }
+.diario textarea { width: 100%; min-height: 6rem; resize: vertical; }
+.diario-entradas { width: 100%; margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.diario-entradas li { padding: 8px 12px; border-left: 4px solid var(--accent-text); white-space: pre-wrap; overflow-wrap: anywhere; }
+.diario-entradas time { display: block; font-size: 0.875rem; color: var(--text-muted); }

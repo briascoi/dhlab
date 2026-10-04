@@ -27,18 +27,39 @@ export function crearSync(almacen: Almacen, api: DocumentosApi, modo: Modo) {
     return r;
   };
 
-  const guardar = (tipo: Tipo, id: string, contenido: string, cifrado = false) =>
+  // `comoNuevo`: el servidor ya no tiene este documento (su clave se reemplazó), así que sube sin versión base.
+  const guardar = (tipo: Tipo, id: string, contenido: string, cifrado = false, comoNuevo = false) =>
     enTurno(async () => {
       const previo = await leer(tipo, id);
       if (previo?.contenido === contenido && previo.rechazado === undefined && !previo.sinSubir) return;
       const clave = claveDe(tipo, id);
-      const poner: [Store, object][] = [["documentos", { clave, tipo, id, contenido, cifrado, version: previo?.version ?? 0 } satisfies Local]];
+      const poner: [Store, object][] = [["documentos", { clave, tipo, id, contenido, cifrado, version: comoNuevo ? 0 : (previo?.version ?? 0) } satisfies Local]];
       // El id de operación nace al encolar y queda guardado: un reintento lleva el mismo (Codex #4).
       // Una cuenta "solo en este dispositivo" no encola nada (invariante 2).
       // Quedarse con lo del servidor tras un rechazo tampoco: solo se quita la marca, no hay nada que subir.
       const aceptaServidor = previo?.contenido === contenido && previo.rechazado !== undefined && !previo.sinSubir;
       if (modo === "nube" && !aceptaServidor) poner.push(["cola", { clave, contenido, cifrado, idOperacion: crypto.randomUUID() } satisfies Operacion]);
       await almacen.aplicar(poner);
+    });
+
+  // Quita documentos solo de este dispositivo, con lo que tuvieran en la cola; no borra nada del servidor.
+  const olvidar = (tipo: Tipo, ids: string[]) =>
+    enTurno(async () => {
+      const claves = new Set(ids.map((id) => claveDe(tipo, id)));
+      const cola = (await almacen.todos<Operacion>("cola")).filter((o) => claves.has(o.clave));
+      await almacen.aplicar([], [...[...claves].map((c): [Store, string] => ["documentos", c]), ...cola.map((o): [Store, number] => ["cola", o.n!])]);
+    });
+
+  // La cuenta pasó de solo local a la nube: el servidor no tiene nada, así que todo lo de este dispositivo sube como nuevo (DR39, E4-otrosdisp).
+  // ponytail: si se repite después de una subida parcial, lo ya subido choca con su propia copia; el choque de la carta con contenido igual se resuelve solo.
+  const subirTodo = () =>
+    enTurno(async () => {
+      const cola = await almacen.todos<Operacion>("cola");
+      const poner = (await almacen.todos<Local>("documentos")).flatMap(({ rechazado: _r, sinSubir: _s, ...d }): [Store, object][] => [
+        ["documentos", { ...d, version: 0 } satisfies Local],
+        ["cola", { clave: d.clave, contenido: d.contenido, cifrado: d.cifrado, idOperacion: crypto.randomUUID() } satisfies Operacion],
+      ]);
+      await almacen.aplicar(poner, cola.map((o) => ["cola", o.n!]));
     });
 
   const listar = async (tipo: Tipo) => (await almacen.todos<Local>("documentos")).filter((d) => d.tipo === tipo);
@@ -94,5 +115,5 @@ export function crearSync(almacen: Almacen, api: DocumentosApi, modo: Modo) {
 
   // Cuántos cambios esperan para subir (DR36).
   const pendientes = async () => (await almacen.todos<Operacion>("cola")).length;
-  return { guardar, leer, listar, sincronizar, pendientes };
+  return { guardar, leer, listar, olvidar, subirTodo, sincronizar, pendientes };
 }

@@ -18,7 +18,7 @@ const sinFallas = async (page: Page) => expect((await new AxeBuilder({ page }).a
 test("sin la clave en este navegador el Libro abre y el diario pide el código; uno equivocado no bloquea y el correcto abre", async ({ page }) => {
   const { codigo } = await conDiario(page);
   await page.getByRole("button", { name: "Libro" }).click();
-  await expect(page.getByText("Tu libro se arma capítulo a capítulo.")).toBeVisible();
+  // El Libro se lee igual, con capítulos o todavía sin ninguno.
   await expect(page.getByText("Diario cerrado en este navegador")).toBeVisible();
   await sinFallas(page);
   await page.getByRole("button", { name: "Escribir mi código" }).click();
@@ -52,7 +52,7 @@ test("Generar código nuevo: el anterior deja de servir, un último grupo equivo
   const hoja = page.getByRole("dialog");
   await expect(hoja.getByRole("heading", { name: "Tu código de recuperación" })).toBeFocused();
   await sinFallas(page);
-  const nuevo = (await hoja.locator(".codigo-recuperacion").textContent())!;
+  const nuevo = (await hoja.locator("p.codigo-recuperacion").textContent())!;
   expect(nuevo).toMatch(/^([0-9A-F]{4}-){7}[0-9A-F]{4}$/);
   expect(servidor.clave!.revision).toBe(2);
   expect(await desenvolver(servidor.clave!.envuelta, codigo)).toBeNull();
@@ -66,7 +66,7 @@ test("Generar código nuevo: el anterior deja de servir, un último grupo equivo
 
   // Completarlo es generar otro y, esta vez, comprobarlo.
   await page.getByRole("button", { name: "Generar código nuevo" }).click();
-  const otro = (await hoja.locator(".codigo-recuperacion").textContent())!;
+  const otro = (await hoja.locator("p.codigo-recuperacion").textContent())!;
   await hoja.getByLabel("Escribe los últimos 4 caracteres del código").fill(otro.slice(-4).toLowerCase());
   await hoja.getByRole("button", { name: "Listo" }).click();
   await expect(hoja).toHaveCount(0);
@@ -85,4 +85,29 @@ test("si otro dispositivo cambió el código mientras tanto, no se pisa y se ofr
   await page.getByRole("button", { name: "Generar otro" }).click();
   await expect(page.getByRole("dialog").getByRole("heading", { name: "Tu código de recuperación" })).toBeVisible();
   expect(servidor.clave!.revision).toBe(6);
+});
+
+test("Empezar un diario nuevo cambia la clave solo después de confirmar, y muestra el código nuevo (DR32)", async ({ page }) => {
+  const { servidor } = await conDiario(page);
+  await page.getByRole("button", { name: "Libro" }).click();
+  await page.getByRole("button", { name: "Escribir mi código" }).click();
+  await page.getByRole("button", { name: "No tengo el código" }).click();
+  await page.getByRole("button", { name: "Empezar un diario nuevo" }).click();
+  const confirmacion = page.getByRole("dialog").filter({ hasText: "Las entradas anteriores se borran de tu cuenta." });
+  await expect(confirmacion.getByRole("heading", { name: "Empezar un diario nuevo" })).toBeFocused();
+  await sinFallas(page);
+  await confirmacion.getByRole("button", { name: "Cancelar" }).click();
+  expect(servidor.clave!.idClave).toBe("clave-1");
+
+  await page.getByRole("button", { name: "Empezar un diario nuevo" }).click();
+  await confirmacion.getByRole("button", { name: "Borrar y empezar de nuevo" }).click();
+  const hoja = page.getByRole("dialog");
+  await expect(hoja.getByRole("heading", { name: "Tu código de recuperación" })).toBeVisible();
+  const nuevo = (await hoja.locator("p.codigo-recuperacion").textContent())!;
+  expect(servidor.clave!.idClave).not.toBe("clave-1");
+  expect(await desenvolver(servidor.clave!.envuelta, nuevo)).not.toBeNull();
+  await hoja.getByLabel("Escribe los últimos 4 caracteres del código").fill(nuevo.slice(-4));
+  await hoja.getByRole("button", { name: "Listo" }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.getByText("Diario cerrado en este navegador")).toHaveCount(0);
 });

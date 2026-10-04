@@ -6,6 +6,8 @@ export type Cuenta = { email: string; modo: Modo };
 export interface CuentaApi {
   pedirAcceso(email: string, modo: Modo, idPedido: string): Promise<{ ok: true; reenviarEn: number } | Fallo>;
   verificar(email: string, codigo: string): Promise<{ cuenta: Cuenta } | Fallo>;
+  // A "local", el servidor borra su copia; a "nube", solo cambia el modo y el contenido sube después.
+  cambiarModo(modo: Modo): Promise<{ cuenta: Cuenta } | Fallo>;
   salir(): Promise<{ ok: true } | Fallo>;
   borrar(): Promise<{ ok: true } | Fallo>;
 }
@@ -22,6 +24,7 @@ async function enviar<T>(ruta: string, cuerpo?: object, method?: string): Promis
 export const api: CuentaApi = {
   pedirAcceso: (email, modo, idPedido) => enviar("/v1/cuenta/acceso", { email, modo, idPedido }),
   verificar: (email, codigo) => enviar("/v1/cuenta/verificar", { email, codigo }),
+  cambiarModo: (modo) => enviar("/v1/cuenta/modo", { modo }),
   salir: () => enviar("/v1/cuenta/salir", undefined, "POST"),
   borrar: () => enviar("/v1/cuenta", undefined, "DELETE"),
 };
@@ -45,7 +48,8 @@ export const documentosApi: DocumentosApi = {
 export interface ClaveGuardada { idClave: string; envuelta: string; revision: number }
 export interface ClaveApi {
   leer(): Promise<{ clave: ClaveGuardada | null } | Fallo>;
-  guardar(cambio: { idClave: string; envuelta: string; revisionBase: number }): Promise<{ clave: ClaveGuardada } | (Fallo & { actual?: ClaveGuardada | null })>;
+  // `reemplaza`: el id de la clave vigente que se cambia por esta ("Empezar un diario nuevo", DR32).
+  guardar(cambio: { idClave: string; envuelta: string; revisionBase: number; reemplaza?: string }): Promise<{ clave: ClaveGuardada } | (Fallo & { actual?: ClaveGuardada | null })>;
 }
 
 export const claveApi: ClaveApi = {

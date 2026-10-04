@@ -17,7 +17,7 @@ interface Env {
 const REMITENTE = "acceso@dhlab.app";
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const { pathname } = new URL(request.url);
     if (pathname === "/v1/estado") return Response.json({ ok: true });
     if (pathname.startsWith("/v1/cuenta")) {
@@ -41,7 +41,7 @@ export default {
     }
     if (pathname.startsWith("/v1/documentos") || pathname === "/v1/clave") {
       if (!env.DB) return Response.json({ error: "no_disponible" }, { status: 503 });
-      return documentos(request, { DB: env.DB });
+      return documentos(request, { DB: env.DB }, Date.now(), (tarea) => ctx.waitUntil(tarea));
     }
     if (pathname === "/admin" || pathname.startsWith("/admin/")) {
       if (!env.DB) return Response.json({ error: "no_disponible" }, { status: 503 });

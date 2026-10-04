@@ -12,11 +12,14 @@ import { motor } from "./motor";
 import { crearSync } from "./sync";
 import { estallido, flecha, mancha } from "./ui/trazos";
 import { t } from "./textos";
-import { abrirCartaCambio, aplicarTema, dibujarAjustes } from "./ui/ajustes";
+import { abrirCartaCambio, abrirExportar, aplicarTema, dibujarAjustes } from "./ui/ajustes";
 import { dibujarConfiguracion } from "./ui/configuracion";
 import { abrirCuenta } from "./ui/cuenta";
 import { dibujarDetalle } from "./ui/detalle-centro";
-import { abrirDesbloqueo } from "./ui/diario";
+import { capitulo1, chequeoPendiente, type EstadoCapitulo } from "./contenido";
+import { DEL_TIPO } from "./engine/tipos";
+import { dibujarCapitulo, dibujarExperimento } from "./ui/capitulo";
+import { abrirCodigo, abrirDiarioCerrado, dibujarDiario, type DiarioCerrado, type Entrada } from "./ui/diario";
 import { avisarHoraInexistente, bannerHoraIncierta, dibujarPendienteDeHora, preguntarHoraRepetida } from "./ui/hora";
 import { dibujarMapa, rotuloMapa } from "./ui/mapa";
 import { dibujarMarco, icono, type Marco, type Pestana } from "./ui/marco";
@@ -44,11 +47,12 @@ let sync: ReturnType<typeof crearSync> | undefined;
 let diario: ReturnType<typeof crearDiario> | undefined;
 let deQuien = "";
 const syncDe = (c: Cuenta) => {
-  if (deQuien !== c.email) {
+  // Otra cuenta, o la misma con otro modo: la sincronización se arma de nuevo.
+  if (deQuien !== `${c.email}:${c.modo}`) {
     const almacen = abrirAlmacen(c.email);
     sync = crearSync(almacen, documentosApi, c.modo);
     diario = crearDiario(almacen, sync, claveApi, c.modo);
-    deQuien = c.email;
+    deQuien = `${c.email}:${c.modo}`;
   }
   return sync!;
 };
@@ -62,6 +66,8 @@ async function sincronizar(): Promise<void> {
   // El diario registra o lee su clave antes de subir: el servidor solo acepta entradas cifradas con la vigente.
   const estado = await diario!.sincronizar();
   const faltan = await s.pendientes();
+  // Otro dispositivo pasó la cuenta a solo local: el servidor ya no acepta contenido. Se vuelve a abrir con el modo nuevo.
+  if (estado === "escritura_no_permitida" && cuenta?.modo === "nube") return abrir({ ...cuenta, modo: "local" });
   if (!marco || !cuenta) return;
   marco.marca(cuenta.modo !== "nube" || (estado === "al_dia" && !faltan) ? null : t(estado === "sin_red" ? "sync.sin_conexion" : estado === "al_dia" || estado === "sesion_vencida" ? "sync.falta_subir" : "sync.servidor"));
   avisarSesion(estado === "sesion_vencida");
@@ -137,9 +143,97 @@ function bienvenida() {
   panel.append(el("p", "rotulo", "Laboratorio de Diseño Humano"), nombre, el("p", "frase", t("bienvenida.frase")), zona, el("p", "aviso", t("bienvenida.solo_invitacion")));
 }
 
+const MODO = "dhlab.modo";
+let avisoModo: "a_local.otros.banner" | "a_nube.otros.banner" | null = null;
+// Lo de la cuenta en este dispositivo, legible: el diario entra descifrado, y solo si está abierto.
+async function documentosLegibles(c: Cuenta) {
+  const s = syncDe(c);
+  const d = diario!;
+  const legibles = [...(await s.listar("carta")), ...(await s.listar("libro"))].map(({ tipo, id, contenido }) => ({ tipo, id, contenido: JSON.parse(contenido) as unknown }));
+  const entradas = (await d.estado()) === "abierto" ? await Promise.all((await s.listar("diario")).map(async ({ tipo, id }) => ({ tipo, id, contenido: await d.leer(id) }))) : [];
+  return [...legibles, ...entradas.filter((e) => e.contenido !== null)];
+}
+// En otro dispositivo de una cuenta que pasó a solo local: lo que hay acá se queda acá y, si había cambios sin subir, se ofrece exportarlos (CEO2-O4).
+async function avisarModo(c: Cuenta) {
+  if (!avisoModo || !marco) return;
+  const aviso = avisoModo;
+  avisoModo = null;
+  const banner = el("div", "banner");
+  banner.setAttribute("role", "status");
+  banner.append(el("p", "", t(aviso)));
+  if (aviso === "a_local.otros.banner" && (await syncDe(c).pendientes())) banner.append(el("p", "", t("a_local.otros.exportar")), boton("boton-link", t("ajustes.datos.exportar"), () => abrirExportar(() => documentosLegibles(c), diario!.estado)));
+  marco.contenido.before(banner);
+}
+// Nube a solo local (DR39): sube lo pendiente, baja y verifica pieza por pieza, y recién ahí el servidor borra su copia (CEO2-O4).
+// Se puede repetir: si el cambio ya se hizo y la respuesta se perdió, la consulta del principio lo encuentra hecho (Codex #5).
+async function pasarALocal(etapa: (texto: string) => void): Promise<"listo" | "sin_red" | "fallo" | "sin_confirmar"> {
+  const c = cuenta!;
+  const terminar = () => {
+    cuenta = { ...c, modo: "local" };
+    localStorage.setItem(MODO, `${c.email}:local`);
+    syncDe(cuenta);
+    marco?.marca(null);
+    return "listo" as const;
+  };
+  // El modo de la cuenta en el servidor; "otro" si respondió sin la cuenta (sesión vencida) y null si no respondió.
+  const enServidor = () => fetch("/v1/cuenta").then((r) => r.json() as Promise<{ cuenta?: Cuenta }>).then((r) => r.cuenta?.modo ?? "otro", () => null);
+  const modo = await enServidor();
+  if (modo === null) return "sin_red";
+  if (modo === "otro") return "fallo";
+  if (modo === "local") return terminar();
+  etapa(t("a_local.etapa.subiendo"));
+  const estado = await diario!.sincronizar();
+  if (estado === "sin_red") return "sin_red";
+  if ((estado !== "al_dia" && estado !== "clave_reemplazada") || (await syncDe(c).pendientes())) return "fallo";
+  const r = await documentosApi.listar();
+  if (!("documentos" in r)) return r.error === "sin_red" ? "sin_red" : "fallo";
+  let hechas = 0;
+  etapa(t("a_local.etapa.bajando", { hechas, total: r.documentos.length }));
+  for (const d of r.documentos) {
+    const local = await syncDe(c).leer(d.tipo, d.id);
+    if (local?.contenido !== d.contenido || local.rechazado !== undefined) return "fallo";
+    etapa(t("a_local.etapa.bajando", { hechas: ++hechas, total: r.documentos.length }));
+  }
+  etapa(t("a_local.etapa.borrando"));
+  const cambio = await api.cambiarModo("local");
+  if ("cuenta" in cambio) return terminar();
+  if (cambio.error !== "sin_red") return "fallo";
+  // La respuesta no llegó: antes de decir nada, se consulta cómo quedó la cuenta.
+  etapa(t("almacenamiento.comprobando"));
+  const quedo = await enServidor();
+  return quedo === "local" ? terminar() : quedo === "nube" ? "fallo" : "sin_confirmar";
+}
+
+// Solo local a la nube (DR39): el servidor cambia el modo antes de la primera subida y este dispositivo sube todo lo suyo como nuevo.
+// Si la subida se corta, la cuenta ya está en la nube y lo que falta sigue en la cola, que se reintenta sola.
+async function pasarALaNube(etapa: (texto: string) => void): Promise<"listo" | "parcial" | "sin_red" | "fallo"> {
+  const c = cuenta!;
+  const r = await api.cambiarModo("nube");
+  if (!("cuenta" in r)) return r.error === "sin_red" ? "sin_red" : "fallo";
+  cuenta = { ...c, modo: "nube" };
+  const s = syncDe(cuenta);
+  await s.subirTodo();
+  localStorage.setItem(MODO, `${c.email}:nube`);
+  const total = await s.pendientes();
+  etapa(t("a_nube.subiendo", { hechas: 0, total }));
+  await sincronizar();
+  const faltan = await s.pendientes();
+  etapa(t("a_nube.subiendo", { hechas: total - faltan, total }));
+  return faltan ? "parcial" : "listo";
+}
+
 // Con sesión: baja lo de la cuenta y, si ya tiene carta, abre la app; si no, pide los datos de nacimiento.
 async function abrir(c: Cuenta) {
   cuenta = c;
+  // El modo con el que este dispositivo conocía la cuenta: si era nube y ahora es local, el cambio se hizo en otro lado (DR39).
+  const antes = localStorage.getItem(MODO);
+  if (antes === `${c.email}:nube` && c.modo === "local") avisoModo = "a_local.otros.banner";
+  // Al revés, la cuenta pasó a la nube desde otro dispositivo: este sube lo suyo, y los choques siguen las reglas de siempre (E4-otrosdisp).
+  if (antes === `${c.email}:local` && c.modo === "nube") {
+    await syncDe(c).subirTodo();
+    avisoModo = "a_nube.otros.banner";
+  }
+  localStorage.setItem(MODO, `${c.email}:${c.modo}`);
   await sincronizar();
   const guardada = await syncDe(c).leer("carta", ID_CARTA);
   if (guardada) return app(JSON.parse(guardada.contenido) as CartaGuardada);
@@ -251,10 +345,100 @@ function notasDelPanel(): HTMLElement {
   return notas;
 }
 
+// Lo que necesitan las pantallas del diario cerrado; cada cambio termina con una sincronización.
+const diarioCerrado = (): DiarioCerrado => {
+  const d = diario!;
+  const yLuego = <T>(p: Promise<T>) => p.finally(() => void sincronizar());
+  return {
+    estado: d.estado,
+    abrir: (codigo) => yLuego(d.abrir(codigo)),
+    empezarNuevo: () => yLuego(d.empezarNuevo()),
+    descartarAnterior: d.descartarAnterior,
+    conSinSubir: async () => (await sync!.listar("diario")).some((e) => e.sinSubir),
+  };
+};
 function filaDiarioCerrado(alAbrir: () => void): HTMLElement {
   const fila = el("div", "banner");
-  fila.append(el("p", "", t("diario.cerrado.fila")), boton("boton-link", t("diario.cerrado.accion"), () => abrirDesbloqueo((codigo) => diario!.abrir(codigo), () => (alAbrir(), void sincronizar()))));
+  fila.append(el("p", "", t("diario.cerrado.fila")), boton("boton-link", t("diario.cerrado.accion"), () => void abrirDiarioCerrado(diarioCerrado(), alAbrir)));
   return fila;
+}
+
+// El Capítulo 1 de la cuenta abierta: su contenido para el Tipo, lo guardado en el Libro y cómo escribir en el diario.
+const ID_CAPITULO = "capitulo-1";
+type TipoId = keyof typeof DEL_TIPO;
+async function capituloDe(tipo: TipoId) {
+  const s = syncDe(cuenta!);
+  const d = diario!;
+  const guardado = await s.leer("libro", ID_CAPITULO);
+  const atributo = `${t("configuracion.estrategia")}: ${t(`estrategia.${DEL_TIPO[tipo].estrategia}` as Parameters<typeof t>[0])}`;
+  return {
+    ...capitulo1(tipo)!,
+    s,
+    d,
+    atributo,
+    estado: guardado ? (JSON.parse(guardado.contenido) as EstadoCapitulo) : null,
+    guardar: async (estado: EstadoCapitulo) => {
+      await s.guardar("libro", ID_CAPITULO, JSON.stringify(estado));
+      void sincronizar();
+    },
+    // Guarda la entrada; devuelve el código de recuperación si con ella nació el diario y su clave ya quedó registrada en la cuenta (DR34).
+    escribir: async (texto: string) => {
+      const codigo = (await d.estado()) === "sin_clave" ? await d.crear() : null;
+      await d.escribir(crypto.randomUUID(), JSON.stringify({ texto, fecha: new Date().toISOString(), capitulo: 1, atributo } satisfies Omit<Entrada, "id">));
+      await sincronizar();
+      // Si otro dispositivo registró su clave antes, rige la de ese y este código no sirve (E3-dosclaves).
+      return codigo && cuenta?.modo === "nube" && (await d.estado()) === "abierto" && !(await s.pendientes()) ? codigo : null;
+    },
+  };
+}
+
+// El Libro: por ahora, el Capítulo 1 con sus fichas, lo elegido para probar y el diario junto a la sección.
+async function libro(tipo: TipoId, contenido: HTMLElement, repintar: () => void) {
+  const c = await capituloDe(tipo);
+  const zonaDiario = dibujarDiario(
+    {
+      estado: c.d.estado,
+      entradas: async () => (await Promise.all((await c.s.listar("diario")).map(async ({ id }) => ({ id, texto: await c.d.leer(id) })))).flatMap(({ id, texto }) => (texto === null ? [] : [{ ...(JSON.parse(texto) as Omit<Entrada, "id">), id }])),
+      escribir: c.escribir,
+    },
+    () => filaDiarioCerrado(repintar),
+  );
+  contenido.append(
+    dibujarCapitulo({
+      titulo: t("capitulo.en_curso", { numero: 1, titulo: t("capitulo.1.titulo") }),
+      fichas: c.fichas,
+      experimentos: c.experimentos,
+      estado: c.estado,
+      alElegir: async (e) => {
+        await c.guardar({ esquema: 1, experimento: e.id, elegido: new Date().toISOString(), atributo: c.atributo, fichas: [...c.fichas, e].map(({ id, version }) => ({ id, version })) });
+        repintar();
+      },
+      diario: zonaDiario,
+    }),
+  );
+}
+
+// Experimentos: lo que la persona eligió probar y, los días 3 y 7, el chequeo "¿cómo te fue?" (DR11). Devuelve false si todavía no eligió nada.
+async function experimentos(tipo: TipoId, contenido: HTMLElement, repintar: () => void): Promise<boolean> {
+  const c = await capituloDe(tipo);
+  const experimento = c.experimentos.find((e) => e.id === c.estado?.experimento);
+  if (!c.estado || !experimento) return false;
+  const estado = c.estado;
+  const abierto = ["abierto", "sin_clave"].includes(await c.d.estado());
+  contenido.append(
+    dibujarExperimento({
+      experimento,
+      estado,
+      conNota: abierto,
+      alResponder: async (dia, respuesta, nota) => {
+        await c.guardar({ ...estado, chequeos: [...(estado.chequeos ?? []), { dia, respuesta, fecha: new Date().toISOString() }] });
+        const codigo = nota ? await c.escribir(nota) : null;
+        if (codigo) abrirCodigo(codigo);
+        repintar();
+      },
+    }),
+  );
+  return true;
 }
 
 // La app con la carta guardada: el marco y sus cuatro pestañas. La carta se recalcula con los datos guardados (R2).
@@ -265,13 +449,21 @@ async function app(carta: CartaGuardada, inicial: Pestana = "mapa") {
   const analisis = m.analizarRango(new Date(carta.inicio), new Date(carta.fin));
   const { puertas, tipo } = m.calcularCarta(new Date(carta.instante));
   document.querySelectorAll(".saltear, .sonido, .hoja").forEach((e) => e.remove());
+  // Corregir la carta: el formulario arranca con los datos guardados; al terminar, la carta nueva reemplaza a la anterior.
+  const corregir = (paso: number) => {
+    localStorage.setItem("dhlab.nacimiento", JSON.stringify(carta.nacimiento));
+    formulario(paso);
+  };
   const nuevo = dibujarMarco(
     (pestana, contenido) => {
+      if (pestana === "libro" && capitulo1(tipo)) return void libro(tipo, contenido, () => nuevo.activar("libro"));
       if (pestana !== "mapa") {
         const vacio = el("p", "marco-vacio", t(`${pestana}.vacio`));
+        // Con algo elegido, Experimentos lo muestra con su chequeo; sin nada, queda el estado vacío.
+        if (pestana === "experimentos" && capitulo1(tipo)) return void experimentos(tipo, contenido, () => nuevo.activar("experimentos")).then((hay) => hay || contenido.append(vacio));
         contenido.append(vacio);
         // Sin la clave en este navegador, el Libro se lee normal y donde van las entradas hay una fila para escribir el código (DR32).
-        if (pestana === "libro") void diario!.estado().then((estado) => estado === "cerrado" && vacio.isConnected && contenido.append(filaDiarioCerrado(() => nuevo.activar("libro"))));
+        if (pestana === "libro") void diario!.estado().then((estado) => (estado === "cerrado" || estado === "anterior") && vacio.isConnected && contenido.append(filaDiarioCerrado(() => nuevo.activar("libro"))));
         return;
       }
       // Bajo el título, el capítulo en curso y cuántos hay (plan, "Mapa de capítulos"): todavía ninguno completado.
@@ -290,6 +482,15 @@ async function app(carta: CartaGuardada, inicial: Pestana = "mapa") {
       };
       // El sello del experimento (un estallido con nota en mayúsculas) y el megáfono del coach, a la derecha de cada tarjeta.
       const experimento = tarjeta("experimentos", t("experimentos.tarjeta"));
+      // Al volver a la app, si toca un chequeo, la tarjeta lo pregunta y lleva a Experimentos (plan, "Volver sin servidor").
+      if (capitulo1(tipo)) {
+        void capituloDe(tipo).then((c) => {
+          const elegido = c.experimentos.find((e) => e.id === c.estado?.experimento);
+          if (!elegido || !c.estado) return;
+          experimento.querySelector("p")!.replaceChildren(el("strong", "", t("experimentos.tarjeta")), elegido.texto);
+          if (chequeoPendiente(c.estado)) experimento.querySelector("p")!.append(" ", boton("boton-link", t("chequeo.pregunta"), () => nuevo.activar("experimentos", true)));
+        });
+      }
       const sello = el("p", "sello");
       sello.innerHTML = `<svg viewBox="0 0 110 70" preserveAspectRatio="none" aria-hidden="true"><path class="trazo" d="${estallido({ x: 55, y: 35 }, 31, 12, 3)}"/></svg>`;
       sello.append(el("span", "anotacion nota", t("experimentos.sello")));
@@ -315,22 +516,16 @@ async function app(carta: CartaGuardada, inicial: Pestana = "mapa") {
       // Con la hora incierta, el aviso queda a la vista; corregirla vuelve al paso de la hora con los datos guardados.
       if (analisis.estado === "incierta") {
         contenido.append(
-          bannerHoraIncierta(() => {
-            localStorage.setItem("dhlab.nacimiento", JSON.stringify(carta.nacimiento));
-            formulario(2);
-          }),
+          bannerHoraIncierta(() => corregir(2)),
         );
       }
     },
     () => {
+      // La cuenta se lee al abrir Ajustes: puede haber cambiado de modo.
       const c = cuenta!;
+      syncDe(c);
       const d = diario!;
-      // Lo de la cuenta en este dispositivo, legible: el diario entra descifrado, y solo si está abierto.
-      const documentos = async () => {
-        const legibles = [...(await syncDe(c).listar("carta")), ...(await syncDe(c).listar("libro"))].map(({ tipo, id, contenido }) => ({ tipo, id, contenido: JSON.parse(contenido) as unknown }));
-        const entradas = (await d.estado()) === "abierto" ? await Promise.all((await syncDe(c).listar("diario")).map(async ({ tipo, id }) => ({ tipo, id, contenido: await d.leer(id) }))) : [];
-        return [...legibles, ...entradas.filter((e) => e.contenido !== null)];
-      };
+      const documentos = () => documentosLegibles(c);
       // Si otro dispositivo cambió el código, se baja la revisión nueva para poder generar otro.
       const nuevoCodigo = async () => {
         const r = await d.nuevoCodigo();
@@ -340,10 +535,10 @@ async function app(carta: CartaGuardada, inicial: Pestana = "mapa") {
       const alSalir = () => ((cuenta = undefined), (marco = undefined), bienvenida());
       const alBorrar = async () => {
         await borrarAlmacen(c.email);
-        for (const clave of ["dhlab.nacimiento", "dhlab.precuenta", "dhlab.codigo_pendiente"]) localStorage.removeItem(clave);
+        for (const clave of ["dhlab.nacimiento", "dhlab.precuenta", "dhlab.codigo_pendiente", MODO]) localStorage.removeItem(clave);
         alSalir();
       };
-      nuevo.mostrar(t("ajustes.titulo"), dibujarAjustes({ cuenta: c, carta, api, alSalir, diario: { estado: d.estado, abrir: d.abrir, nuevoCodigo }, documentos, alBorrar }));
+      nuevo.mostrar(t("ajustes.titulo"), dibujarAjustes({ cuenta: c, carta, api, alSalir, alCorregir: () => corregir(1), diario: { estado: d.estado, escribirCodigo: (alCambiar) => void abrirDiarioCerrado(diarioCerrado(), alCambiar), nuevoCodigo }, documentos, alBorrar, pasarALocal, pasarALaNube }));
     },
     detalleDeMarca,
     { izquierda: pegatina(), derecha: notaDelTitulo() },
@@ -352,6 +547,7 @@ async function app(carta: CartaGuardada, inicial: Pestana = "mapa") {
   raiz.replaceChildren(nuevo.raiz);
   nuevo.activar(inicial);
   void sincronizar();
+  void avisarModo(cuenta!);
 }
 
 // Si ya hay sesión, no se pide el código otra vez.

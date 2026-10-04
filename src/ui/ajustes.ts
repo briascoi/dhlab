@@ -5,7 +5,7 @@ import "./ajustes.css";
 import type { CartaGuardada } from "../almacen";
 import type { Cuenta, CuentaApi, Fallo } from "../cuenta-api";
 import { t, type TextoId } from "../textos";
-import { abrirCodigo, abrirDesbloqueo, codigoPendiente } from "./diario";
+import { abrirCodigo, codigoPendiente } from "./diario";
 import type { Nacimiento } from "./nacimiento";
 import { anuncio, boton, completa, el } from "./pantalla";
 
@@ -24,21 +24,32 @@ const fechaDe = (n: Nacimiento) => new Date(`${n.fecha}T12:00:00Z`).toLocaleDate
 // La hora con su confiabilidad: exacta, con su margen o desconocida.
 const horaDe = (n: Nacimiento) => (n.confiabilidad === "desconocida" ? t("nacimiento.hora.desconocida") : n.confiabilidad === "aproximada" ? `${n.hora} ± ${n.margen} min` : n.hora);
 
+type Cambio = (etapa: (texto: string) => void) => Promise<"listo" | "parcial" | "sin_red" | "fallo" | "sin_confirmar">;
+
 export interface OpcionesAjustes {
   cuenta: Cuenta;
   carta: CartaGuardada;
   api: CuentaApi;
   // Sesión cerrada o cuenta borrada: vuelta a la bienvenida (DR27).
   alSalir: () => void;
+  // Vuelve al formulario de nacimiento con los datos guardados, para corregirlos.
+  alCorregir: () => void;
   // El diario en este dispositivo: sin clave (todavía no hay diario), abierto o cerrado (DR32).
-  diario: { estado: () => Promise<"sin_clave" | "abierto" | "cerrado">; abrir: (codigo: string) => Promise<boolean>; nuevoCodigo: () => Promise<{ codigo: string } | { error: string }> };
+  diario: { estado: () => Promise<"sin_clave" | "abierto" | "cerrado" | "anterior">; escribirCodigo: (alCambiar: () => void) => void; nuevoCodigo: () => Promise<{ codigo: string } | { error: string }> };
+  // Nube a "solo en este dispositivo" (DR39): avisa cada etapa y dice cómo terminó. "sin_confirmar": la respuesta se perdió y el estado no se pudo consultar.
+  pasarALocal: Cambio;
+  // Solo local a la nube: el servidor cambia el modo y este dispositivo sube lo suyo. "parcial": la subida se cortó y sigue sola.
+  pasarALaNube: Cambio;
   // Lo que hay de la cuenta en este dispositivo, legible, para el archivo de exportación.
   documentos: () => Promise<object[]>;
   // El servidor confirmó el borrado: recién ahí se limpia lo de este dispositivo.
   alBorrar: () => Promise<void>;
 }
 
-export function dibujarAjustes({ cuenta, carta, api, alSalir, diario, documentos, alBorrar }: OpcionesAjustes): HTMLElement {
+export function dibujarAjustes(opciones: OpcionesAjustes): HTMLElement {
+  const { cuenta, carta, api, alSalir, alCorregir, diario, documentos, alBorrar, pasarALocal, pasarALaNube } = opciones;
+  // Al terminar un cambio de modo, Ajustes se vuelve a dibujar con la cuenta ya cambiada.
+  const conModo = (modo: Cuenta["modo"]) => () => panel.replaceWith(dibujarAjustes({ ...opciones, cuenta: { ...cuenta, modo } }));
   const exportar = () => abrirExportar(documentos, diario.estado);
   const panel = el("div", "panel ajustes");
   const paises = new Intl.DisplayNames(["es"], { type: "region" });
@@ -79,8 +90,7 @@ export function dibujarAjustes({ cuenta, carta, api, alSalir, diario, documentos
     const estado = await diario.estado();
     grupoDiario.hidden = estado === "sin_clave";
     grupoDiario.replaceChildren(grupoDiario.firstChild!);
-    if (estado === "cerrado") return grupoDiario.append(el("p", "", t("diario.cerrado.fila")), boton("boton-secundario", t("diario.cerrado.accion"), () => abrirDesbloqueo(diario.abrir, () => void pintarDiario())));
-    if (estado !== "abierto") return;
+    if (estado !== "abierto") return grupoDiario.append(el("p", "", t("diario.cerrado.fila")), boton("boton-secundario", t("diario.cerrado.accion"), () => diario.escribirCodigo(() => void pintarDiario())));
     // "Generar código nuevo" envuelve la misma clave con otro código: el anterior deja de servir (DR34).
     const error = anuncio("error", "alert");
     const generar = boton("boton-secundario", t("recuperacion.generar_nuevo"), async (b) => {
@@ -102,6 +112,14 @@ export function dibujarAjustes({ cuenta, carta, api, alSalir, diario, documentos
     grupo(
       "ajustes.grupo.cuenta",
       el("dl", "", fila("ajustes.cuenta.email", cuenta.email), fila("ajustes.cuenta.donde", t(cuenta.modo === "nube" ? "ajustes.cuenta.donde.nube" : "ajustes.cuenta.donde.local"))),
+      cuenta.modo === "nube"
+        ? boton("boton-secundario", t("a_local.confirmar"), () =>
+            abrirCambio("solo_local.titulo", [el("p", "", t("solo_local.promesa")), el("ul", "", ...(["cuenta", "ia", "safari", "otra_compu"] as const).map((l) => el("li", "", t(`solo_local.linea_${l}`))))], "a_local.confirmar", "almacenamiento.fallo", pasarALocal, conModo("local")),
+          )
+        : boton("boton-secundario", t("a_nube.titulo"), async () =>
+            // El código de recuperación solo se anuncia si hay un diario que subir.
+            abrirCambio("a_nube.titulo", [el("p", "", t("a_nube.lineas")), ...((await diario.estado()) === "sin_clave" ? [] : [el("p", "", t("a_nube.codigo"))])], "a_nube.confirmar", "sync.servidor", pasarALaNube, conModo("nube")),
+          ),
       salir,
       el("p", "ajustes-nota", t(cuenta.modo === "nube" ? "cuenta.salir.consecuencia" : "cuenta.salir.consecuencia_local")),
       errorSalir,
@@ -109,6 +127,7 @@ export function dibujarAjustes({ cuenta, carta, api, alSalir, diario, documentos
     grupo(
       "ajustes.grupo.carta",
       el("dl", "", fila("ajustes.carta.nacimiento", `${fecha}${hora}, ${nacimiento.ciudad?.[0] ?? ""}`), fila("ajustes.carta.pais", paises.of(nacimiento.residencia) ?? nacimiento.residencia)),
+      boton("boton-secundario", t("ajustes.carta.corregir"), alCorregir),
     ),
     grupoDiario,
     grupo("ajustes.grupo.apariencia", temas),
@@ -142,8 +161,55 @@ function confirmarBorrado(api: CuentaApi, exportar: () => void, alBorrar: () => 
   const hoja = completa("cuenta.borrar.titulo", (cerrar) => [el("p", "", t("cuenta.borrar.que_se_borra")), el("p", "", t("cuenta.borrar.diario")), boton("boton-secundario", t("cuenta.borrar.exportar"), exportar), error, borrar, boton("boton-link", t("comun.cancelar"), cerrar)]);
 }
 
+// Cambiar dónde se guarda (DR39): lo que implica, confirmación y las etapas a la vista, en estilo consola.
+// Mientras dura no se puede escribir (la pantalla tapa la app). `fallo` es lo que se dice cuando el servidor confirmó que el cambio no se hizo.
+function abrirCambio(titulo: TextoId, cuerpo: Node[], textoConfirmar: TextoId, fallo: TextoId, pasar: Cambio, alTerminar: () => void) {
+  const etapas = el("ol", "etapas");
+  const avance = el("div", "", etapas);
+  avance.setAttribute("role", "status");
+  const error = anuncio("error", "alert");
+  const bloqueo = el("p", "ajustes-nota", t("almacenamiento.escritura_bloqueada"));
+  bloqueo.hidden = true;
+  const cancelar = boton("boton-link", t("comun.cancelar"), () => hoja.close());
+  let enCurso = false;
+  const confirmar = boton("boton-principal", t(textoConfirmar), async (b) => {
+    b.disabled = cancelar.hidden = enCurso = true;
+    bloqueo.hidden = false;
+    error.textContent = "";
+    etapas.replaceChildren();
+    // La etapa "bajando" se actualiza en su renglón, con el dato real.
+    const r = await pasar((texto) => {
+      const ultima = etapas.lastElementChild;
+      if (ultima && ultima.textContent!.split(":")[0] === texto.split(":")[0]) ultima.textContent = texto;
+      else etapas.append(el("li", "", texto));
+    });
+    bloqueo.hidden = true;
+    enCurso = false;
+    if (r === "listo" || r === "parcial") {
+      // Una subida cortada no deshace el cambio: sigue sola en cuanto haya conexión.
+      etapas.append(el("li", "", t(r === "listo" ? "a_local.etapa.listo" : "a_nube.parcial")));
+      b.replaceWith(boton("boton-principal", t("comun.cerrar"), () => hoja.close()));
+      return hoja.addEventListener("close", alTerminar);
+    }
+    b.disabled = cancelar.hidden = false;
+    b.textContent = t("comun.reintentar");
+    // Nunca se afirma que nada se borró sin la confirmación del servidor (Codex #5).
+    error.textContent = t(r === "sin_red" ? "almacenamiento.sin_red" : r === "fallo" ? fallo : "almacenamiento.comprobando");
+  });
+  const hoja = completa(titulo, () => [
+    ...cuerpo,
+    avance,
+    bloqueo,
+    error,
+    confirmar,
+    cancelar,
+  ]);
+  // Mientras el cambio está en curso, Escape no cierra la pantalla.
+  hoja.addEventListener("cancel", (e) => enCurso && e.preventDefault());
+}
+
 // Exportar (DR43): pantalla previa con qué incluye; el archivo se arma recién al confirmar.
-function abrirExportar(documentos: () => Promise<object[]>, estadoDiario: OpcionesAjustes["diario"]["estado"]) {
+export function abrirExportar(documentos: () => Promise<object[]>, estadoDiario: OpcionesAjustes["diario"]["estado"]) {
   const estado = anuncio("", "status");
   // El diario sale legible; cerrado, no se puede incluir hasta abrirlo.
   const avisoDiario = el("p", "");

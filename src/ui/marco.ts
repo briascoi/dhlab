@@ -22,7 +22,8 @@ export const icono = (nombre: Pestana | "ajustes") => `<svg viewBox="0 0 24 24" 
 export interface Marco {
   raiz: HTMLElement;
   contenido: HTMLElement;
-  activar(pestana: Pestana): void;
+  // `conFoco`: lleva el foco al título, para cuando el cambio lo pidió la persona desde el contenido.
+  activar(pestana: Pestana, conFoco?: boolean): void;
   // Una pantalla fuera de las pestañas (Ajustes): cambia el título y el contenido, y ninguna pestaña queda marcada.
   mostrar(titulo: string, ...nodos: Node[]): void;
   // Marca de sincronización (DR36): un texto corto a la izquierda de Ajustes, solo cuando algo no está confirmado por el servidor.

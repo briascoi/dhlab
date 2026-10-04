@@ -19,6 +19,7 @@ export const simulada: CuentaApi = {
     intentos -= 1;
     return intentos > 0 ? { error: "codigo_incorrecto", quedan: intentos } : { error: "intentos_agotados" };
   },
+  cambiarModo: async () => ({ error: "no_disponible" }),
   salir: async () => ({ ok: true }),
   borrar: async () => ({ ok: true }),
 };

@@ -13,15 +13,39 @@ const publico = ({ tipo, id, contenido, cifrado, version }: Fila) => ({ tipo, id
 
 // Clave del diario (T65): se guarda envuelta con el código de recuperación, que el servidor nunca ve.
 interface Clave { idClave: string; envuelta: string; revision: number }
-async function clave(request: Request, env: EnvCuenta, sesion: { id: string; modo: string }, ahora: number): Promise<Response> {
+// Borra las entradas cifradas con claves reemplazadas (E4-limpieza): un paso aparte del reemplazo, que se puede repetir sin daño.
+const limpiar = (env: EnvCuenta, cuenta: string) =>
+  env.DB.batch([
+    env.DB.prepare("DELETE FROM documentos WHERE cuenta_id = ?1 AND tipo = 'diario' AND id_clave IN (SELECT id_clave FROM borrados_pendientes WHERE cuenta_id = ?1)").bind(cuenta),
+    env.DB.prepare("DELETE FROM borrados_pendientes WHERE cuenta_id = ?1").bind(cuenta),
+  ]);
+
+async function clave(request: Request, env: EnvCuenta, sesion: { id: string; modo: string }, ahora: number, diferir?: Diferir): Promise<Response> {
   const vigente = () => env.DB.prepare("SELECT id_clave AS idClave, envuelta, revision FROM claves WHERE cuenta_id = ?").bind(sesion.id).first<Clave>();
   if (request.method === "GET") return json({ clave: await vigente() });
   if (request.method !== "PUT") return fallo("no_encontrado", 404);
   if (sesion.modo !== "nube") return fallo("escritura_no_permitida", 403);
-  const { idClave, envuelta, revisionBase } = (await request.json().catch(() => ({}))) as { idClave?: unknown; envuelta?: unknown; revisionBase?: unknown };
+  const { idClave, envuelta, revisionBase, reemplaza } = (await request.json().catch(() => ({}))) as { idClave?: unknown; envuelta?: unknown; revisionBase?: unknown; reemplaza?: unknown };
   if (typeof idClave !== "string" || !idClave || idClave.length > 64 || idClave.includes(".")) return fallo("pedido_invalido", 400);
   if (typeof envuelta !== "string" || !envuelta || envuelta.length > 256) return fallo("pedido_invalido", 400);
   if (!Number.isInteger(revisionBase) || (revisionBase as number) < 0) return fallo("pedido_invalido", 400);
+  // "Empezar un diario nuevo" (DR32): cambia la clave vigente por otra, solo si la vigente sigue siendo la que el dispositivo vio,
+  // y en la misma transacción anota la vieja para borrar sus entradas (E4-limpieza). Desde ahí, lo cifrado con la vieja se rechaza.
+  if (reemplaza !== undefined) {
+    if (typeof reemplaza !== "string" || !reemplaza || reemplaza === idClave) return fallo("pedido_invalido", 400);
+    const SIGUE = `EXISTS (SELECT 1 FROM claves WHERE cuenta_id = ?1 AND id_clave = ?2) AND ${NUBE}`;
+    await env.DB.batch([
+      env.DB.prepare(`INSERT OR IGNORE INTO borrados_pendientes (cuenta_id, id_clave) SELECT ?1, ?2 WHERE ${SIGUE}`).bind(sesion.id, reemplaza),
+      env.DB.prepare(`UPDATE claves SET id_clave = ?3, envuelta = ?4, revision = revision + 1 WHERE cuenta_id = ?1 AND id_clave = ?2 AND ${NUBE}`).bind(sesion.id, reemplaza, idClave, envuelta),
+    ]);
+    const actual = await vigente();
+    if (actual?.idClave !== idClave || actual.envuelta !== envuelta) return fallo("conflicto", 409, { actual: actual ?? null });
+    // El borrado no demora la respuesta; si no termina, lo completa el próximo pedido de la cuenta.
+    const tarea = limpiar(env, sesion.id).catch(() => undefined);
+    if (diferir) diferir(tarea);
+    else await tarea;
+    return json({ clave: actual });
+  }
   // Base 0: registrar la clave, y gana la primera (E3-dosclaves). Base mayor: envolverla con un código nuevo,
   // solo si la clave y la revisión siguen siendo las que el dispositivo leyó (Codex #2 de la eng ronda 4).
   await (revisionBase === 0
@@ -36,17 +60,21 @@ async function clave(request: Request, env: EnvCuenta, sesion: { id: string; mod
   return modo?.modo === "nube" ? fallo("conflicto", 409, { actual: null }) : fallo("escritura_no_permitida", 403);
 }
 
-export async function documentos(request: Request, env: EnvCuenta, ahora = Date.now()): Promise<Response> {
+type Diferir = (tarea: Promise<unknown>) => void;
+// `diferir` es el `waitUntil` del Worker: deja terminar una tarea después de responder.
+export async function documentos(request: Request, env: EnvCuenta, ahora = Date.now(), diferir?: Diferir): Promise<Response> {
   const url = new URL(request.url);
   if (request.method !== "GET" && request.headers.get("Origin") !== url.origin) return fallo("origen_no_permitido", 403);
   const sesion = await sesionDe(request, env, ahora);
   if (!sesion) return fallo("sesion_vencida", 401);
-  if (url.pathname === "/v1/clave") return clave(request, env, sesion, ahora);
+  // Un borrado que quedó pendiente se completa antes de responder: el servidor nunca devuelve entradas de una clave reemplazada.
+  await limpiar(env, sesion.id);
+  if (url.pathname === "/v1/clave") return clave(request, env, sesion, ahora, diferir);
 
   const [, , , tipo, id] = url.pathname.split("/");
   if (request.method === "GET" && !tipo) {
     const filtro = url.searchParams.get("tipo");
-    const filas = await env.DB.prepare("SELECT tipo, id, contenido, cifrado, version, id_operacion FROM documentos WHERE cuenta_id = ?1 AND (?2 IS NULL OR tipo = ?2) ORDER BY tipo, id")
+    const filas = await env.DB.prepare("SELECT tipo, id, contenido, cifrado, version, id_operacion FROM documentos WHERE cuenta_id = ?1 AND (?2 IS NULL OR tipo = ?2) AND (id_clave IS NULL OR id_clave NOT IN (SELECT id_clave FROM borrados_pendientes WHERE cuenta_id = ?1)) ORDER BY tipo, id")
       .bind(sesion.id, filtro).all<Fila>();
     return json({ documentos: filas.results.map(publico) });
   }

@@ -25,7 +25,7 @@ beforeAll(async () => {
 });
 afterAll(() => cerrar());
 beforeEach(async () => {
-  for (const tabla of ["documentos", "claves", "sesiones", "cuentas", "codigos", "envios", "invitaciones"]) await db.prepare(`DELETE FROM ${tabla}`).run();
+  for (const tabla of ["borrados_pendientes", "documentos", "claves", "sesiones", "cuentas", "codigos", "envios", "invitaciones"]) await db.prepare(`DELETE FROM ${tabla}`).run();
 });
 
 const env = () => ({ DB: db, enviarEmail: async (m: { texto: string }) => void (codigo = /\d{6}/.exec(m.texto)![0]) });
@@ -305,4 +305,103 @@ test("diario: dos sincronizaciones a la vez registran la misma clave y el diario
   expect(await Promise.all([d.diario.sincronizar(), d.diario.sincronizar()])).toEqual(["al_dia", "al_dia"]);
   expect(await d.diario.estado()).toBe("abierto");
   expect((await d.diario.nuevoCodigo()) as { codigo?: string }).toHaveProperty("codigo");
+});
+
+test("diario nuevo: reemplaza la clave, borra las entradas anteriores y no deja nada pendiente; con la vigente equivocada no cambia nada", async () => {
+  const cookie = await entrar("ana@ejemplo.com");
+  const celu = dispositivo(cookie);
+  await celu.diario.crear();
+  await celu.diario.escribir("vieja", "del diario anterior");
+  await celu.diario.sincronizar();
+  // Otro dispositivo, sin el código: el diario está cerrado y empieza uno nuevo.
+  const compu = dispositivo(cookie);
+  await compu.diario.sincronizar();
+  expect(await compu.diario.estado()).toBe("cerrado");
+  const nuevo = (await compu.diario.empezarNuevo()) as { codigo: string };
+  expect(nuevo.codigo).toMatch(/^([0-9A-F]{4}-){7}[0-9A-F]{4}$/);
+  expect([await compu.diario.estado(), await compu.sync.listar("diario")]).toEqual(["abierto", []]);
+  expect([(await db.prepare("SELECT * FROM documentos").all()).results, (await db.prepare("SELECT * FROM borrados_pendientes").all()).results]).toEqual([[], []]);
+  const { id_clave: vigente } = (await db.prepare("SELECT id_clave FROM claves").first<{ id_clave: string }>())!;
+  const r = await claveApiDe(cookie).guardar({ idClave: "otra", envuelta: "x", revisionBase: 1, reemplaza: "una-que-no-rige" });
+  expect([(r as { error: string }).error, (await db.prepare("SELECT id_clave FROM claves").first<{ id_clave: string }>())!.id_clave]).toEqual(["conflicto", vigente]);
+
+  // El dispositivo que guarda el diario anterior lo nota al reconectar, y no lo vuelve a subir solo (E4-diarioviejo).
+  expect(await celu.diario.sincronizar()).toBe("al_dia");
+  expect([await celu.diario.estado(), (await db.prepare("SELECT * FROM documentos").all()).results]).toEqual(["anterior", []]);
+  // "Recuperarlo": con el código nuevo, vuelve a todos los dispositivos cifrado con la clave nueva.
+  expect(await celu.diario.abrir(nuevo.codigo)).toBe(true);
+  await celu.diario.sincronizar();
+  await compu.diario.sincronizar();
+  expect([await celu.diario.estado(), await compu.diario.leer("vieja")]).toEqual(["abierto", "del diario anterior"]);
+});
+
+test("diario nuevo: lo escrito sin red con la clave vieja se conserva y sube con el código nuevo; Descartarlo borra solo las copias ya sincronizadas", async () => {
+  const cookie = await entrar("ana@ejemplo.com");
+  const celu = dispositivo(cookie);
+  await celu.diario.crear();
+  await celu.diario.escribir("subida", "ya estaba en la cuenta");
+  await celu.diario.sincronizar();
+  await celu.diario.escribir("sin-red", "escrita sin red");
+  const compu = dispositivo(cookie);
+  await compu.diario.sincronizar();
+  const nuevo = (await compu.diario.empezarNuevo()) as { codigo: string };
+
+  expect(await celu.diario.sincronizar()).toBe("clave_reemplazada");
+  expect([await celu.diario.estado(), (await celu.sync.leer("diario", "sin-red"))!.sinSubir]).toEqual(["anterior", true]);
+  await celu.diario.descartarAnterior();
+  expect([await celu.diario.estado(), (await celu.sync.listar("diario")).map((d) => d.id)]).toEqual(["cerrado", ["sin-red"]]);
+  await celu.diario.abrir(nuevo.codigo);
+  await celu.diario.sincronizar();
+  await compu.diario.sincronizar();
+  expect([await compu.diario.leer("sin-red"), await compu.diario.leer("subida")]).toEqual(["escrita sin red", null]);
+});
+
+test("diario nuevo desde el dispositivo que guarda el anterior: lo que ya estaba en la cuenta se borra y solo sigue lo que nunca subió", async () => {
+  const cookie = await entrar("ana@ejemplo.com");
+  const celu = dispositivo(cookie);
+  await celu.diario.crear();
+  await celu.diario.escribir("subida", "ya estaba en la cuenta");
+  await celu.diario.sincronizar();
+  await celu.diario.escribir("sin-red", "escrita sin red");
+  const compu = dispositivo(cookie);
+  await compu.diario.sincronizar();
+  await compu.diario.empezarNuevo();
+  await celu.diario.sincronizar();
+  // En el celu tampoco está el código nuevo: empieza otro diario desde ahí.
+  expect(await celu.diario.empezarNuevo()).toHaveProperty("codigo");
+  await celu.diario.sincronizar();
+  expect([(await db.prepare("SELECT id FROM documentos").all()).results, await celu.diario.leer("sin-red"), await celu.diario.leer("subida")]).toEqual([[{ id: "sin-red" }], "escrita sin red", null]);
+});
+
+test("un borrado que quedó pendiente lo completa el próximo pedido de la cuenta, antes de responder (E4-limpieza)", async () => {
+  const cookie = await entrar("ana@ejemplo.com");
+  const celu = dispositivo(cookie);
+  await celu.diario.crear();
+  await celu.diario.escribir("vieja", "del diario anterior");
+  await celu.diario.sincronizar();
+  const { id_clave } = (await db.prepare("SELECT id_clave FROM claves").first<{ id_clave: string }>())!;
+  // El reemplazo se anotó pero el borrado no llegó a correr.
+  await db.prepare("INSERT INTO borrados_pendientes (cuenta_id, id_clave) SELECT id, ? FROM cuentas").bind(id_clave).run();
+  expect(await apiDe(cookie).listar()).toEqual({ documentos: [] });
+  expect([(await db.prepare("SELECT * FROM documentos").all()).results, (await db.prepare("SELECT * FROM borrados_pendientes").all()).results]).toEqual([[], []]);
+});
+
+test("pasar a solo en este dispositivo borra la copia del servidor, y desde ahí no entra contenido", async () => {
+  const cookie = await entrar("ana@ejemplo.com");
+  const celu = dispositivo(cookie);
+  await celu.sync.guardar("carta", "principal", "la carta");
+  await celu.diario.crear();
+  await celu.diario.escribir("e1", "una entrada");
+  await celu.diario.sincronizar();
+  const r = await cuenta(pedido("POST", "/v1/cuenta/modo", { modo: "local" }, cookie), env() as never, T0);
+  expect(await r.json()).toEqual({ cuenta: { email: "ana@ejemplo.com", modo: "local" } });
+  const filas = async (tabla: string) => (await db.prepare(`SELECT * FROM ${tabla}`).all()).results.length;
+  expect([await filas("documentos"), await filas("claves"), await filas("cuentas")]).toEqual([0, 0, 1]);
+  expect((await guardar(cookie, "otra", 0, "op-x")).status).toBe(403);
+  // De vuelta a la nube: el servidor cambia el modo antes de la primera subida, y todo lo del dispositivo sube como nuevo.
+  expect((await cuenta(pedido("POST", "/v1/cuenta/modo", { modo: "otro" }, cookie), env() as never, T0)).status).toBe(400);
+  expect((await cuenta(pedido("POST", "/v1/cuenta/modo", { modo: "nube" }, cookie), env() as never, T0)).status).toBe(200);
+  await celu.sync.subirTodo();
+  expect(await celu.sync.sincronizar()).toBe("clave_reemplazada");
+  expect([await enServidor(), await celu.sync.pendientes()]).toEqual([[{ contenido: "la carta", version: 1 }], 0]);
 });

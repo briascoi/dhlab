@@ -150,6 +150,25 @@ export async function cuenta(request: Request, env: EnvCuenta, ahora = Date.now(
   const renovada = { "Set-Cookie": cookie(sesion.id_sesion, LIMITES.sesion / 1000) };
 
   if (ruta === "GET /v1/cuenta") return json({ cuenta: { email: sesion.email, modo: sesion.modo } }, 200, renovada);
+  // Cambiar dónde se guarda (DR39). A "solo en este dispositivo": cambia el modo y borra la copia del servidor en una sola transacción.
+  // Desde ese instante las escrituras de contenido se rechazan, porque cada una lleva la condición del modo en su sentencia.
+  // El estado se consulta con GET /v1/cuenta: si el modo ya es local, el cambio terminó (Codex #5).
+  if (ruta === "POST /v1/cuenta/modo") {
+    const { modo } = (await request.json().catch(() => ({}))) as { modo?: unknown };
+    // A la nube: solo cambia el modo, antes de la primera subida (el contenido lo sube cada dispositivo después).
+    if (modo === "nube") {
+      await env.DB.prepare("UPDATE cuentas SET modo = 'nube' WHERE id = ?").bind(sesion.id).run();
+      return json({ cuenta: { email: sesion.email, modo: "nube" } }, 200, renovada);
+    }
+    if (modo !== "local") return fallo("pedido_invalido", 400);
+    // ponytail: el borrado no comprueba que el servidor siga igual que cuando el dispositivo verificó; algo que otro dispositivo suba
+    // entre la verificación y este pedido se borra acá (ese dispositivo conserva su copia). Si hace falta, condición sobre las versiones en el UPDATE.
+    await env.DB.batch([
+      env.DB.prepare("UPDATE cuentas SET modo = 'local' WHERE id = ?").bind(sesion.id),
+      ...["documentos", "claves", "borrados_pendientes"].map((tabla) => env.DB.prepare(`DELETE FROM ${tabla} WHERE cuenta_id = ?`).bind(sesion.id)),
+    ]);
+    return json({ cuenta: { email: sesion.email, modo: "local" } }, 200, renovada);
+  }
   if (ruta === "POST /v1/cuenta/salir") {
     await env.DB.prepare("DELETE FROM sesiones WHERE hash = ?").bind(sesion.hash).run();
     return json({ ok: true }, 200, { "Set-Cookie": cookie("", 0) });
