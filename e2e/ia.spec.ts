@@ -185,3 +185,40 @@ test("Llévame al capítulo: desde una respuesta del coach se vuelve al Libro", 
   await expect(page.getByRole("heading", { level: 1, name: "Libro" })).toBeFocused();
   await expect(page.getByRole("heading", { name: "Capítulo 1 · Tu Tipo" })).toBeVisible();
 });
+
+test("el coach tiene su osciloscopio, que cambia con el estado, y lleva al mapa con el Centro resaltado", async ({ page }) => {
+  const servidor = await simularServidor(page, { conSesion: true, carta: true });
+  servidor.ia.configurada = true;
+  await page.addInitScript(() => localStorage.setItem("dhlab.ia_consentida", "2026-10-04"));
+  await page.goto("/");
+  await page.getByRole("button", { name: "Coach" }).click();
+  const pantalla = page.locator(".osciloscopio");
+  await expect(pantalla).toHaveAttribute("data-estado", "esperando");
+  await expect(pantalla).toHaveAttribute("aria-hidden", "true");
+  await sinFallas(page);
+  servidor.respuestasIA.push({ cuerpo: { parrafos: [{ tipo: "interpretativo", texto: "Tu Garganta está definida.", fuentes: ["centro.garganta.definido"] }] } }, { cuerpo: { fija: "sin_biblioteca" } });
+  await page.getByLabel("Escribe tu pregunta").fill("¿Cómo me comunico?");
+  await page.getByRole("button", { name: "Enviar" }).click();
+  await expect(pantalla).toHaveAttribute("data-estado", "responde");
+  // La acción va en píldora, de 44 px de alto, y lleva al mapa con ese Centro resaltado y su detalle a la vista.
+  const accion = page.getByRole("button", { name: "Muéstrame en mi mapa" });
+  expect((await accion.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  await accion.click();
+  await expect(page.getByRole("heading", { level: 1, name: "Tu mapa" })).toBeFocused();
+  await expect(page.locator(".mapa-boton.mapa-resaltado")).toHaveAttribute("aria-label", /^Garganta,/);
+  await expect(page.locator(".detalle-titulo")).toHaveText("Garganta");
+  await page.getByRole("button", { name: "Coach" }).click();
+  await page.getByLabel("Escribe tu pregunta").fill("¿Y mi Cruz?");
+  await page.getByRole("button", { name: "Enviar" }).click();
+  await expect(page.locator(".osciloscopio")).toHaveAttribute("data-estado", "no_sabe");
+});
+
+test("con movimiento reducido la onda del coach no se anima", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  const servidor = await simularServidor(page, { conSesion: true, carta: true });
+  servidor.ia.configurada = true;
+  await page.addInitScript(() => localStorage.setItem("dhlab.ia_consentida", "2026-10-04"));
+  await page.goto("/");
+  await page.getByRole("button", { name: "Coach" }).click();
+  expect(await page.locator(".osciloscopio .onda").evaluate((e) => getComputedStyle(e).animationName)).toBe("none");
+});

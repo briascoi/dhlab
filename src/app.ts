@@ -557,6 +557,8 @@ async function libro(a: Atributos, contenido: HTMLElement, repintar: () => void)
   if ((lista.at(-1)!.estado || lista.at(-1)!.cambio) && sigue <= CAPITULOS) contenido.append(el("p", "marco-vacio", t("capitulo.bloqueado", { numero: sigue, titulo: t(`capitulo.${sigue}.titulo` as TextoId) })));
 }
 
+// El Centro que el coach pidió mostrar: el mapa lo resalta y abre su detalle al dibujarse.
+let centroPedido: string | null = null;
 // El coach: responde con las fichas de esta carta. Antes del primer uso pide el consentimiento; lo conversado no se guarda.
 async function pantallaCoach(a: Atributos, contenido: HTMLElement, repintar: () => void) {
   if (!localStorage.getItem("dhlab.ia_consentida")) {
@@ -574,6 +576,11 @@ async function pantallaCoach(a: Atributos, contenido: HTMLElement, repintar: () 
         return f && { tema: f.tema, texto: f.texto, fuente: t("capitulo.fuente", { fuentes: f.fuentes.map((x) => `${x.autor}, ${x.obra}`).join("; ") }) };
       },
       alCapitulo: () => marco?.activar("libro", true),
+      // Sin el cable animado todavía: el Centro se resalta directo, que es también lo que pide el movimiento reducido (DR12).
+      alMapa: (centro) => {
+        centroPedido = centro;
+        marco?.activar("mapa", true);
+      },
       preguntar: async (texto, historial) => {
         contar("coach_mensaje");
         const r = await iaActiva().mensaje(texto, historial, a);
@@ -693,6 +700,8 @@ async function app(carta: CartaGuardada, inicial: Pestana = "mapa") {
       sello.append(el("span", "anotacion nota", t("experimentos.sello")));
       experimento.append(sello);
       const coach = tarjeta("coach", t("nav.coach"));
+      // Con la IA disponible, la tarjeta lleva al coach en lugar de decir que no está.
+      if (hayIA()) coach.querySelector("p")!.replaceChildren(el("strong", "", t("nav.coach")), boton("boton-link", t("coach.rotulo"), () => nuevo.activar("coach", true)));
       coach.insertAdjacentHTML("beforeend", MEGAFONO);
       contenido.append(franja, experimento, coach);
       const panel = el("div", "panel panel-mapa");
@@ -710,6 +719,14 @@ async function app(carta: CartaGuardada, inicial: Pestana = "mapa") {
         ),
       );
       contenido.append(panel, dibujarConfiguracion(analisis), notasDelPanel(), interruptores(tipo));
+      if (centroPedido && centroPedido in CENTROS) {
+        const id = centroPedido as keyof typeof CENTROS;
+        centroPedido = null;
+        panel.querySelector(`.mapa-boton[aria-label^="${CENTROS[id]},"]`)?.classList.add("mapa-resaltado");
+        detalle = dibujarDetalle(id, capitulosAbiertos, puertas);
+        panel.append(detalle);
+        panel.scrollIntoView({ block: "center" });
+      }
       // Con la hora incierta, el aviso queda a la vista; corregirla vuelve al paso de la hora con los datos guardados.
       if (analisis.estado === "incierta") {
         contenido.append(

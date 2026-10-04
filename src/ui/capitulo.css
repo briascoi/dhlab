@@ -38,3 +38,22 @@
   .ficha, .seccion-ia { break-inside: avoid; }
   body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 }
+/* Osciloscopio del coach (DR12): pantalla con rejilla, onda en la tinta de luz (rosa de día, salmón de noche) y rejilla de parlante. */
+.osciloscopio { width: min(100%, 22rem); justify-self: center; }
+.osciloscopio > svg { display: block; width: 100%; height: auto; }
+/* La onda se recorta al borde de la pantalla. */
+.osciloscopio svg svg { overflow: hidden; }
+.osciloscopio .pantalla { fill: var(--surface-page); stroke: var(--border); stroke-width: 2; }
+.osciloscopio .rejilla { stroke: var(--border-decor); stroke-width: 0.6; stroke-dasharray: 2 3; fill: none; }
+.osciloscopio .parlante { fill: var(--border); }
+.osciloscopio .onda { fill: none; stroke: var(--onda, var(--light)); stroke-width: 2.5; stroke-linejoin: round; transform-origin: 0 30px; animation: onda 2.4s linear infinite; }
+.osciloscopio[data-estado="pensando"] .onda { animation-duration: 0.7s; }
+.osciloscopio[data-estado="responde"] .onda { animation: onda 1.6s linear infinite, onda-modula 1.6s ease-in-out infinite; }
+.osciloscopio[data-estado="no_sabe"] .onda { animation: none; transform: scaleY(0.08); }
+@keyframes onda { to { translate: -240px 0; } }
+@keyframes onda-modula { 50% { scale: 1 0.45; } }
+@media (prefers-reduced-motion: reduce) { .osciloscopio .onda { animation: none !important; } }
+/* Acciones del coach: píldoras (DESIGN.md, coach-action). */
+.coach-accion { min-height: 44px; padding: 6px 16px; font: inherit; font-weight: 600; color: var(--text); background: var(--surface-panel); border: 2px solid var(--border); border-radius: 999px; cursor: pointer; }
+/* El Centro al que llevó el coach, resaltado en el mapa con la segunda tinta: sobre un Centro definido, la de luz no se vería. */
+.mapa-boton.mapa-resaltado { stroke: var(--action); stroke-width: 5; stroke-linejoin: round; }

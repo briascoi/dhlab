@@ -25,6 +25,7 @@
   :root:not([data-tema="dia"]) {
     --surface-page: #0e1431;
     --surface-panel: #172048;
+  --onda: #f48c7f;
     --text: #f4ede0;
     --text-muted: #b8b3c9;
     --border: #b8b3c9;
@@ -46,6 +47,7 @@
 :root[data-tema="noche"] {
   --surface-page: #0e1431;
   --surface-panel: #172048;
+  --onda: #f48c7f;
   --text: #f4ede0;
   --text-muted: #b8b3c9;
   --border: #b8b3c9;

@@ -201,6 +201,7 @@ const TEXTOS = {
   "glosario.sello": { texto: "Sello: el cierre de un experimento.", aprobado: true },
   "coach.ver_fuente": { texto: "Ver la fuente", aprobado: true },
   "coach.al_capitulo": { texto: "Llévame al capítulo", aprobado: true },
+  "coach.en_mapa": { texto: "Muéstrame en mi mapa", aprobado: true },
   "coach.vacio": { texto: "El coach todavía no está disponible.", aprobado: true },
   "mapa.nombre": { texto: "Mapa de tu carta", aprobado: true },
   "mapa.centro.definido": { texto: "definido", aprobado: true },
