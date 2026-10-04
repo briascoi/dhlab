@@ -49,7 +49,8 @@ export function motivo(p: Parrafo, fichas: FichaIA[]): string | null {
   if (esProhibido(p.texto)) return "prohibido";
   if (p.tipo === "narrativo") {
     if (oraciones(p.texto) > 2) return "narrativo_largo";
-    if (SOBRE_EL_DISENO.test(sinTildes(p.texto)) || numeros(p.texto).length) return "narrativo_afirma";
+    // Un narrativo no cita fichas: no puede afirmar nada del Diseño, ni llevar números, ni nombrar términos del sistema (Centros, Canales...).
+    if (SOBRE_EL_DISENO.test(sinTildes(p.texto)) || numeros(p.texto).length || frases(p.texto).some((f) => terminos(f).length)) return "narrativo_afirma";
     return null;
   }
   const citadas = (p.fuentes ?? []).map((id) => fichas.find((f) => f.id === id));
@@ -64,11 +65,12 @@ export function motivo(p: Parrafo, fichas: FichaIA[]): string | null {
 // Frases de un párrafo interpretativo que nombran un término con mayúscula (un Centro, un Canal, una Línea, un Tipo...) que no
 // está en las fichas que el párrafo cita: es la forma más común de colar algo de otra ficha o del conocimiento del modelo.
 // No cuenta la primera palabra de cada frase. Devuelve las posiciones de esas frases.
+// Los términos con mayúscula de una frase, sin contar su primera palabra.
+const terminos = (frase: string) => frase.split(/\s+/).slice(1).map((x) => x.replace(/^[^\p{L}]+|[^\p{L}]+$/gu, "")).filter((x) => x.length > 1 && /^\p{Lu}/u.test(x));
 export function frasesAjenas(p: Parrafo, fichas: FichaIA[]): number[] {
   const citado = sinTildes(fichas.filter((f) => p.fuentes?.includes(f.id)).map((f) => f.texto).join(" "));
   return frases(p.texto).flatMap((frase, i) => {
-    const terminos = frase.split(/\s+/).slice(1).map((x) => x.replace(/^[^\p{L}]+|[^\p{L}]+$/gu, "")).filter((x) => x.length > 1 && /^\p{Lu}/u.test(x));
-    return terminos.some((x) => !new RegExp(`\\b${sinTildes(x)}`).test(citado)) ? [i] : [];
+    return terminos(frase).some((x) => !new RegExp(`\\b${sinTildes(x)}`).test(citado)) ? [i] : [];
   });
 }
 

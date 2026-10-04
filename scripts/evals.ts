@@ -118,7 +118,7 @@ function cartas(): { nombre: string; atributos: Atributos }[] {
   });
 }
 
-const AUDITAR = 'Eres un auditor estricto. Recibes fichas y los párrafos de un texto, cada uno con las fichas que cita. Revisas frase por frase: una frase está "sin respaldo" si afirma algo que las fichas citadas por su párrafo no dicen, aunque sea plausible. Reformular o resumir lo que la ficha dice sí cuenta como respaldado. Para cada una dices además si lo que afirma sí está en alguna de las otras fichas recibidas, que ese párrafo no cita. Respondes SOLO con JSON: {"sin_respaldo":[{"parrafo":número,"frase":"la frase tal cual","en_otra_ficha":true o false}]}';
+const AUDITAR = 'Eres un auditor estricto. Recibes fichas y los párrafos de un texto, cada uno con las fichas que cita. Un párrafo sin fichas citadas es una transición: cualquier frase suya que afirme algo sobre el Diseño de la persona va sin respaldo. Revisas frase por frase: una frase está "sin respaldo" si afirma algo que las fichas citadas por su párrafo no dicen, aunque sea plausible. Reformular o resumir lo que la ficha dice sí cuenta como respaldado. Para cada una dices además si lo que afirma sí está en alguna de las otras fichas recibidas, que ese párrafo no cita. Respondes SOLO con JSON: {"sin_respaldo":[{"parrafo":número,"frase":"la frase tal cual","en_otra_ficha":true o false}]}';
 
 async function puntaAPunta() {
   const C = cartas();
@@ -140,7 +140,8 @@ async function puntaAPunta() {
       }
       const interpretativos = r.parrafos.filter((p) => p.tipo === "interpretativo");
       frasesMostradas += interpretativos.reduce((x, p) => x + frases(p.texto).length, 0);
-      const a = await pedir(AUDITOR, AUDITAR, JSON.stringify({ fichas, parrafos: interpretativos.map((p, i) => ({ numero: i, texto: p.texto, fuentes: p.fuentes })) }));
+      // El auditor ve todo lo que se muestra, también las transiciones.
+      const a = await pedir(AUDITOR, AUDITAR, JSON.stringify({ fichas, parrafos: r.parrafos.map((p, i) => ({ numero: i, texto: p.texto, fuentes: p.fuentes })) }));
       let hallazgos: { frase?: string; en_otra_ficha?: boolean }[] | null = null;
       try { hallazgos = (JSON.parse(a!.texto.replace(/^\s*```(?:json)?\s*|\s*```\s*$/g, "")) as { sin_respaldo: { frase?: string; en_otra_ficha?: boolean }[] }).sin_respaldo; } catch { hallazgos = null; }
       if (!Array.isArray(hallazgos)) { sinAuditar++; continue; }
