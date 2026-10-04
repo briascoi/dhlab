@@ -194,6 +194,11 @@ async function avisarModo(c: Cuenta) {
   const banner = el("div", "banner");
   banner.setAttribute("role", "status");
   banner.append(el("p", "", t(aviso)));
+  // En este dispositivo el diario espera el código de recuperación que se creó al pasar a la nube (E4-otrosdisp).
+  if (aviso === "a_nube.otros.banner") {
+    await sincronizar();
+    if ((await diario!.estado()) === "cerrado") banner.append(el("p", "", t("a_nube.otros.diario")));
+  }
   if (aviso === "a_local.otros.banner" && (await syncDe(c).pendientes())) banner.append(el("p", "", t("a_local.otros.exportar")), boton("boton-link", t("ajustes.datos.exportar"), () => abrirExportar(() => documentosLegibles(c), diario!.estado)));
   marco.contenido.before(banner);
 }
@@ -245,6 +250,8 @@ async function pasarALaNube(etapa: (texto: string) => void): Promise<"listo" | "
   if (!("cuenta" in r)) return r.error === "sin_red" ? "sin_red" : "fallo";
   cuenta = { ...c, modo: "nube" };
   const s = syncDe(cuenta);
+  // Si hay diario, su clave se registra con un código nuevo, que se muestra al terminar la subida.
+  const codigo = await diario!.prepararNube();
   await s.subirTodo();
   localStorage.setItem(MODO, `${c.email}:nube`);
   const total = await s.pendientes();
@@ -252,6 +259,9 @@ async function pasarALaNube(etapa: (texto: string) => void): Promise<"listo" | "
   await sincronizar();
   const faltan = await s.pendientes();
   etapa(t("a_nube.subiendo", { hechas: total - faltan, total }));
+  // El código vale cuando la clave quedó registrada; si la subida se cortó antes, queda el recordatorio para generar uno.
+  if (codigo && (await diario!.estado()) === "abierto" && !faltan) abrirCodigo(codigo);
+  else if (codigo) marcarCodigoPendiente();
   return faltan ? "parcial" : "listo";
 }
 

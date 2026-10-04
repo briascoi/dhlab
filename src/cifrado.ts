@@ -183,5 +183,15 @@ export function crearDiario(almacen: Almacen, sync: ReturnType<typeof crearSync>
     return { codigo };
   }
 
-  return { estado, crear, escribir, leer, sincronizar, abrir, nuevoCodigo, empezarNuevo, descartarAnterior };
+  // Al pasar de solo local a la nube: la clave de un diario local nunca se registró y su código no se mostró.
+  // Antes de registrarla se envuelve con un código nuevo, que es el que la persona va a guardar (DR39, DR34). Sin diario, no hay código.
+  async function prepararNube(): Promise<string | null> {
+    const r = await registro();
+    if (!r.propia || r.propia.revision !== 0 || r.vigente) return null;
+    const codigo = generarCodigo();
+    await guardar({ ...r, propia: { ...r.propia, envuelta: await envolver(r.propia.clave, codigo) } });
+    return codigo;
+  }
+
+  return { estado, crear, escribir, leer, sincronizar, abrir, nuevoCodigo, empezarNuevo, descartarAnterior, prepararNube };
 }

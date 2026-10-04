@@ -190,3 +190,29 @@ test("si una corrección cambia la Autoridad, su capítulo se abre otra vez con 
   await expect(segundo.locator(".capitulo-cambio")).toHaveCount(0);
   await expect(segundo.getByRole("heading", { name: "Capítulo completado" })).toBeVisible();
 });
+
+test("una cuenta solo local con diario que pasa a la nube recibe su código de recuperación al terminar la subida", async ({ page }) => {
+  const servidor = await simularServidor(page, { conSesion: true, carta: true });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Ajustes" }).click();
+  await page.getByRole("button", { name: "Pasar a solo en este dispositivo" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Pasar a solo en este dispositivo" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Cerrar" }).click();
+  // En solo local el diario se escribe sin código: no hay nada que recuperar en otro dispositivo.
+  await page.getByRole("button", { name: "Libro" }).click();
+  await page.getByLabel("Anota algo en tu diario").fill("Escrita en solo local.");
+  await page.getByRole("button", { name: "Guardar en mi diario" }).click();
+  await expect(page.locator(".diario-entradas li")).toHaveCount(1);
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  expect(servidor.documentos).toHaveLength(0);
+
+  await page.getByRole("button", { name: "Ajustes" }).click();
+  await page.getByRole("button", { name: "Guardar en la nube" }).click();
+  const cambio = page.getByRole("dialog").filter({ hasText: "Guardar en la nube" });
+  await expect(cambio.getByText("Al terminar vas a recibir un código de recuperación")).toBeVisible();
+  await cambio.getByRole("button", { name: "Pasar a la nube" }).click();
+  const codigo = page.getByRole("dialog").filter({ hasText: "Tu código de recuperación" });
+  const texto = (await codigo.locator("p.codigo-recuperacion").textContent())!;
+  expect(await desenvolver(servidor.clave!.envuelta, texto)).not.toBeNull();
+  expect(servidor.documentos.map((d) => d.tipo).sort()).toEqual(["carta", "diario"]);
+});

@@ -420,3 +420,36 @@ test("sync: borrar un documento lo quita del dispositivo ya y del servidor al si
   expect(await sync.sincronizar()).toBe("al_dia");
   expect([await enServidor(), await sync.pendientes(), (await sync.listar("libro")).map((d) => d.id)]).toEqual([[{ contenido: "dos", version: 1 }], 0, ["b"]]);
 });
+
+test("diario de una cuenta solo local que pasa a la nube: la clave se registra con un código nuevo, y otro dispositivo local sube lo suyo con ese código", async () => {
+  const cookie = await entrar("ana@ejemplo.com", "local");
+  const celu = dispositivo(cookie, "local");
+  const compu = dispositivo(cookie, "local");
+  await celu.diario.crear();
+  await celu.diario.escribir("del-celu", "escrita en el celu");
+  await compu.diario.crear();
+  await compu.diario.escribir("de-la-compu", "escrita en la compu");
+  expect((await db.prepare("SELECT * FROM documentos").all()).results).toEqual([]);
+
+  // El celu pasa la cuenta a la nube: mismo almacén, ahora sincronizando.
+  await cuenta(pedido("POST", "/v1/cuenta/modo", { modo: "nube" }, cookie), env() as never, T0);
+  const sync = crearSync(celu.almacen, apiDe(cookie), "nube");
+  const diario = crearDiario(celu.almacen, sync, claveApiDe(cookie), "nube");
+  const codigo = (await diario.prepararNube())!;
+  await sync.subirTodo();
+  expect(await diario.sincronizar()).toBe("al_dia");
+  const { envuelta } = (await db.prepare("SELECT envuelta FROM claves").first<{ envuelta: string }>())!;
+  expect([await diario.estado(), (await desenvolver(envuelta, codigo)) !== null, await diario.prepararNube()]).toEqual(["abierto", true, null]);
+
+  // La compu abre después: su diario espera el código nuevo y, con él, sus entradas suben cifradas con la clave de la cuenta.
+  const syncCompu = crearSync(compu.almacen, apiDe(cookie), "nube");
+  const diarioCompu = crearDiario(compu.almacen, syncCompu, claveApiDe(cookie), "nube");
+  await syncCompu.subirTodo();
+  await diarioCompu.sincronizar();
+  expect(await diarioCompu.estado()).toBe("cerrado");
+  expect(await diarioCompu.abrir(codigo)).toBe(true);
+  await diarioCompu.sincronizar();
+  await diario.sincronizar();
+  expect([await diario.leer("de-la-compu"), await diarioCompu.leer("del-celu")]).toEqual(["escrita en la compu", "escrita en el celu"]);
+  expect((await db.prepare("SELECT COUNT(DISTINCT id_clave) AS claves, COUNT(*) AS entradas FROM documentos WHERE tipo = 'diario'").first())).toEqual({ claves: 1, entradas: 2 });
+});
