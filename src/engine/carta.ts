@@ -1,11 +1,12 @@
 // La carta: 13 activaciones de Personalidad (el nacimiento) y 13 de Diseño (cuando el Sol estaba 88° antes).
+import type { Tipo } from "./tipos";
 import { definicion } from "./definicion";
 import { CUERPOS, diaJuliano, instanteDe, longitudSol, posiciones, type Cuerpo, type Nodo } from "./efemerides";
 import { activacion, normalizar, type Activacion } from "./rueda";
 import type { Canal, CentroId } from "./system-data";
 
 export const GRADOS_DISENO = 88;
-export type Tipo = "manifestador" | "generador" | "generador_manifestante" | "proyector" | "reflector";
+export type { Tipo } from "./tipos";
 // Las ocho Autoridades, con la taxonomía de Jovian Archive (docs/diseno-humano/base-de-conocimiento.md).
 export type Autoridad = "emocional" | "sacral" | "esplenica" | "ego_manifestado" | "ego_proyectado" | "autoproyectada" | "mental" | "lunar";
 export type Definicion = "ninguna" | "simple" | "partida" | "triple" | "cuadruple";

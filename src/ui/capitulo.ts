@@ -15,10 +15,11 @@ function ficha(f: Ficha, encabezado: string, nivel: "h2" | "h3" = "h3"): HTMLEle
   return caja;
 }
 
-export function dibujarCapitulo(o: { titulo: string; fichas: Ficha[]; experimentos: Ficha[]; estado: EstadoCapitulo | null; cambio?: { antes: string; ahora: string } | null; alElegir: (experimento: Ficha) => void; diario: Node }): HTMLElement {
+export function dibujarCapitulo(o: { titulo: string; fichas: Ficha[]; experimentos: Ficha[]; estado: EstadoCapitulo | null; ia?: Node[]; cambio?: { antes: string; ahora: string } | null; alElegir: (experimento: Ficha) => void; diario: Node }): HTMLElement {
   const panel = el("section", "panel capitulo", el("h2", "capitulo-titulo", o.titulo));
   if (o.cambio) panel.append(el("p", "banner capitulo-cambio", t("capitulo.cambio", o.cambio)));
-  panel.append(...o.fichas.map((f) => ficha(f, f.tema)));
+  // Lo escrito por la IA va arriba; las fichas siguen debajo, tal cual, como respaldo a la vista.
+  panel.append(...(o.ia ?? []), ...o.fichas.map((f) => ficha(f, f.tema)));
   const elegido = o.experimentos.find((e) => e.id === o.estado?.experimento);
   const tarjetas = el("div", "capitulo-opciones");
   for (const e of elegido ? [elegido] : o.experimentos) {

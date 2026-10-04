@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { afterAll, beforeAll, beforeEach, expect, test } from "vitest";
 import { getPlatformProxy } from "wrangler";
 import { LIMITES, cuenta } from "../worker/cuenta";
@@ -13,8 +13,10 @@ beforeAll(async () => {
   const proxy = await getPlatformProxy<{ DB: D1Database }>({ configPath: "test/wrangler.test.jsonc", persist: false });
   db = proxy.env.DB;
   cerrar = proxy.dispose;
-  const sql = readFileSync("migrations/0001_cuentas.sql", "utf8").replace(/--.*$/gm, "");
-  for (const sentencia of sql.split(";").map((s) => s.trim()).filter(Boolean)) await db.prepare(sentencia).run();
+  for (const archivo of readdirSync("migrations").sort()) {
+    const sql = readFileSync(`migrations/${archivo}`, "utf8").replace(/--.*$/gm, "");
+    for (const sentencia of sql.split(";").map((s) => s.trim()).filter(Boolean)) await db.prepare(sentencia).run();
+  }
 });
 afterAll(() => cerrar());
 beforeEach(async () => {

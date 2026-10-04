@@ -179,6 +179,8 @@ export async function cuenta(request: Request, env: EnvCuenta, ahora = Date.now(
       env.DB.prepare("DELETE FROM cuentas WHERE id = ?").bind(sesion.id),
       env.DB.prepare("DELETE FROM invitaciones WHERE email = ?").bind(sesion.email),
       env.DB.prepare("DELETE FROM codigos WHERE email = ?").bind(sesion.email),
+      // El gasto de IA de la cuenta también se va; el global del mes queda, porque es de todos.
+      env.DB.prepare("DELETE FROM gasto_ia WHERE clave = ?").bind(sesion.id),
       env.DB.prepare("DELETE FROM envios WHERE clave = ?").bind(`e:${sesion.email}`),
     ]);
     return json({ ok: true }, 200, { "Set-Cookie": cookie("", 0) });

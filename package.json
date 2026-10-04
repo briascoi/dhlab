@@ -5,8 +5,8 @@
   "license": "AGPL-3.0-only",
   "scripts": {
     "ciudades": "node scripts/ciudades.mjs",
-    "dev": "npm run ciudades && vite",
-    "build": "npm run ciudades && tsc --noEmit && tsc --noEmit -p worker && vite build",
+    "dev": "npm run ciudades && node scripts/catalogo.mjs && vite",
+    "build": "npm run ciudades && node scripts/catalogo.mjs && tsc --noEmit && tsc --noEmit -p worker && vite build",
     "preview": "npm run build && wrangler dev",
     "test": "npm run ciudades && vitest run",
     "deploy": "npm run build && wrangler deploy",

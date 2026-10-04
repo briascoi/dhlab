@@ -19,6 +19,10 @@ export async function simularServidor(page: Page, { conSesion = false, carta = f
     fallosAlBorrar: 0,
     // El cambio a solo local se hace, pero la respuesta no llega (corte de transporte).
     cortarCambio: false,
+    // La IA incluida: apagada salvo que el test la prenda. `respuestas` es lo que contesta cada pedido, en orden.
+    ia: { configurada: false, usado: 0, tope: 500_000, pausa: false, renovacion: "2026-11-01", reserva: { capitulo: 60_000, mensaje: 15_000 } },
+    respuestasIA: [] as { status?: number; cuerpo: object }[],
+    pedidosIA: [] as Record<string, unknown>[],
     // Cuántas veces falla el cambio a solo local antes de andar, sin haber cambiado nada.
     fallosAlCambiar: 0,
     // La clave del diario envuelta, como la guarda el servidor.
@@ -38,6 +42,12 @@ export async function simularServidor(page: Page, { conSesion = false, carta = f
       return json({ cuenta: estado.cuenta });
     }
     if (!estado.cuenta) return json({ error: "sesion_vencida" }, 401);
+    if (camino === "/v1/ia") {
+      if (pedido.method() === "GET") return json(estado.ia);
+      estado.pedidosIA.push(cuerpo);
+      const r = estado.respuestasIA.shift() ?? { status: 502, cuerpo: { error: "salida_invalida" } };
+      return json(r.cuerpo, r.status ?? 200);
+    }
     if (camino === "/v1/cuenta/modo") {
       if (estado.fallosAlCambiar-- > 0) return json({ error: "no_disponible" }, 503);
       estado.cuenta = { ...estado.cuenta, modo: String(cuerpo.modo) };

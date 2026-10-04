@@ -1,6 +1,7 @@
 import { admin } from "./admin";
 import { cuenta } from "./cuenta";
 import { documentos } from "./documentos";
+import { ia, type Catalogo } from "./ia";
 
 interface Env {
   ASSETS: Fetcher;
@@ -12,6 +13,11 @@ interface Env {
   RESEND_API_KEY?: string;
   EMAIL_EN_CONSOLA?: string;
   REGISTRO?: string;
+  // IA incluida: la clave es un secreto del Worker; modelo y topes son variables (T54).
+  OPENROUTER_API_KEY?: string;
+  IA_MODELO?: string;
+  IA_TOPE_CUENTA?: string;
+  IA_TOPE_GLOBAL?: string;
 }
 
 const REMITENTE = "acceso@dhlab.app";
@@ -42,6 +48,12 @@ export default {
     if (pathname.startsWith("/v1/documentos") || pathname === "/v1/clave") {
       if (!env.DB) return Response.json({ error: "no_disponible" }, { status: 503 });
       return documentos(request, { DB: env.DB }, Date.now(), (tarea) => ctx.waitUntil(tarea));
+    }
+    if (pathname === "/v1/ia") {
+      if (!env.DB) return Response.json({ error: "no_disponible" }, { status: 503 });
+      // El catálogo de fichas se arma en el build y viaja como un archivo más del sitio.
+      const catalogo = () => env.ASSETS.fetch(new URL("/contenido.json", request.url)).then((r) => (r.ok ? (r.json() as Promise<Catalogo>) : { fichas: {} }), () => ({ fichas: {} }));
+      return ia(request, { ...env, DB: env.DB, catalogo });
     }
     if (pathname === "/admin" || pathname.startsWith("/admin/")) {
       if (!env.DB) return Response.json({ error: "no_disponible" }, { status: 503 });

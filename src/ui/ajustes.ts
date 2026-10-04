@@ -32,6 +32,8 @@ export interface OpcionesAjustes {
   api: CuentaApi;
   // Sesión cerrada o cuenta borrada: vuelta a la bienvenida (DR27).
   alSalir: () => void;
+  // La IA incluida, si el servidor la tiene configurada: cuánto se usó del tope del mes y cuándo se renueva (DR40).
+  ia: { configurada: boolean; usado: number; tope: number; pausa: boolean; renovacion: string } | null;
   // Vuelve al formulario de nacimiento con los datos guardados, para corregirlos.
   alCorregir: () => void;
   // El diario en este dispositivo: sin clave (todavía no hay diario), abierto o cerrado (DR32).
@@ -49,7 +51,7 @@ export interface OpcionesAjustes {
 }
 
 export function dibujarAjustes(opciones: OpcionesAjustes): HTMLElement {
-  const { cuenta, carta, api, alSalir, alCorregir, diario, documentos, importar, alBorrar, pasarALocal, pasarALaNube } = opciones;
+  const { cuenta, carta, api, alSalir, alCorregir, ia, diario, documentos, importar, alBorrar, pasarALocal, pasarALaNube } = opciones;
   // Al terminar un cambio de modo, Ajustes se vuelve a dibujar con la cuenta ya cambiada.
   const conModo = (modo: Cuenta["modo"]) => () => panel.replaceWith(dibujarAjustes({ ...opciones, cuenta: { ...cuenta, modo } }));
   const exportar = () => abrirExportar(documentos, diario.estado);
@@ -132,6 +134,15 @@ export function dibujarAjustes(opciones: OpcionesAjustes): HTMLElement {
       boton("boton-secundario", t("ajustes.carta.corregir"), alCorregir),
     ),
     grupoDiario,
+    ...(ia?.configurada
+      ? [
+          grupo(
+            "ajustes.grupo.ia",
+            el("dl", "", fila("ajustes.ia.incluida", t(ia.pausa ? "ajustes.ia.pausa" : ia.usado > ia.tope * 0.8 ? "ajustes.ia.cerca" : "ajustes.ia.disponible"))),
+            el("p", "ajustes-nota", t("ia.renovacion", { fecha: new Date(`${ia.renovacion}T12:00:00Z`).toLocaleDateString("es", { timeZone: "UTC", day: "numeric", month: "long" }) })),
+          ),
+        ]
+      : []),
     grupo("ajustes.grupo.apariencia", temas),
     grupo("ajustes.grupo.datos", boton("boton-secundario", t("ajustes.datos.exportar"), exportar), boton("boton-secundario", t("ajustes.datos.importar"), () => abrirImportar(importar)), boton("boton-destructivo", t("ajustes.datos.borrar"), () => confirmarBorrado(api, exportar, alBorrar))),
   );

@@ -3,6 +3,7 @@ dist
 .wrangler
 .gstack
 public/ciudades
+public/contenido.json
 test-results/
 playwright-report/
 dist-motor

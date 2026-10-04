@@ -8,6 +8,7 @@ import "./ui/tintas";
 import { abrirAlmacen, borrarAlmacen, contenidoCarta, ID_CARTA, type CartaGuardada } from "./almacen";
 import { crearDiario } from "./cifrado";
 import { api, claveApi, documentosApi, type Cuenta } from "./cuenta-api";
+import { iaApi, type EstadoIA, type Seccion } from "./ia";
 import { clasificar, clave, leerArchivo, otraVersion } from "./importar";
 import { motor } from "./motor";
 import { crearSync } from "./sync";
@@ -23,6 +24,7 @@ import { DEL_TIPO } from "./engine/tipos";
 import { dibujarCapitulo, dibujarExperimento } from "./ui/capitulo";
 import { abrirCodigo, abrirDiarioCerrado, dibujarDiario, marcarCodigoPendiente, type DiarioCerrado, type Entrada } from "./ui/diario";
 import { avisarHoraInexistente, bannerHoraIncierta, dibujarPendienteDeHora, preguntarHoraRepetida } from "./ui/hora";
+import { abrirEscritura, conConsentimiento, dibujarCoach, dibujarSeccion } from "./ui/ia";
 import { dibujarMapa, rotuloMapa } from "./ui/mapa";
 import { dibujarMarco, icono, type Marco, type Pestana } from "./ui/marco";
 import { abrirNacimiento, type Nacimiento } from "./ui/nacimiento";
@@ -432,6 +434,18 @@ async function capituloDe(n: number, a: Atributos) {
     },
   };
 }
+// La IA incluida: su estado se lee al abrir la app y después de cada uso. Sin configurar en el servidor, la app sigue igual que sin IA.
+let estadoIA: EstadoIA | null = null;
+const leerEstadoIA = async () => {
+  const r = await iaApi.estado();
+  estadoIA = "error" in r ? null : r;
+};
+// El tema de cada ficha de esta carta, para decir de dónde sale cada afirmación generada.
+const temas = (a: Atributos) => {
+  const mapa = new Map([1, 2, 3, 4, 5].flatMap((n) => capitulo(n, a)?.fichas ?? []).map((f) => [f.id, f.tema]));
+  return (id: string) => mapa.get(id) ?? id;
+};
+
 // Los capítulos abiertos, en orden: el primero, y cada siguiente cuando el anterior está completado (elegido su experimento).
 async function abiertos(a: Atributos) {
   const lista: Awaited<ReturnType<typeof capituloDe>>[] = [];
@@ -464,8 +478,37 @@ async function libro(a: Atributos, contenido: HTMLElement, repintar: () => void)
       },
       () => filaDiarioCerrado(repintar),
     );
+    // La sección escrita por la IA, si la hay, y el botón para escribirla; desactualizada si cambió la versión de alguna de sus fichas.
+    const ia: Node[] = [];
+    const guardada = await c.s.leer("libro", `seccion-${c.n}`);
+    if (guardada) {
+      const seccion = JSON.parse(guardada.contenido) as Seccion;
+      const vigente = new Map(c.fichas.map((f) => [f.id, f.version]));
+      ia.push(dibujarSeccion(seccion, temas(a), seccion.fichas.some((f) => vigente.get(f.id) !== f.version)));
+    }
+    if (estadoIA?.configurada) {
+      const estado = estadoIA;
+      ia.push(
+        boton("boton-secundario", t(guardada ? "ia.capitulo.reescribir" : "ia.capitulo.escribir"), () =>
+          conConsentimiento(() =>
+            abrirEscritura(
+              estado,
+              (senal) => iaApi.capitulo(c.n, a, senal),
+              async (r) => {
+                // Solo se guarda un capítulo que pasó las verificaciones: uno incompleto nunca queda como estable.
+                await c.s.guardar("libro", `seccion-${c.n}`, JSON.stringify({ ...(r as Omit<Seccion, "esquema" | "escrita">), esquema: 1, escrita: new Date().toISOString() } satisfies Seccion));
+                void sincronizar();
+                await leerEstadoIA();
+                repintar();
+              },
+            ),
+          ),
+        ),
+      );
+    }
     contenido.append(
       dibujarCapitulo({
+        ia,
         titulo: t("capitulo.en_curso", { numero: c.n, titulo: t(`capitulo.${c.n}.titulo` as TextoId) }),
         fichas: c.fichas,
         experimentos: c.experimentos,
@@ -482,6 +525,36 @@ async function libro(a: Atributos, contenido: HTMLElement, repintar: () => void)
   // El que sigue, todavía cerrado: su nombre y qué lo abre, sin contenido.
   const sigue = lista.length + 1;
   if ((lista.at(-1)!.estado || lista.at(-1)!.cambio) && sigue <= CAPITULOS) contenido.append(el("p", "marco-vacio", t("capitulo.bloqueado", { numero: sigue, titulo: t(`capitulo.${sigue}.titulo` as TextoId) })));
+}
+
+// El coach: responde con las fichas de esta carta. Antes del primer uso pide el consentimiento; lo conversado no se guarda.
+async function pantallaCoach(a: Atributos, contenido: HTMLElement, repintar: () => void) {
+  if (!localStorage.getItem("dhlab.ia_consentida")) {
+    return void contenido.append(el("p", "marco-vacio", t("ia.consentimiento.que_recibe")), boton("boton-principal", t("ia.consentimiento.titulo"), () => conConsentimiento(repintar)));
+  }
+  const estado = estadoIA!;
+  if (estado.pausa) contenido.append(el("p", "banner", `${t("ia.pausa")}.`));
+  else if (estado.usado > estado.tope * 0.8) contenido.append(el("p", "banner", t("ia.banner.cerca")));
+  const puedeAnotar = ["abierto", "sin_clave"].includes(await diario!.estado());
+  contenido.append(
+    dibujarCoach({
+      temaDe: temas(a),
+      preguntar: async (texto, historial) => {
+        const r = await iaApi.mensaje(texto, historial, a);
+        void leerEstadoIA();
+        return r;
+      },
+      // "Anotar en mi diario": la respuesta queda en el diario de este dispositivo, cifrada; el diario nunca se le manda a la IA (R19).
+      ...(puedeAnotar
+        ? {
+            anotar: async (texto: string) => {
+              const codigo = await (await abiertos(a)).at(-1)!.escribir(texto);
+              if (codigo) abrirCodigo(codigo);
+            },
+          }
+        : {}),
+    }),
+  );
 }
 
 // Experimentos: lo que la persona eligió probar en cada capítulo y, los días 3 y 7, el chequeo "¿cómo te fue?" (DR11). Devuelve false si todavía no eligió nada.
@@ -533,6 +606,7 @@ async function app(carta: CartaGuardada, inicial: Pestana = "mapa") {
   const nuevo = dibujarMarco(
     (pestana, contenido) => {
       if (pestana === "libro" && ESCRITOS) return void libro(atributos, contenido, () => nuevo.activar("libro"));
+      if (pestana === "coach" && estadoIA?.configurada) return void pantallaCoach(atributos, contenido, () => nuevo.activar("coach"));
       if (pestana !== "mapa") {
         const vacio = el("p", "marco-vacio", t(`${pestana}.vacio`));
         // Con algo elegido, Experimentos lo muestra con su chequeo; sin nada, queda el estado vacío.
@@ -625,13 +699,15 @@ async function app(carta: CartaGuardada, inicial: Pestana = "mapa") {
         for (const clave of ["dhlab.nacimiento", "dhlab.precuenta", "dhlab.codigo_pendiente", MODO]) localStorage.removeItem(clave);
         alSalir();
       };
-      nuevo.mostrar(t("ajustes.titulo"), dibujarAjustes({ cuenta: c, carta, api, alSalir, alCorregir: () => corregir(1), importar: (texto) => importar(c, texto), diario: { estado: d.estado, escribirCodigo: (alCambiar) => void abrirDiarioCerrado(diarioCerrado(), alCambiar), nuevoCodigo }, documentos, alBorrar, pasarALocal, pasarALaNube }));
+      nuevo.mostrar(t("ajustes.titulo"), dibujarAjustes({ cuenta: c, carta, api, alSalir, ia: estadoIA, alCorregir: () => corregir(1), importar: (texto) => importar(c, texto), diario: { estado: d.estado, escribirCodigo: (alCambiar) => void abrirDiarioCerrado(diarioCerrado(), alCambiar), nuevoCodigo }, documentos, alBorrar, pasarALocal, pasarALaNube }));
     },
     detalleDeMarca,
     { izquierda: pegatina(), derecha: notaDelTitulo() },
   );
   marco = nuevo;
   raiz.replaceChildren(nuevo.raiz);
+  // El estado de la IA se necesita antes de pintar: de eso depende que el Libro y el coach la ofrezcan.
+  await leerEstadoIA();
   nuevo.activar(inicial);
   void sincronizar();
   void avisarModo(cuenta!);

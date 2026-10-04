@@ -17,3 +17,11 @@
 .diario-entradas time { display: block; font-size: 0.875rem; color: var(--text-muted); }
 .diario-entradas .otra-version { margin-left: 16px; border-left-style: dashed; }
 .diario-entradas .otra-version strong { display: block; }
+/* Sección escrita por la IA, y la charla del coach. */
+.seccion-ia { display: grid; gap: 8px; padding: 12px; border: 2px solid var(--border); border-radius: 4px; }
+.seccion-ia p { margin: 0; }
+.coach-charla { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; }
+.coach-charla li { display: grid; gap: 6px; padding: 8px 12px; border-left: 4px solid var(--action); justify-items: start; }
+.coach-charla li.persona { border-left-color: var(--accent-text); }
+.coach-charla p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.coach textarea { width: 100%; min-height: 5rem; resize: vertical; }

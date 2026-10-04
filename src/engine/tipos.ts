@@ -2,7 +2,7 @@
 // Fuente: páginas de cada Tipo en Jovian Archive (jovianarchive.com/pages/type-and-strategy-in-human-design y las de
 // Generator, Projector, Manifestor y Reflector), leídas el 2026-10-03. Esa fuente cuenta al Generador Manifestante
 // dentro de los Generadores, así que comparte su Estrategia, Firma y No-Yo.
-import type { Tipo } from "./carta";
+export type Tipo = "manifestador" | "generador" | "generador_manifestante" | "proyector" | "reflector";
 
 export const DEL_TIPO: Record<Tipo, { estrategia: string; firma: string; noYo: string }> = {
   generador: { estrategia: "responder", firma: "satisfaccion", noYo: "frustracion" },
