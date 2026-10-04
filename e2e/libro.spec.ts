@@ -116,12 +116,31 @@ test("completar el Capítulo 1 abre el Capítulo 2 con las fichas de la Autorida
   await expect(tercero.getByText(/^Tu Perfil es de Ángulo Derecho/)).toBeVisible();
   await expect(tercero.getByRole("button", { name: "Elegir este" })).toHaveCount(3);
   await tercero.getByRole("button", { name: "Elegir este" }).first().click();
-  await expect(page.getByText("El Capítulo 4 · Tus Centros se abre cuando completes el anterior.")).toBeVisible();
+  // El Capítulo 4: una ficha de entrada, los nueve Centros (cada uno en el estado que tiene en esta carta) y la Definición.
+  const cuarto = page.locator(".capitulo").nth(3);
+  await expect(cuarto.getByRole("heading", { name: "Capítulo 4 · Tus Centros" })).toBeVisible();
+  await expect(cuarto.locator(":scope > .ficha")).toHaveCount(11);
+  await expect(cuarto.getByText(/^Tu Definición es Triple partida/)).toBeVisible();
+  await expect(cuarto.getByText(/^El Plexo Solar .* Lo tienes definido/)).toBeVisible();
+  await expect(cuarto.getByText(/^El Sacral .* Lo tienes sin definir/)).toBeVisible();
+  expect((await new AxeBuilder({ page }).analyze()).violations.map((v) => v.id)).toEqual([]);
+  await cuarto.getByRole("button", { name: "Elegir este" }).first().click();
+  // El Capítulo 5: una ficha de entrada y una por cada Canal definido de esta carta, con el nombre que le da la fuente.
+  const quinto = page.locator(".capitulo").nth(4);
+  await expect(quinto.getByRole("heading", { name: "Capítulo 5 · Tus Canales" })).toBeVisible();
+  await expect(quinto.getByText(/^Los Canales son las vías de energía/)).toBeVisible();
+  const canales = quinto.locator(":scope > .ficha").filter({ hasText: /^Canal \d+-\d+/ });
+  expect(await canales.count()).toBeGreaterThan(0);
+  await expect(canales.first()).toContainText(/Tienes definido el Canal \d+-\d+, que une .* "The Channel of /);
+  expect((await new AxeBuilder({ page }).analyze()).violations.map((v) => v.id)).toEqual([]);
+  await quinto.getByRole("button", { name: "Elegir este" }).first().click();
+  await expect(quinto.getByRole("heading", { name: "Capítulo completado" })).toBeVisible();
+  await expect(page.locator(".marco-vacio")).toHaveCount(0);
   await page.getByRole("button", { name: "Mapa" }).click();
-  await expect(page.getByText("Capítulo 4 · Tus Centros")).toBeVisible();
-  await expect(page.getByText("4/5")).toBeVisible();
+  await expect(page.getByText("Capítulo 5 · Tus Canales")).toBeVisible();
+  await expect(page.getByText("5/5")).toBeVisible();
   await page.getByRole("button", { name: "Experimentos" }).click();
-  await expect(page.locator(".capitulo")).toHaveCount(3);
+  await expect(page.locator(".capitulo")).toHaveCount(5);
 });
 
 test("si una corrección cambia la Autoridad, su capítulo se abre otra vez con el antes y el después, las entradas quedan con el valor anterior y el resto del progreso sigue (R12)", async ({ page }) => {

@@ -27,11 +27,11 @@ if (process.argv[1]?.endsWith("bajar-fuentes.mjs")) {
   for (const donde of [...fuentes].sort()) {
     const archivo = archivoDe(donde);
     if (existsSync(archivo) && !process.argv.includes("--todas")) continue;
-    const r = await fetch(`https://www.${donde}`, { headers: { "User-Agent": "Mozilla/5.0" } });
+    const r = await fetch(`https://${donde.startsWith("jovianarchive.com") ? "www." : ""}${donde}`, { headers: { "User-Agent": "Mozilla/5.0" } });
     if (!r.ok) throw new Error(`${donde}: ${r.status}`);
     const cuerpo = texto(await r.text());
     if (cuerpo.length < 2000) throw new Error(`${donde}: la página vino casi vacía (${cuerpo.length} caracteres)`);
-    writeFileSync(archivo, `Fuente: https://www.${donde}\nBajada: ${new Date().toISOString().slice(0, 10)}\n\n${cuerpo}\n`);
+    writeFileSync(archivo, `Fuente: https://${donde.startsWith("jovianarchive.com") ? "www." : ""}${donde}\nBajada: ${new Date().toISOString().slice(0, 10)}\n\n${cuerpo}\n`);
     console.log(`${archivo} (${cuerpo.length} caracteres)`);
   }
 }

@@ -51,6 +51,20 @@ test.skipIf(!archivos.some((a) => a.includes("capitulo-3")))("el Capítulo 3 tie
   for (const id of ["perfil.calculo", "observacion.perfil", ...[1, 2, 3, 4, 5, 6].flatMap((n) => [`linea.${n}`, `experimento.linea.${n}`]), ...["derecho", "yuxtaposicion", "izquierdo"].map((g) => `perfil.grupo.${g}`)]) expect(ids.has(id), id).toBe(true);
 });
 
+test.skipIf(!archivos.some((a) => a.includes("capitulo-4")))("el Capítulo 4 tiene los nueve Centros en sus dos estados y los cinco tipos de Definición", () => {
+  const ids = new Set(entradas.map((e) => e.id));
+  const centros = ["cabeza", "ajna", "garganta", "g", "corazon", "sacral", "plexo", "bazo", "raiz"];
+  for (const id of ["centros.intro", ...centros.flatMap((c) => [`centro.${c}.definido`, `centro.${c}.indefinido`]), ...["ninguna", "simple", "partida", "triple", "cuadruple"].map((d) => `definicion.${d}`)]) expect(ids.has(id), id).toBe(true);
+});
+
+test.skipIf(!archivos.some((a) => a.includes("capitulo-5")))("el Capítulo 5 tiene una ficha por cada uno de los 36 Canales del motor", async () => {
+  const { CANALES } = await import("../src/engine/system-data");
+  const ids = new Set(entradas.map((e) => e.id));
+  expect(CANALES).toHaveLength(36);
+  for (const { puertas } of CANALES) expect(ids.has(`canal.${[...puertas].sort((a, b) => a - b).join("-")}`), puertas.join("-")).toBe(true);
+  for (const id of ["canales.intro", "canales.ninguno", "experimento.canal"]) expect(ids.has(id), id).toBe(true);
+});
+
 // La traba contra citas y cifras inventadas (2026-10-04): leer una página a través de un resumen automático puede inventarlas.
 // Por eso cada cita entre comillas y cada cifra de una ficha tiene que aparecer literal en el texto crudo de una de sus fuentes,
 // bajado sin pasar por ningún modelo (`node scripts/bajar-fuentes.mjs`, que lo deja en contenido/fuentes/).
@@ -68,7 +82,11 @@ test.skipIf(!archivos.length)("cada cita entre comillas aparece literal en el te
   const faltan: string[] = [];
   for (const e of entradas) {
     const textos = crudo(e);
-    for (const [, cita] of String(e.texto).matchAll(/"([^"]+)"/g)) if (!textos.some((t) => t.includes(normal(cita!)))) faltan.push(`${String(e.id)}: "${cita}"`);
+    // Una cita va entre comillas rectas o, si ella misma trae comillas, entre comillas angulares.
+    for (const [, recta, angular] of String(e.texto).matchAll(/"([^"]+)"|«([^»]+)»/g)) {
+      const cita = recta ?? angular!;
+      if (!textos.some((t) => t.includes(normal(cita)))) faltan.push(`${String(e.id)}: "${cita}"`);
+    }
   }
   expect(faltan).toEqual([]);
 });

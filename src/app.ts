@@ -18,6 +18,7 @@ import { dibujarConfiguracion } from "./ui/configuracion";
 import { abrirCuenta } from "./ui/cuenta";
 import { dibujarDetalle } from "./ui/detalle-centro";
 import { capitulo, chequeoPendiente, ESCRITOS, type Atributos, type EstadoCapitulo } from "./contenido";
+import { CENTROS } from "./engine/system-data";
 import { DEL_TIPO } from "./engine/tipos";
 import { dibujarCapitulo, dibujarExperimento } from "./ui/capitulo";
 import { abrirCodigo, abrirDiarioCerrado, dibujarDiario, marcarCodigoPendiente, type DiarioCerrado, type Entrada } from "./ui/diario";
@@ -400,7 +401,7 @@ async function capituloDe(n: number, a: Atributos) {
   const previo = guardado ? (JSON.parse(guardado.contenido) as EstadoCapitulo) : null;
   // El atributo al que se refiere lo que se guarde, para cuando una corrección de la carta lo cambie (R12).
   const atributo =
-    n === 1 ? `${t("configuracion.estrategia")}: ${t(`estrategia.${DEL_TIPO[a.tipo].estrategia}` as TextoId)}` : n === 2 ? `${t("configuracion.autoridad")}: ${t(`autoridad.${a.autoridad}` as TextoId)}` : `${t("configuracion.perfil")}: ${a.perfil}`;
+    n === 1 ? `${t("configuracion.estrategia")}: ${t(`estrategia.${DEL_TIPO[a.tipo].estrategia}` as TextoId)}` : n === 2 ? `${t("configuracion.autoridad")}: ${t(`autoridad.${a.autoridad}` as TextoId)}` : n === 3 ? `${t("configuracion.perfil")}: ${a.perfil}` : n === 4 ? `${t("configuracion.centros")}: ${a.centros.map((c) => CENTROS[c]).join(", ") || "0"}` : `${t("configuracion.canales")}: ${a.canales.join(", ") || "0"}`;
   return {
     ...capitulo(n, a)!,
     n,
@@ -517,8 +518,12 @@ async function app(carta: CartaGuardada, inicial: Pestana = "mapa") {
   if ((carta.esquema as number) > 1) return void escena().append(el("h1", "frase", t("rescate.esquema_nuevo")), boton("boton-principal", t("comun.reintentar"), () => location.reload()));
   const m = await motor();
   const analisis = m.analizarRango(new Date(carta.inicio), new Date(carta.fin));
-  const { puertas, tipo, autoridad, perfil } = m.calcularCarta(new Date(carta.instante));
-  const atributos: Atributos = { tipo, autoridad, perfil: perfil.join("/") };
+  const { puertas, tipo, autoridad, perfil, centros, definicion, canales } = m.calcularCarta(new Date(carta.instante));
+  // Los Canales, con la Puerta menor primero y en orden: así se llaman sus fichas.
+  const idsDeCanales = canales.map((c) => [...c.puertas].sort((x, y) => x - y)).sort((x, y) => x[0]! - y[0]! || x[1]! - y[1]!).map((p) => p.join("-"));
+  const atributos: Atributos = { tipo, autoridad, perfil: perfil.join("/"), centros, definicion, canales: idsDeCanales };
+  // Cuántos capítulos tiene abiertos la persona: de eso depende qué muestra el mapa al tocar un Centro (candado o detalle).
+  let capitulosAbiertos = 1;
   document.querySelectorAll(".saltear, .sonido, .hoja").forEach((e) => e.remove());
   // Corregir la carta: el formulario arranca con los datos guardados; al terminar, la carta nueva reemplaza a la anterior.
   const corregir = (paso: number) => {
@@ -559,6 +564,7 @@ async function app(carta: CartaGuardada, inicial: Pestana = "mapa") {
       if (ESCRITOS) {
         void abiertos(atributos).then((lista) => {
           // El capítulo en curso es el último abierto, y la barra avanza con él.
+          capitulosAbiertos = lista.length;
           const pendiente = lista.find((x) => !x.estado);
           const actual = pendiente ? pendiente.n : Math.min(lista.length + 1, CAPITULOS);
           enCurso.textContent = t("capitulo.en_curso", { numero: actual, titulo: t(`capitulo.${actual}.titulo` as TextoId) });
@@ -587,7 +593,7 @@ async function app(carta: CartaGuardada, inicial: Pestana = "mapa") {
           puertas,
           (id) => {
             detalle?.remove();
-            detalle = dibujarDetalle(id, 1, puertas);
+            detalle = dibujarDetalle(id, capitulosAbiertos, puertas);
             panel.append(detalle);
           },
           t("anotacion.mapa.empieza"),
