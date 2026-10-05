@@ -6,7 +6,8 @@ import { expect, test } from "vitest";
 import { huella } from "../evals/huella";
 
 // La puerta vale mientras la IA incluida esté encendida: con la pausa puesta en wrangler.jsonc, nadie recibe texto generado.
-const enPausa = /"IA_PAUSA":\s*"1"/.test(readFileSync("wrangler.jsonc", "utf8"));
+// Se miran solo las líneas de configuración, no los comentarios.
+const enPausa = /"IA_PAUSA":\s*"1"/.test(readFileSync("wrangler.jsonc", "utf8").replace(/^\s*\/\/.*$/gm, ""));
 
 test.skipIf(enPausa)("hay un resultado de evals aprobado para los prompts, las guardas y el modelo actuales", () => {
   expect(existsSync("evals/resultado.json"), "falta evals/resultado.json: correr scripts/evals.ts").toBe(true);

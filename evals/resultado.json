@@ -1,21 +1,21 @@
 {
- "huella": "54b085c8ccbcc9f2",
+ "huella": "9b9e61eaa48ce6a3",
  "fecha": "2026-10-05",
  "modelo": "anthropic/claude-haiku-4.5",
  "verificador": "typesafe/jev-router",
  "auditor": "openai/gpt-5.6-terra",
  "auditor_2": "google/gemini-2.5-pro",
- "aprobado": false,
+ "aprobado": true,
  "umbrales": {
   "deteccion_reservados": true,
   "falsos_positivos": true,
   "verificador_respondio": true,
   "citas_validas": true,
   "sin_prohibidos": true,
-  "capitulos_publicados": false,
+  "capitulos_publicados": true,
   "sin_respaldo_mostrado": true
  },
- "gasto_usd": 1.238858,
+ "gasto_usd": 1.447398,
  "deteccion_reservados": 1,
  "deteccion_ajuste": 1,
  "falsos_positivos": 0,
@@ -34,25 +34,32 @@
   "generador_manifestante emocional"
  ],
  "capitulos": 60,
- "no_publicables": 15,
+ "modelos_reales": {
+  "typesafe/jev-router": [
+   "deepseek/deepseek-v4.1-flash",
+   "google/gemini-3.8-flash",
+   "openai/gpt-6-luna"
+  ]
+ },
+ "no_publicables": 5,
  "no_publicables_por_motivo": {
-  "salida_invalida": 14,
+  "salida_invalida": 4,
   "no_publicable": 1
  },
  "gasto_usd_por_modelo": {
-  "typesafe/jev-router": 0.155965,
-  "anthropic/claude-haiku-4.5": 0.153586,
-  "openai/gpt-5.6-terra": 0.089888,
-  "google/gemini-2.5-pro": 0.839419
+  "typesafe/jev-router": 0.183628,
+  "anthropic/claude-haiku-4.5": 0.157896,
+  "openai/gpt-5.6-terra": 0.120781,
+  "google/gemini-2.5-pro": 0.985093
  },
  "sin_auditar": 0,
- "frases_mostradas": 278,
- "sin_respaldo": 1,
- "sin_respaldo_cada_100": 0.3597122302158273,
+ "frases_mostradas": 351,
+ "sin_respaldo": 0,
+ "sin_respaldo_cada_100": 0,
  "marcadas_solo_por_el_primero": 0,
- "marcadas_solo_por_el_segundo": 3,
+ "marcadas_solo_por_el_segundo": 10,
  "cita_mal_puesta": 0,
- "inventadas": 1,
+ "inventadas": 0,
  "citas_invalidas": 0,
  "prohibidos": 0
 }
