@@ -49,8 +49,12 @@ test("escribir un capítulo: pide consentimiento, manda solo la acción y los at
   await expect(escrita).toContainText("Tu Estrategia es esperar la invitación.");
   await expect(escrita).toContainText("Fuente: Estrategia");
   await expect(escrita).toContainText("Cada afirmación fue contrastada automáticamente con las fichas citadas. No es una revisión humana.");
-  // Las fichas siguen debajo, y la sección queda guardada en el Libro.
-  await expect(page.locator(".capitulo").first().locator(":scope > .ficha")).toHaveCount(3);
+  // Las fichas quedan plegadas debajo, a un toque, y la sección queda guardada en el Libro.
+  const plegadas = page.locator(".capitulo").first().locator(".capitulo-fichas");
+  await expect(plegadas.locator(".ficha")).toHaveCount(3);
+  await expect(plegadas.locator(".ficha").first()).toBeHidden();
+  await plegadas.getByText("Ver las fichas y sus fuentes").click();
+  await expect(plegadas.locator(".ficha").first()).toBeVisible();
   await expect.poll(() => servidor.documentos.map((d) => `${d.tipo}/${d.id}`).sort()).toEqual(["carta/principal", "libro/seccion-1"]);
   await expect(page.getByRole("button", { name: "Escribirlo otra vez" })).toBeVisible();
   await sinFallas(page);

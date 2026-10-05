@@ -18,8 +18,11 @@ function ficha(f: Ficha, encabezado: string, nivel: "h2" | "h3" = "h3"): HTMLEle
 export function dibujarCapitulo(o: { titulo: string; fichas: Ficha[]; experimentos: Ficha[]; estado: EstadoCapitulo | null; ia?: Node[]; cambio?: { antes: string; ahora: string } | null; alElegir: (experimento: Ficha) => void; diario: Node }): HTMLElement {
   const panel = el("section", "panel capitulo", el("h2", "capitulo-titulo", o.titulo));
   if (o.cambio) panel.append(el("p", "banner capitulo-cambio", t("capitulo.cambio", o.cambio)));
-  // Lo escrito por la IA va arriba; las fichas siguen debajo, tal cual, como respaldo a la vista.
-  panel.append(...(o.ia ?? []), ...o.fichas.map((f) => ficha(f, f.tema)));
+  // Lo escrito por la IA va arriba. Como sale de las mismas fichas, con la sección escrita las fichas quedan plegadas debajo,
+  // a un toque: son el respaldo, y a la vista se leía todo dos veces. Sin sección escrita, las fichas van abiertas.
+  const fichas = o.fichas.map((f) => ficha(f, f.tema));
+  if (o.ia?.length) panel.append(...o.ia, el("details", "capitulo-fichas", el("summary", "", t("capitulo.fichas.ver")), ...fichas));
+  else panel.append(...fichas);
   const elegido = o.experimentos.find((e) => e.id === o.estado?.experimento);
   const tarjetas = el("div", "capitulo-opciones");
   for (const e of elegido ? [elegido] : o.experimentos) {

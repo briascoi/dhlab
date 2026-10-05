@@ -63,3 +63,5 @@
 .marco-contenido.entra .capitulo > :nth-child(3) { --orden: 2; }
 .marco-contenido.entra .capitulo > :nth-child(4) { --orden: 3; }
 .marco-contenido.entra .capitulo > :nth-child(n + 5) { --orden: 4; }
+/* Con la sección escrita por la IA, las fichas quedan plegadas: son el respaldo, a un toque. */
+.capitulo-fichas summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-weight: 700; }

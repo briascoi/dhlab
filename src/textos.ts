@@ -28,6 +28,7 @@ const TEXTOS = {
   "chequeo.sello": { texto: "Cerrado: {respuesta}", aprobado: true },
   "capitulo.fuente": { texto: "Fuente: {fuentes}", aprobado: true },
   "capitulo.borrador": { texto: "Borrador sin revisar", aprobado: true },
+  "capitulo.fichas.ver": { texto: "Ver las fichas y sus fuentes", aprobado: true },
   "capitulo.elegir.titulo": { texto: "Elige cómo probarlo", aprobado: true },
   "capitulo.elegir.boton": { texto: "Elegir este", aprobado: true },
   "capitulo.elegido": { texto: "Lo elegiste el {fecha}.", aprobado: true },
