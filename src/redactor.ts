@@ -55,17 +55,22 @@ async function redactar(llamar: Llamar, pedido: string) {
 export interface SinRespaldo { parrafo: number; frase: number }
 export async function verificar(llamar: Llamar, fichas: FichaIA[], parrafos: Parrafo[]): Promise<{ sinRespaldo: SinRespaldo[] | null; micros: number }> {
   const pedido = parrafos.map((p, i) => ({ numero: i, fichas: fichas.filter((f) => p.fuentes?.includes(f.id)).map((f) => f.texto), frases: frases(p.texto).map((texto, j) => ({ numero: j, texto })) }));
-  const v = await llamar(VERIFICADOR, JSON.stringify({ parrafos: pedido }));
-  let lista: unknown;
-  try {
-    lista = (JSON.parse(v!.texto.replace(/^\s*```(?:json)?\s*|\s*```\s*$/g, "")) as { sin_respaldo?: unknown }).sin_respaldo;
-  } catch {
-    lista = null;
+  // Como el redactor: si la respuesta no cumple el formato, se reintenta hasta dos veces (algunos modelos envuelven el JSON en texto).
+  let lista: unknown = null, micros = 0;
+  for (let intento = 0; intento < 3 && !Array.isArray(lista); intento++) {
+    const v = await llamar(VERIFICADOR, JSON.stringify({ parrafos: pedido }));
+    if (!v) break;
+    micros += v.micros;
+    try {
+      lista = (JSON.parse(v.texto.replace(/^[^{]*|[^}]*$/g, "")) as { sin_respaldo?: unknown }).sin_respaldo;
+    } catch {
+      lista = null;
+    }
   }
   const valida = Array.isArray(lista) && lista.every((x) => Number.isInteger((x as SinRespaldo)?.parrafo) && Number.isInteger((x as SinRespaldo)?.frase));
   // Lo que está tal cual en la ficha citada no se discute.
   const sinRespaldo = valida ? (lista as SinRespaldo[]).filter((x) => !esLiteral(frases(parrafos[x.parrafo]?.texto ?? "")[x.frase] ?? "", parrafos[x.parrafo] ?? { tipo: "interpretativo", texto: "" }, fichas)) : null;
-  return { sinRespaldo, micros: v?.micros ?? 0 };
+  return { sinRespaldo, micros };
 }
 
 // Un capítulo: redactar, guardas y verificador. El verificador quita las frases interpretativas sin respaldo (y el párrafo, si se

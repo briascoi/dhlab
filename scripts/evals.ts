@@ -26,6 +26,8 @@ const AUDITOR = process.env.IA_AUDITOR || "openai/gpt-5.6-terra";
 const AUDITOR_2 = process.env.IA_AUDITOR_2 || "google/gemini-2.5-pro";
 
 let gasto = 0;
+// Cuánto se va en cada modelo, para saber qué cuesta el verificador aparte del redactor y de los auditores.
+const gastoPorModelo: Record<string, number> = {};
 const pedir = async (m: string, sistema: string, usuario: string, extra: object = {}) => {
   const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
@@ -37,6 +39,7 @@ const pedir = async (m: string, sistema: string, usuario: string, extra: object 
   if (!r?.ok) console.error(`  OpenRouter respondió ${r?.status ?? "sin red"} (${m})`);
   const salida = r?.ok ? leerOpenRouter(await r.json().catch(() => null)) : null;
   gasto += salida?.micros ?? 0;
+  gastoPorModelo[m] = (gastoPorModelo[m] ?? 0) + (salida?.micros ?? 0);
   return salida;
 };
 const llamar: Llamar = (sistema, usuario) => pedir(modelo, sistema, usuario);
@@ -144,13 +147,14 @@ async function puntaAPunta() {
   type Marcada = { carta: string; capitulo: number; frase: string; enOtraFicha: boolean };
   const sinRespaldo: Marcada[] = [], soloUno: Marcada[] = [], soloDos: Marcada[] = [];
   const todo: { carta: string; capitulo: number; parrafos: Parrafo[] }[] = [];
+  const motivos: Record<string, number> = {};
   for (const { nombre, atributos } of C) {
     for (const n of [1, 2, 3, 4, 5]) {
       const fichas = piezas(n, atributos)[0].flatMap((id) => (catalogo.fichas[id] ? [{ id, texto: catalogo.fichas[id]!.texto }] : []));
       if (!fichas.length) continue;
       capitulos++;
       const r = await escribirCapitulo(llamar, n, fichas, llamarVerificador);
-      if (!r.parrafos) { noPublicables++; console.log(`${nombre}, capítulo ${n}: ${r.error}`); continue; }
+      if (!r.parrafos) { noPublicables++; motivos[r.error!] = (motivos[r.error!] ?? 0) + 1; console.log(`${nombre}, capítulo ${n}: ${r.error}`); continue; }
       // Lo que queda para mostrar pasa otra vez por las guardas: acá tiene que salir limpio.
       for (const p of r.parrafos) {
         const m = motivo(p, fichas);
@@ -174,7 +178,7 @@ async function puntaAPunta() {
       console.log(`${nombre}, capítulo ${n}: ${interpretativos.length} párrafos; sin respaldo: ${coinciden} según los dos auditores (${uno.length} el primero, ${dos.length} el segundo)`);
     }
   }
-  return { cartas: C.map((c) => c.nombre), capitulos, noPublicables, sinAuditar, frasesMostradas, citasInvalidas, prohibidos, sinRespaldo, soloUno, soloDos, todo, porCien: (100 * sinRespaldo.length) / (frasesMostradas || 1), muestra: todo.slice(0, 12) };
+  return { cartas: C.map((c) => c.nombre), capitulos, noPublicables, sinAuditar, frasesMostradas, citasInvalidas, prohibidos, sinRespaldo, soloUno, soloDos, todo, motivos, porCien: (100 * sinRespaldo.length) / (frasesMostradas || 1), muestra: todo.slice(0, 12) };
 }
 
 if (process.argv.includes("--muestra")) { for (const c of [...CONJUNTOS.reservados.slice(0, 3), ...CONJUNTOS.limpios.slice(0, 2)]) console.log(JSON.stringify({ cita: c.parrafo.fuentes, sembrada: c.ajena ?? null, texto: c.parrafo.texto })); process.exit(0); }
@@ -189,6 +193,8 @@ const umbrales = {
   citas_validas: e2e.citasInvalidas === 0,
   sin_prohibidos: e2e.prohibidos === 0,
   // Sin nada mostrado o sin auditar no hay medición: no aprueba.
+  // Un resultado limpio a costa de perder capítulos no sirve: como mucho 1 de cada 10 puede quedar sin publicar.
+  capitulos_publicados: e2e.noPublicables <= e2e.capitulos * 0.1,
   sin_respaldo_mostrado: e2e.frasesMostradas > 0 && e2e.porCien <= 1 && e2e.sinAuditar === 0,
 };
 // El resultado que se publica lleva solo números. El detalle (fallos, frases y la muestra para leer) cita el contenido de las fichas,
@@ -196,7 +202,7 @@ const umbrales = {
 const resultado = {
   huella: huella(), fecha: new Date().toISOString().slice(0, 10), modelo, verificador: VERIFICADOR, auditor: AUDITOR, auditor_2: AUDITOR_2, aprobado: Object.values(umbrales).every(Boolean), umbrales, gasto_usd: gasto / 1_000_000,
   deteccion_reservados: verificador.reservados.tasa, deteccion_ajuste: verificador.ajuste.tasa, falsos_positivos: verificador.limpios.tasa,
-  cartas: e2e.cartas, capitulos: e2e.capitulos, no_publicables: e2e.noPublicables, sin_auditar: e2e.sinAuditar, frases_mostradas: e2e.frasesMostradas, sin_respaldo: e2e.sinRespaldo.length, sin_respaldo_cada_100: e2e.porCien, marcadas_solo_por_el_primero: e2e.soloUno.length, marcadas_solo_por_el_segundo: e2e.soloDos.length,
+  cartas: e2e.cartas, capitulos: e2e.capitulos, no_publicables: e2e.noPublicables, no_publicables_por_motivo: e2e.motivos, gasto_usd_por_modelo: Object.fromEntries(Object.entries(gastoPorModelo).map(([k, v]) => [k, v / 1_000_000])), sin_auditar: e2e.sinAuditar, frases_mostradas: e2e.frasesMostradas, sin_respaldo: e2e.sinRespaldo.length, sin_respaldo_cada_100: e2e.porCien, marcadas_solo_por_el_primero: e2e.soloUno.length, marcadas_solo_por_el_segundo: e2e.soloDos.length,
   // De esas, las que el auditor encuentra en otra ficha entregada que el párrafo no citó (cita mal puesta) y las que no están en ninguna (inventadas).
   cita_mal_puesta: e2e.sinRespaldo.filter((x) => x.enOtraFicha).length, inventadas: e2e.sinRespaldo.filter((x) => !x.enOtraFicha).length, citas_invalidas: e2e.citasInvalidas, prohibidos: e2e.prohibidos,
 };

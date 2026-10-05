@@ -10,7 +10,10 @@ const enPausa = /"IA_PAUSA":\s*"1"/.test(readFileSync("wrangler.jsonc", "utf8"))
 
 test.skipIf(enPausa)("hay un resultado de evals aprobado para los prompts, las guardas y el modelo actuales", () => {
   expect(existsSync("evals/resultado.json"), "falta evals/resultado.json: correr scripts/evals.ts").toBe(true);
-  const r = JSON.parse(readFileSync("evals/resultado.json", "utf8")) as { huella: string; aprobado: boolean };
+  const r = JSON.parse(readFileSync("evals/resultado.json", "utf8")) as { huella: string; aprobado: boolean; modelo: string; verificador: string };
+  // El resultado vale para el verificador con el que se midió: tiene que ser el que usa producción (IA_VERIFICADOR, o el modelo del redactor).
+  const configurado = /"IA_VERIFICADOR":\s*"([^"]+)"/.exec(readFileSync("wrangler.jsonc", "utf8"))?.[1] ?? r.modelo;
+  expect(r.verificador, "los evals aprobados se midieron con otro verificador que el configurado en wrangler.jsonc").toBe(configurado);
   expect(r.huella, "los prompts, las guardas o el modelo cambiaron desde los últimos evals: correr scripts/evals.ts").toBe(huella());
   expect(r.aprobado, "los últimos evals no alcanzaron los umbrales").toBe(true);
 });
