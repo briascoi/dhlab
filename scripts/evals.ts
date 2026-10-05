@@ -29,6 +29,8 @@ const pedir = async (m: string, sistema: string, usuario: string) => {
     headers: { Authorization: `Bearer ${clave}`, "Content-Type": "application/json", "X-Title": "DH Lab (evals)" },
     body: JSON.stringify(cuerpoOpenRouter(m, sistema, usuario)),
   }).catch(() => null);
+  // Sin saldo o con la clave mal no hay medición posible: se corta antes de escribir un resultado a medias.
+  if (r && [401, 402].includes(r.status) && !process.argv.includes("--seco")) throw new Error(`OpenRouter respondió ${r.status} (${r.status === 402 ? "sin saldo" : "clave inválida"}): la corrida se corta y no se guarda nada.`);
   if (!r?.ok) console.error(`  OpenRouter respondió ${r?.status ?? "sin red"} (${m})`);
   const salida = r?.ok ? leerOpenRouter(await r.json().catch(() => null)) : null;
   gasto += salida?.micros ?? 0;

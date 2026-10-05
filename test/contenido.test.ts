@@ -46,9 +46,9 @@ test.skipIf(!archivos.some((a) => a.includes("capitulo-2")))("el Capítulo 2 tie
   }
 });
 
-test.skipIf(!archivos.some((a) => a.includes("capitulo-3")))("el Capítulo 3 tiene la ficha y el experimento de las seis Líneas y los tres ángulos", () => {
+test.skipIf(!archivos.some((a) => a.includes("capitulo-3")))("el Capítulo 3 tiene la ficha y el experimento de las seis Líneas, los tres ángulos y la ficha de cada uno de los doce Perfiles", () => {
   const ids = new Set(entradas.map((e) => e.id));
-  for (const id of ["perfil.calculo", "observacion.perfil", ...[1, 2, 3, 4, 5, 6].flatMap((n) => [`linea.${n}`, `experimento.linea.${n}`]), ...["derecho", "yuxtaposicion", "izquierdo"].map((g) => `perfil.grupo.${g}`)]) expect(ids.has(id), id).toBe(true);
+  for (const id of ["perfil.calculo", "observacion.perfil", ...["1-3", "1-4", "2-4", "2-5", "3-5", "3-6", "4-6", "4-1", "5-1", "5-2", "6-2", "6-3"].map((x) => `perfil.es.${x}`), ...[1, 2, 3, 4, 5, 6].flatMap((n) => [`linea.${n}`, `experimento.linea.${n}`]), ...["derecho", "yuxtaposicion", "izquierdo"].map((g) => `perfil.grupo.${g}`)]) expect(ids.has(id), id).toBe(true);
 });
 
 test.skipIf(!archivos.some((a) => a.includes("capitulo-4")))("el Capítulo 4 tiene los nueve Centros en sus dos estados y los cinco tipos de Definición", () => {

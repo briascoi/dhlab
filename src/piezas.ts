@@ -22,7 +22,8 @@ export function piezas(n: number, { tipo, autoridad, perfil, centros, definicion
   const [a, b] = perfil.split("/");
   // Ángulo Derecho, Yuxtaposición (solo el 4/1) o Ángulo Izquierdo, según la página oficial de Perfil.
   const grupo = perfil === "4/1" ? "yuxtaposicion" : ["5/1", "5/2", "6/2", "6/3"].includes(perfil) ? "izquierdo" : "derecho";
-  return [["perfil.calculo", `linea.${a}`, `linea.${b}`, `perfil.grupo.${grupo}`], [`experimento.linea.${a}`, `experimento.linea.${b}`]];
+  // `perfil.es.A-B` dice cuál de las dos Líneas es la consciente: sin esa ficha, la IA lo deducía por su cuenta (evals del 2026-10-05).
+  return [["perfil.calculo", `perfil.es.${a}-${b}`, `linea.${a}`, `linea.${b}`, `perfil.grupo.${grupo}`], [`experimento.linea.${a}`, `experimento.linea.${b}`]];
 }
 
 const AUTORIDADES = ["emocional", "sacral", "esplenica", "ego_manifestado", "ego_proyectado", "autoproyectada", "mental", "lunar"];

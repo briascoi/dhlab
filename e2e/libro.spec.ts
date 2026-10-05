@@ -125,7 +125,9 @@ test("completar el Capítulo 1 abre el Capítulo 2 con las fichas de la Autorida
   // El Capítulo 3: la carta de prueba es 1/3, así que trae sus dos Líneas, el cálculo y el ángulo, y un experimento por Línea.
   const tercero = page.locator(".capitulo").nth(2);
   await expect(tercero.getByRole("heading", { name: "Capítulo 3 · Tu Perfil" })).toBeVisible();
-  await expect(tercero.locator(":scope > .ficha")).toHaveCount(4);
+  await expect(tercero.locator(":scope > .ficha")).toHaveCount(5);
+  // La ficha del Perfil dice cuál Línea es la consciente y cuál la inconsciente.
+  await expect(tercero.getByText(/^Tu Perfil es 1\/3\./)).toBeVisible();
   await expect(tercero.getByText(/^La Línea 1 es El Investigador/)).toBeVisible();
   await expect(tercero.getByText(/^La Línea 3 es El Mártir/)).toBeVisible();
   await expect(tercero.getByText(/^Tu Perfil es de Ángulo Derecho/)).toBeVisible();
