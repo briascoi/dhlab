@@ -1,6 +1,6 @@
 // Cómo se le pide un texto al modelo y qué se hace con lo que devuelve. Sin red propia ni DOM: recibe la función que llama al modelo,
 // así el mismo código corre en el Worker (IA incluida) y en el navegador (clave propia), con las mismas guardas (E3-guardas).
-import { filtrar, frases, frasesAjenas, leerSalida, type FichaIA, type Parrafo } from "./guardas";
+import { esLiteral, filtrar, frases, frasesAjenas, leerSalida, type FichaIA, type Parrafo } from "./guardas";
 
 export const MODELO = "anthropic/claude-haiku-4.5";
 // Una llamada al modelo: devuelve el texto y lo que costó en millonésimas de dólar, o null si no respondió.
@@ -63,7 +63,9 @@ export async function verificar(llamar: Llamar, fichas: FichaIA[], parrafos: Par
     lista = null;
   }
   const valida = Array.isArray(lista) && lista.every((x) => Number.isInteger((x as SinRespaldo)?.parrafo) && Number.isInteger((x as SinRespaldo)?.frase));
-  return { sinRespaldo: valida ? (lista as SinRespaldo[]) : null, micros: v?.micros ?? 0 };
+  // Lo que está tal cual en la ficha citada no se discute.
+  const sinRespaldo = valida ? (lista as SinRespaldo[]).filter((x) => !esLiteral(frases(parrafos[x.parrafo]?.texto ?? "")[x.frase] ?? "", parrafos[x.parrafo] ?? { tipo: "interpretativo", texto: "" }, fichas)) : null;
+  return { sinRespaldo, micros: v?.micros ?? 0 };
 }
 
 // Un capítulo: redactar, guardas y verificador. El verificador quita las frases interpretativas sin respaldo (y el párrafo, si se

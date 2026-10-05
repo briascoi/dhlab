@@ -76,6 +76,11 @@ export function frasesAjenas(p: Parrafo, fichas: FichaIA[]): number[] {
   });
 }
 
+// Una frase que está tal cual en una de las fichas que su párrafo cita está respaldada por definición: el verificador no la puede tirar.
+// (En los evals del 2026-10-05 el verificador marcaba como dudosas frases copiadas de la ficha.)
+const plano = (t: string) => sinTildes(t).replace(/\s+/g, " ").trim();
+export const esLiteral = (frase: string, p: Parrafo, fichas: FichaIA[]) => fichas.some((f) => p.fuentes?.includes(f.id) && plano(f.texto).includes(plano(frase)));
+
 // Aplica las guardas a una salida ya leída. Un capítulo no se publica si se descartó más del 40% de lo interpretativo;
 // una respuesta del coach sin ningún párrafo interpretativo válido se reemplaza por la frase fija.
 export function filtrar(parrafos: Parrafo[], fichas: FichaIA[]) {

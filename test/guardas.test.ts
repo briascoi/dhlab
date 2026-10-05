@@ -52,3 +52,12 @@ test("una frase que nombra un término que sus fichas no traen se detecta; la pr
   expect(frasesAjenas(p, fichas)).toEqual([1]);
   expect(frasesAjenas({ ...p, fuentes: ["linea.4", "canal"] }, fichas)).toEqual([]);
 });
+
+test("una frase copiada de la ficha citada cuenta como literal, sin importar tildes ni espacios; una de otra ficha, no", async () => {
+  const { esLiteral } = await import("../src/guardas");
+  const fichas = [{ id: "a", texto: 'La fuente dice que trata de la base ("all about foundation"): necesita entender las cosas a fondo.' }, { id: "b", texto: "Otra cosa." }];
+  const p = { tipo: "interpretativo" as const, texto: "", fuentes: ["a"] };
+  expect(esLiteral('la fuente dice que trata  de la base ("all about foundation"): necesita entender las cosas a fondo.', p, fichas)).toBe(true);
+  expect(esLiteral("Otra cosa.", p, fichas)).toBe(false);
+  expect(esLiteral("Necesita entender todo a fondo.", p, fichas)).toBe(false);
+});

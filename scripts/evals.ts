@@ -21,13 +21,16 @@ if (!clave) throw new Error("Falta OPENROUTER_API_KEY en el entorno.");
 const modelo = process.env.IA_MODELO || MODELO;
 // El auditor es de otro proveedor que el verificador, para que no compartan puntos ciegos.
 const AUDITOR = process.env.IA_AUDITOR || "openai/gpt-5.6-terra";
+// Segundo auditor, de un tercer proveedor: una frase cuenta como sin respaldo solo si los dos la marcan. Con uno solo, cerca de la
+// mitad de lo marcado estaba en la ficha (revisión a mano de la corrida del 2026-10-05).
+const AUDITOR_2 = process.env.IA_AUDITOR_2 || "google/gemini-2.5-pro";
 
 let gasto = 0;
-const pedir = async (m: string, sistema: string, usuario: string) => {
+const pedir = async (m: string, sistema: string, usuario: string, extra: object = {}) => {
   const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${clave}`, "Content-Type": "application/json", "X-Title": "DH Lab (evals)" },
-    body: JSON.stringify(cuerpoOpenRouter(m, sistema, usuario)),
+    body: JSON.stringify({ ...cuerpoOpenRouter(m, sistema, usuario), ...extra }),
   }).catch(() => null);
   // Sin saldo o con la clave mal no hay medición posible: se corta antes de escribir un resultado a medias.
   if (r && [401, 402].includes(r.status) && !process.argv.includes("--seco")) throw new Error(`OpenRouter respondió ${r.status} (${r.status === 402 ? "sin saldo" : "clave inválida"}): la corrida se corta y no se guarda nada.`);
@@ -120,13 +123,27 @@ function cartas(): { nombre: string; atributos: Atributos }[] {
   });
 }
 
-const AUDITAR = 'Eres un auditor estricto. Recibes fichas y los párrafos de un texto, cada uno con las fichas que cita. Un párrafo sin fichas citadas es una transición: cualquier frase suya que afirme algo sobre el Diseño de la persona va sin respaldo. Revisas frase por frase: una frase está "sin respaldo" si afirma algo que las fichas citadas por su párrafo no dicen, aunque sea plausible. Reformular o resumir lo que la ficha dice sí cuenta como respaldado. Para cada una dices además si lo que afirma sí está en alguna de las otras fichas recibidas, que ese párrafo no cita. Respondes SOLO con JSON: {"sin_respaldo":[{"parrafo":número,"frase":"la frase tal cual","en_otra_ficha":true o false}]}';
+const AUDITAR = 'Eres un auditor estricto. Recibes fichas y los párrafos de un texto; cada párrafo trae las fichas que cita y sus frases numeradas. Un párrafo sin fichas citadas es una transición: cualquier frase suya que afirme algo sobre el Diseño de la persona va sin respaldo. Revisas frase por frase: una frase está "sin respaldo" si afirma algo que las fichas citadas por su párrafo no dicen, aunque sea plausible. Reformular o resumir lo que la ficha dice sí cuenta como respaldado. Para cada una dices además si lo que afirma sí está en alguna de las otras fichas recibidas, que ese párrafo no cita. Respondes SOLO con JSON: {"sin_respaldo":[{"parrafo":número,"frase":número,"en_otra_ficha":true o false}]}';
+interface Hallazgo { parrafo: number; frase: number; en_otra_ficha?: boolean }
+// Los auditores razonan antes de responder: necesitan más lugar que el redactor, y un segundo intento si la respuesta no se puede leer.
+async function auditar(m: string, fichas: FichaIA[], parrafos: Parrafo[]): Promise<Hallazgo[] | null> {
+  const pedido = JSON.stringify({ fichas, parrafos: parrafos.map((p, i) => ({ numero: i, fuentes: p.fuentes ?? [], frases: frases(p.texto).map((texto, j) => ({ numero: j, texto })) })) });
+  for (let intento = 0; intento < 2; intento++) {
+    const a = await pedir(m, AUDITAR, pedido, { max_tokens: 6000 });
+    try {
+      const lista = (JSON.parse(a!.texto.replace(/^[^{]*|[^}]*$/g, "")) as { sin_respaldo: Hallazgo[] }).sin_respaldo;
+      if (Array.isArray(lista)) return lista;
+    } catch { /* se reintenta */ }
+  }
+  return null;
+}
 
 async function puntaAPunta() {
   const C = cartas();
   let frasesMostradas = 0, capitulos = 0, noPublicables = 0, sinAuditar = 0, citasInvalidas = 0, prohibidos = 0;
-  const sinRespaldo: { carta: string; capitulo: number; frase: string; enOtraFicha: boolean }[] = [];
-  const muestra: { carta: string; capitulo: number; parrafos: Parrafo[] }[] = [];
+  type Marcada = { carta: string; capitulo: number; frase: string; enOtraFicha: boolean };
+  const sinRespaldo: Marcada[] = [], soloUno: Marcada[] = [], soloDos: Marcada[] = [];
+  const todo: { carta: string; capitulo: number; parrafos: Parrafo[] }[] = [];
   for (const { nombre, atributos } of C) {
     for (const n of [1, 2, 3, 4, 5]) {
       const fichas = piezas(n, atributos)[0].flatMap((id) => (catalogo.fichas[id] ? [{ id, texto: catalogo.fichas[id]!.texto }] : []));
@@ -142,17 +159,22 @@ async function puntaAPunta() {
       }
       const interpretativos = r.parrafos.filter((p) => p.tipo === "interpretativo");
       frasesMostradas += r.parrafos.reduce((x, p) => x + frases(p.texto).length, 0);
-      // El auditor ve todo lo que se muestra, también las transiciones.
-      const a = await pedir(AUDITOR, AUDITAR, JSON.stringify({ fichas, parrafos: r.parrafos.map((p, i) => ({ numero: i, texto: p.texto, fuentes: p.fuentes })) }));
-      let hallazgos: { frase?: string; en_otra_ficha?: boolean }[] | null = null;
-      try { hallazgos = (JSON.parse(a!.texto.replace(/^\s*```(?:json)?\s*|\s*```\s*$/g, "")) as { sin_respaldo: { frase?: string; en_otra_ficha?: boolean }[] }).sin_respaldo; } catch { hallazgos = null; }
-      if (!Array.isArray(hallazgos)) { sinAuditar++; continue; }
-      for (const h of hallazgos) sinRespaldo.push({ carta: nombre, capitulo: n, frase: String(h.frase), enOtraFicha: h.en_otra_ficha === true });
-      if (muestra.length < 12 && n === 1 + (muestra.length % 5)) muestra.push({ carta: nombre, capitulo: n, parrafos: r.parrafos });
-      console.log(`${nombre}, capítulo ${n}: ${interpretativos.length} párrafos, ${hallazgos.length} frases sin respaldo según el auditor`);
+      // Los dos auditores ven todo lo que se muestra. Cuenta lo que marcan los dos; lo que marca uno solo se guarda aparte.
+      const [uno, dos] = await Promise.all([auditar(AUDITOR, fichas, r.parrafos), auditar(AUDITOR_2, fichas, r.parrafos)]);
+      todo.push({ carta: nombre, capitulo: n, parrafos: r.parrafos });
+      if (!uno || !dos) { sinAuditar++; continue; }
+      const clave = (h: Hallazgo) => `${h.parrafo}.${h.frase}`;
+      const fraseDe = (h: Hallazgo) => frases(r.parrafos![h.parrafo]?.texto ?? "")[h.frase] ?? "";
+      for (const h of uno) {
+        const coincide = dos.some((x) => clave(x) === clave(h));
+        (coincide ? sinRespaldo : soloUno).push({ carta: nombre, capitulo: n, frase: fraseDe(h), enOtraFicha: h.en_otra_ficha === true });
+      }
+      for (const h of dos) if (!uno.some((x) => clave(x) === clave(h))) soloDos.push({ carta: nombre, capitulo: n, frase: fraseDe(h), enOtraFicha: h.en_otra_ficha === true });
+      const coinciden = uno.filter((h) => dos.some((x) => clave(x) === clave(h))).length;
+      console.log(`${nombre}, capítulo ${n}: ${interpretativos.length} párrafos; sin respaldo: ${coinciden} según los dos auditores (${uno.length} el primero, ${dos.length} el segundo)`);
     }
   }
-  return { cartas: C.map((c) => c.nombre), capitulos, noPublicables, sinAuditar, frasesMostradas, citasInvalidas, prohibidos, sinRespaldo, porCien: (100 * sinRespaldo.length) / (frasesMostradas || 1), muestra };
+  return { cartas: C.map((c) => c.nombre), capitulos, noPublicables, sinAuditar, frasesMostradas, citasInvalidas, prohibidos, sinRespaldo, soloUno, soloDos, todo, porCien: (100 * sinRespaldo.length) / (frasesMostradas || 1), muestra: todo.slice(0, 12) };
 }
 
 if (process.argv.includes("--muestra")) { for (const c of [...CONJUNTOS.reservados.slice(0, 3), ...CONJUNTOS.limpios.slice(0, 2)]) console.log(JSON.stringify({ cita: c.parrafo.fuentes, sembrada: c.ajena ?? null, texto: c.parrafo.texto })); process.exit(0); }
@@ -172,14 +194,14 @@ const umbrales = {
 // El resultado que se publica lleva solo números. El detalle (fallos, frases y la muestra para leer) cita el contenido de las fichas,
 // que no se publica: va aparte, en evals/detalle.json, que scripts/publicar-codigo.sh deja afuera.
 const resultado = {
-  huella: huella(), fecha: new Date().toISOString().slice(0, 10), modelo, verificador: VERIFICADOR, auditor: AUDITOR, aprobado: Object.values(umbrales).every(Boolean), umbrales, gasto_usd: gasto / 1_000_000,
+  huella: huella(), fecha: new Date().toISOString().slice(0, 10), modelo, verificador: VERIFICADOR, auditor: AUDITOR, auditor_2: AUDITOR_2, aprobado: Object.values(umbrales).every(Boolean), umbrales, gasto_usd: gasto / 1_000_000,
   deteccion_reservados: verificador.reservados.tasa, deteccion_ajuste: verificador.ajuste.tasa, falsos_positivos: verificador.limpios.tasa,
-  cartas: e2e.cartas, capitulos: e2e.capitulos, no_publicables: e2e.noPublicables, sin_auditar: e2e.sinAuditar, frases_mostradas: e2e.frasesMostradas, sin_respaldo: e2e.sinRespaldo.length, sin_respaldo_cada_100: e2e.porCien,
+  cartas: e2e.cartas, capitulos: e2e.capitulos, no_publicables: e2e.noPublicables, sin_auditar: e2e.sinAuditar, frases_mostradas: e2e.frasesMostradas, sin_respaldo: e2e.sinRespaldo.length, sin_respaldo_cada_100: e2e.porCien, marcadas_solo_por_el_primero: e2e.soloUno.length, marcadas_solo_por_el_segundo: e2e.soloDos.length,
   // De esas, las que el auditor encuentra en otra ficha entregada que el párrafo no citó (cita mal puesta) y las que no están en ninguna (inventadas).
   cita_mal_puesta: e2e.sinRespaldo.filter((x) => x.enOtraFicha).length, inventadas: e2e.sinRespaldo.filter((x) => !x.enOtraFicha).length, citas_invalidas: e2e.citasInvalidas, prohibidos: e2e.prohibidos,
 };
 if (!process.argv.includes("--seco")) {
   writeFileSync("evals/resultado.json", JSON.stringify(resultado, null, 1) + "\n");
-  writeFileSync("evals/detalle.json", JSON.stringify({ huella: resultado.huella, verificador, sin_respaldo: e2e.sinRespaldo, muestra: e2e.muestra }, null, 1) + "\n");
+  writeFileSync("evals/detalle.json", JSON.stringify({ huella: resultado.huella, verificador, sin_respaldo: e2e.sinRespaldo, solo_el_primero: e2e.soloUno, solo_el_segundo: e2e.soloDos, muestra: e2e.muestra, todo: e2e.todo }, null, 1) + "\n");
 }
 console.log(JSON.stringify(resultado, null, 1));
