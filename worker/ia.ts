@@ -22,7 +22,8 @@ export interface EnvIA extends EnvCuenta {
 const TOPE_CUENTA = 500_000;
 const TOPE_GLOBAL = 10_000_000;
 // Lo que se aparta antes de llamar: un capítulo son dos llamadas (redactar y verificar).
-const RESERVA = { capitulo: 60_000, mensaje: 15_000 };
+// La del capítulo cubre el peor caso: tres intentos del redactor y tres del verificador con su tope de respuesta más alto.
+const RESERVA = { capitulo: 90_000, mensaje: 15_000 };
 const CAPITULOS = 5;
 
 const json = (cuerpo: unknown, status = 200) => Response.json(cuerpo, { status });
@@ -32,11 +33,11 @@ const mesDe = (ahora: number) => new Date(ahora).toISOString().slice(0, 7);
 const renovacion = (ahora: number) => new Date(Date.UTC(new Date(ahora).getUTCFullYear(), new Date(ahora).getUTCMonth() + 1, 1)).toISOString().slice(0, 10);
 
 // La llamada del camino incluido: con la clave de Isma, que es un secreto del Worker.
-const llamarCon = (env: EnvIA, modelo = env.IA_MODELO || MODELO): Llamar => async (sistema, usuario) => {
+const llamarCon = (env: EnvIA, modelo = env.IA_MODELO || MODELO): Llamar => async (sistema, usuario, tope) => {
   const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${env.OPENROUTER_API_KEY}`, "Content-Type": "application/json", "X-Title": "DH Lab" },
-    body: JSON.stringify(cuerpoOpenRouter(modelo, sistema, usuario)),
+    body: JSON.stringify(cuerpoOpenRouter(modelo, sistema, usuario, tope)),
   }).catch(() => null);
   return r?.ok ? leerOpenRouter(await r.json().catch(() => null)) : null;
 };

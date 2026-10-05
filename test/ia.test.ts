@@ -139,7 +139,7 @@ test("dos pedidos simultáneos al borde del tope: entra uno solo; el tope global
   const cookie = await entrar();
   openrouter(capitulo, { sin_respaldo: [] });
   // El tope de la cuenta alcanza para una sola reserva de capítulo.
-  const tope = { IA_TOPE_CUENTA: "90000" };
+  const tope = { IA_TOPE_CUENTA: "130000" };
   const estados = (await Promise.all([pedir(cookie, { accion: "capitulo", n: 1, atributos }, tope), pedir(cookie, { accion: "capitulo", n: 2, atributos }, tope)])).map((r) => r.status).sort();
   expect(estados).toEqual([200, 429]);
   const otra = await entrar("beto@ejemplo.com");

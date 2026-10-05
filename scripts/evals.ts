@@ -25,27 +25,33 @@ const AUDITOR = process.env.IA_AUDITOR || "openai/gpt-5.6-terra";
 // mitad de lo marcado estaba en la ficha (revisión a mano de la corrida del 2026-10-05).
 const AUDITOR_2 = process.env.IA_AUDITOR_2 || "google/gemini-2.5-pro";
 
+// La última respuesta cruda, para el modo --diagnostico.
+let ultimo: any = null;
 let gasto = 0;
 // Cuánto se va en cada modelo, para saber qué cuesta el verificador aparte del redactor y de los auditores.
 const gastoPorModelo: Record<string, number> = {};
-const pedir = async (m: string, sistema: string, usuario: string, extra: object = {}) => {
+// Si un modelo es un enrutador, qué modelos eligió de verdad.
+const reales: Record<string, string[]> = {};
+const pedir = async (m: string, sistema: string, usuario: string, extra: object = {}, tope?: number) => {
   const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${clave}`, "Content-Type": "application/json", "X-Title": "DH Lab (evals)" },
-    body: JSON.stringify({ ...cuerpoOpenRouter(m, sistema, usuario), ...extra }),
+    body: JSON.stringify({ ...cuerpoOpenRouter(m, sistema, usuario, tope), ...extra }),
   }).catch(() => null);
   // Sin saldo o con la clave mal no hay medición posible: se corta antes de escribir un resultado a medias.
   if (r && [401, 402].includes(r.status) && !process.argv.includes("--seco")) throw new Error(`OpenRouter respondió ${r.status} (${r.status === 402 ? "sin saldo" : "clave inválida"}): la corrida se corta y no se guarda nada.`);
   if (!r?.ok) console.error(`  OpenRouter respondió ${r?.status ?? "sin red"} (${m})`);
-  const salida = r?.ok ? leerOpenRouter(await r.json().catch(() => null)) : null;
+  ultimo = r?.ok ? await r.json().catch(() => null) : null;
+  const salida = leerOpenRouter(ultimo);
   gasto += salida?.micros ?? 0;
   gastoPorModelo[m] = (gastoPorModelo[m] ?? 0) + (salida?.micros ?? 0);
+  if (ultimo?.model && ultimo.model !== m) reales[m] = [...new Set([...(reales[m] ?? []), ultimo.model as string])];
   return salida;
 };
-const llamar: Llamar = (sistema, usuario) => pedir(modelo, sistema, usuario);
+const llamar: Llamar = (sistema, usuario, tope) => pedir(modelo, sistema, usuario, {}, tope);
 // El verificador puede probarse con otro modelo: IA_VERIFICADOR=... (por defecto, el mismo que el redactor).
 const VERIFICADOR = process.env.IA_VERIFICADOR || modelo;
-const llamarVerificador: Llamar = (sistema, usuario) => pedir(VERIFICADOR, sistema, usuario);
+const llamarVerificador: Llamar = (sistema, usuario, tope) => pedir(VERIFICADOR, sistema, usuario, {}, tope);
 
 const catalogo = JSON.parse(readFileSync("public/contenido.json", "utf8")) as { fichas: Record<string, { texto: string }> };
 const FICHAS: FichaIA[] = Object.entries(catalogo.fichas).map(([id, f]) => ({ id, texto: f.texto }));
@@ -183,6 +189,18 @@ async function puntaAPunta() {
 
 if (process.argv.includes("--muestra")) { for (const c of [...CONJUNTOS.reservados.slice(0, 3), ...CONJUNTOS.limpios.slice(0, 2)]) console.log(JSON.stringify({ cita: c.parrafo.fuentes, sembrada: c.ajena ?? null, texto: c.parrafo.texto })); process.exit(0); }
 if (SOLO_GUARDAS) { for (const [n, c] of Object.entries(CONJUNTOS)) { const r = await medirVerificador(c); console.log(n, `${r.marcados}/${r.total}`); r.fallos.slice(0, 6).forEach((f) => console.log("  ", f.slice(0, 150))); } process.exit(0); }
+// --diagnostico: le pasa al verificador capítulos ya generados (los de evals/detalle.json) y muestra la respuesta cruda, para ver
+// por qué a veces no se puede leer. Gasta centavos. Uso: ... npx vite-node scripts/evals.ts -- --diagnostico
+if (process.argv.includes("--diagnostico")) {
+  const guardados = (JSON.parse(readFileSync("evals/detalle.json", "utf8")) as { todo: { carta: string; capitulo: number; parrafos: Parrafo[] }[] }).todo;
+  for (const c of [...guardados.filter((x) => x.capitulo === 4).slice(0, 3), ...guardados.filter((x) => x.capitulo === 3).slice(0, 2)]) {
+    const ids = new Set(c.parrafos.flatMap((p) => p.fuentes ?? []));
+    const r = await verificar(llamarVerificador, FICHAS.filter((f) => ids.has(f.id)), c.parrafos.filter((p) => p.tipo === "interpretativo"));
+    const eleccion = ultimo?.choices?.[0];
+    console.log(JSON.stringify({ carta: c.carta, capitulo: c.capitulo, leida: r.sinRespaldo !== null, marcadas: r.sinRespaldo?.length ?? null, modelo_real: ultimo?.model, fin: eleccion?.finish_reason, tokens: ultimo?.usage && { salida: ultimo.usage.completion_tokens, razonamiento: ultimo.usage.completion_tokens_details?.reasoning_tokens }, texto: String(eleccion?.message?.content ?? "").slice(0, 400) }, null, 1));
+  }
+  process.exit(0);
+}
 const verificador = { ajuste: await medirVerificador(CONJUNTOS.ajuste), reservados: await medirVerificador(CONJUNTOS.reservados), limpios: await medirVerificador(CONJUNTOS.limpios) };
 console.log(`verificador: detecta ${(100 * verificador.reservados.tasa).toFixed(1)}% de los reservados (ajuste ${(100 * verificador.ajuste.tasa).toFixed(1)}%), marca ${(100 * verificador.limpios.tasa).toFixed(1)}% de los limpios`);
 const e2e = await puntaAPunta();
@@ -202,7 +220,7 @@ const umbrales = {
 const resultado = {
   huella: huella(), fecha: new Date().toISOString().slice(0, 10), modelo, verificador: VERIFICADOR, auditor: AUDITOR, auditor_2: AUDITOR_2, aprobado: Object.values(umbrales).every(Boolean), umbrales, gasto_usd: gasto / 1_000_000,
   deteccion_reservados: verificador.reservados.tasa, deteccion_ajuste: verificador.ajuste.tasa, falsos_positivos: verificador.limpios.tasa,
-  cartas: e2e.cartas, capitulos: e2e.capitulos, no_publicables: e2e.noPublicables, no_publicables_por_motivo: e2e.motivos, gasto_usd_por_modelo: Object.fromEntries(Object.entries(gastoPorModelo).map(([k, v]) => [k, v / 1_000_000])), sin_auditar: e2e.sinAuditar, frases_mostradas: e2e.frasesMostradas, sin_respaldo: e2e.sinRespaldo.length, sin_respaldo_cada_100: e2e.porCien, marcadas_solo_por_el_primero: e2e.soloUno.length, marcadas_solo_por_el_segundo: e2e.soloDos.length,
+  cartas: e2e.cartas, capitulos: e2e.capitulos, modelos_reales: reales, no_publicables: e2e.noPublicables, no_publicables_por_motivo: e2e.motivos, gasto_usd_por_modelo: Object.fromEntries(Object.entries(gastoPorModelo).map(([k, v]) => [k, v / 1_000_000])), sin_auditar: e2e.sinAuditar, frases_mostradas: e2e.frasesMostradas, sin_respaldo: e2e.sinRespaldo.length, sin_respaldo_cada_100: e2e.porCien, marcadas_solo_por_el_primero: e2e.soloUno.length, marcadas_solo_por_el_segundo: e2e.soloDos.length,
   // De esas, las que el auditor encuentra en otra ficha entregada que el párrafo no citó (cita mal puesta) y las que no están en ninguna (inventadas).
   cita_mal_puesta: e2e.sinRespaldo.filter((x) => x.enOtraFicha).length, inventadas: e2e.sinRespaldo.filter((x) => !x.enOtraFicha).length, citas_invalidas: e2e.citasInvalidas, prohibidos: e2e.prohibidos,
 };

@@ -4,14 +4,15 @@ import { esLiteral, filtrar, frases, frasesAjenas, leerSalida, type FichaIA, typ
 
 export const MODELO = "anthropic/claude-haiku-4.5";
 // Una llamada al modelo: devuelve el texto y lo que costó en millonésimas de dólar, o null si no respondió.
-export type Llamar = (sistema: string, usuario: string) => Promise<{ texto: string; micros: number } | null>;
+// `tope`: cuántos tokens puede usar la respuesta; sin valor, el del redactor.
+export type Llamar = (sistema: string, usuario: string, tope?: number) => Promise<{ texto: string; micros: number } | null>;
 
 // El cuerpo de un pedido a OpenRouter: salida en JSON y solo proveedores sin retención ni entrenamiento (nota delegada de T51).
-export const cuerpoOpenRouter = (modelo: string, sistema: string, usuario: string) => ({
+export const cuerpoOpenRouter = (modelo: string, sistema: string, usuario: string, tope = 1500) => ({
   model: modelo,
   messages: [{ role: "system", content: sistema }, { role: "user", content: usuario }],
   response_format: { type: "json_object" },
-  max_tokens: 1500,
+  max_tokens: tope,
   usage: { include: true },
   provider: { zdr: true, data_collection: "deny" },
 });
@@ -49,6 +50,10 @@ async function redactar(llamar: Llamar, pedido: string) {
   return { parrafos: null, micros };
 }
 
+// Un verificador que razona antes de responder gasta ahí su espacio: con 1.500 tokens la respuesta salía cortada en los
+// capítulos largos (diagnóstico del 2026-10-05). La respuesta en sí es corta; esto es margen para razonar.
+const TOPE_VERIFICADOR = 4000;
+
 // El verificador: una segunda llamada que revisa frase por frase los párrafos interpretativos contra las fichas que cada uno cita.
 // Devuelve las frases sin respaldo (párrafo y frase por posición), o null si no respondió con el formato pedido.
 // Lo usan el capítulo y los evals (scripts/evals.ts).
@@ -58,7 +63,7 @@ export async function verificar(llamar: Llamar, fichas: FichaIA[], parrafos: Par
   // Como el redactor: si la respuesta no cumple el formato, se reintenta hasta dos veces (algunos modelos envuelven el JSON en texto).
   let lista: unknown = null, micros = 0;
   for (let intento = 0; intento < 3 && !Array.isArray(lista); intento++) {
-    const v = await llamar(VERIFICADOR, JSON.stringify({ parrafos: pedido }));
+    const v = await llamar(VERIFICADOR, JSON.stringify({ parrafos: pedido }), TOPE_VERIFICADOR);
     if (!v) break;
     micros += v.micros;
     try {

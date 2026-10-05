@@ -20,7 +20,7 @@ export async function simularServidor(page: Page, { conSesion = false, carta = f
     // El cambio a solo local se hace, pero la respuesta no llega (corte de transporte).
     cortarCambio: false,
     // La IA incluida: apagada salvo que el test la prenda. `respuestas` es lo que contesta cada pedido, en orden.
-    ia: { configurada: false, usado: 0, tope: 500_000, pausa: false, renovacion: "2026-11-01", reserva: { capitulo: 60_000, mensaje: 15_000 } },
+    ia: { configurada: false, usado: 0, tope: 500_000, pausa: false, renovacion: "2026-11-01", reserva: { capitulo: 90_000, mensaje: 15_000 } },
     eventos: [] as string[],
     respuestasIA: [] as { status?: number; cuerpo: object }[],
     pedidosIA: [] as Record<string, unknown>[],

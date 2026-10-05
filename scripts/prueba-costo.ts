@@ -11,19 +11,19 @@ const clave = process.env.OPENROUTER_API_KEY;
 if (!clave) throw new Error("Falta OPENROUTER_API_KEY en el entorno.");
 const modelo = process.env.IA_MODELO || MODELO;
 // Los valores de worker/ia.ts que esta prueba calibra, en millonésimas de dólar.
-const RESERVA = { capitulo: 60_000, mensaje: 15_000 };
+const RESERVA = { capitulo: 90_000, mensaje: 15_000 };
 const TOPE_CUENTA = 500_000;
 
 const catalogo = JSON.parse(readFileSync("public/contenido.json", "utf8")) as { fichas: Record<string, { texto: string }> };
 const fichasDe = (ids: string[]) => ids.flatMap((id) => (catalogo.fichas[id] ? [{ id, texto: catalogo.fichas[id]!.texto }] : []));
 
 let llamadas = 0;
-const llamar: Llamar = async (sistema, usuario) => {
+const llamar: Llamar = async (sistema, usuario, tope) => {
   llamadas++;
   const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${clave}`, "Content-Type": "application/json", "X-Title": "DH Lab (prueba de costo)" },
-    body: JSON.stringify(cuerpoOpenRouter(modelo, sistema, usuario)),
+    body: JSON.stringify(cuerpoOpenRouter(modelo, sistema, usuario, tope)),
   }).catch(() => null);
   if (!r?.ok) console.error(`  OpenRouter respondió ${r?.status ?? "sin red"}`);
   return r?.ok ? leerOpenRouter(await r.json().catch(() => null)) : null;

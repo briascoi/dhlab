@@ -1,20 +1,21 @@
 {
- "huella": "5385c11a1f8c3bde",
+ "huella": "54b085c8ccbcc9f2",
  "fecha": "2026-10-05",
  "modelo": "anthropic/claude-haiku-4.5",
  "verificador": "typesafe/jev-router",
  "auditor": "openai/gpt-5.6-terra",
  "auditor_2": "google/gemini-2.5-pro",
- "aprobado": true,
+ "aprobado": false,
  "umbrales": {
   "deteccion_reservados": true,
   "falsos_positivos": true,
   "verificador_respondio": true,
   "citas_validas": true,
   "sin_prohibidos": true,
+  "capitulos_publicados": false,
   "sin_respaldo_mostrado": true
  },
- "gasto_usd": 1.150888,
+ "gasto_usd": 1.238858,
  "deteccion_reservados": 1,
  "deteccion_ajuste": 1,
  "falsos_positivos": 0,
@@ -33,15 +34,25 @@
   "generador_manifestante emocional"
  ],
  "capitulos": 60,
- "no_publicables": 14,
+ "no_publicables": 15,
+ "no_publicables_por_motivo": {
+  "salida_invalida": 14,
+  "no_publicable": 1
+ },
+ "gasto_usd_por_modelo": {
+  "typesafe/jev-router": 0.155965,
+  "anthropic/claude-haiku-4.5": 0.153586,
+  "openai/gpt-5.6-terra": 0.089888,
+  "google/gemini-2.5-pro": 0.839419
+ },
  "sin_auditar": 0,
- "frases_mostradas": 276,
- "sin_respaldo": 0,
- "sin_respaldo_cada_100": 0,
+ "frases_mostradas": 278,
+ "sin_respaldo": 1,
+ "sin_respaldo_cada_100": 0.3597122302158273,
  "marcadas_solo_por_el_primero": 0,
- "marcadas_solo_por_el_segundo": 8,
+ "marcadas_solo_por_el_segundo": 3,
  "cita_mal_puesta": 0,
- "inventadas": 0,
+ "inventadas": 1,
  "citas_invalidas": 0,
  "prohibidos": 0
 }

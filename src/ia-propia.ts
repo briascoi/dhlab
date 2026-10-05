@@ -23,11 +23,11 @@ export async function conectarClave(clave: string): Promise<"conectada" | "inval
 export function iaPropia(clave: string) {
   // Por qué falló la última llamada, para decirlo con su texto: clave inválida, sin saldo o corte.
   let motivo = "corte_propia";
-  const llamarCon = (senal?: AbortSignal): Llamar => async (sistema, usuario) => {
+  const llamarCon = (senal?: AbortSignal): Llamar => async (sistema, usuario, tope) => {
     const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${clave}`, "Content-Type": "application/json", "X-Title": "DH Lab" },
-      body: JSON.stringify(cuerpoOpenRouter(MODELO, sistema, usuario)),
+      body: JSON.stringify(cuerpoOpenRouter(MODELO, sistema, usuario, tope)),
       signal: senal ?? null,
     }).catch(() => null);
     motivo = senal?.aborted ? "cancelado" : !r ? "corte_propia" : r.status === 401 || r.status === 403 ? "clave_invalida" : r.status === 402 ? "sin_saldo" : "corte_propia";
