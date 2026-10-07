@@ -1,0 +1,321 @@
+- generic [active] [ref=f20e1]:
+  - region [ref=f20e2]:
+    - generic [ref=f20e4]:
+      - heading [level=2]
+      - generic [ref=f20e5]:
+        - paragraph [ref=f20e7]:
+          - text: We use cookies to improve your experience on our site. By using our site, you agree to our use of cookies.
+          - link "[Learn More]" [ref=f20e8] [cursor=pointer]:
+            - /url: https://www.geneticmatrix.com/privacy/
+        - button "OK" [ref=f20e10] [cursor=pointer]
+  - navigation [ref=f20e11]:
+    - generic [ref=f20e12]:
+      - link [ref=f20e13] [cursor=pointer]:
+        - /url: https://www.geneticmatrix.com/
+        - img "Genetic Matrix" [ref=f20e14]
+      - generic [ref=f20e15]:
+        - button "Products" [ref=f20e17] [cursor=pointer]
+        - button "Explore" [ref=f20e21] [cursor=pointer]
+        - link "Our Plans" [ref=f20e24] [cursor=pointer]:
+          - /url: https://www.geneticmatrix.com/plans-features/
+        - button "English" [ref=f20e26] [cursor=pointer]
+        - link "Sign In" [ref=f20e31] [cursor=pointer]:
+          - /url: https://www.geneticmatrix.com/login/
+        - link "Sign Up" [ref=f20e32] [cursor=pointer]:
+          - /url: https://www.geneticmatrix.com/register/
+  - generic [ref=f20e35]:
+    - generic [ref=f20e36]:
+      - generic [ref=f20e37]: Human Design and Astrology
+      - heading "Know you. Explore your Source." [level=1] [ref=f20e40]
+      - paragraph [ref=f20e41]: The world's most complete Human Design and Astrology platform. Over 500 chart views, Talking Charts, personal Reports, and 94,000+ celebrity charts, all in one app.
+      - generic [ref=f20e42]:
+        - link "Create Free Chart" [ref=f20e43] [cursor=pointer]:
+          - /url: https://www.geneticmatrix.com/free-foundation-chart/
+        - link "Register Free" [ref=f20e44] [cursor=pointer]:
+          - /url: https://www.geneticmatrix.com/register/
+      - paragraph [ref=f20e45]: No credit card required. Free forever on the Starter plan.
+      - navigation "Jump to section" [ref=f20e46]:
+        - link "Live Weather" [ref=f20e47] [cursor=pointer]:
+          - /url: "#weather"
+        - link "Tools" [ref=f20e49] [cursor=pointer]:
+          - /url: "#tools"
+        - link "Learn Hub" [ref=f20e50] [cursor=pointer]:
+          - /url: /learn-hub/
+        - link "Plans" [ref=f20e51] [cursor=pointer]:
+          - /url: "#plans"
+    - generic [ref=f20e53]:
+      - img "Mandala chart" [ref=f20e54]
+      - img "Foundation chart" [ref=f20e55]
+      - img "Connection chart" [ref=f20e56]
+      - img "Variable chart" [ref=f20e57]
+      - img "Animal Foundation chart" [ref=f20e58]
+      - img "BG5 Penta business profile chart" [ref=f20e59]
+      - img "Sleep chart" [ref=f20e60]
+      - img "Circuit chart" [ref=f20e61]
+  - generic [ref=f20e73]:
+    - generic [ref=f20e74]:
+      - generic [ref=f20e75]: 200K+
+      - generic [ref=f20e76]: Registered users
+    - generic [ref=f20e77]:
+      - generic [ref=f20e78]: 94,000+
+      - generic [ref=f20e79]: Celebrity charts
+    - generic [ref=f20e80]:
+      - generic [ref=f20e81]: 500+
+      - generic [ref=f20e82]: Chart views
+    - generic [ref=f20e83]:
+      - generic [ref=f20e84]: "14"
+      - generic [ref=f20e85]: Calculation methods
+    - generic [ref=f20e86]:
+      - generic [ref=f20e87]: "7"
+      - generic [ref=f20e88]: Languages
+  - generic [ref=f20e90]:
+    - generic [ref=f20e91]:
+      - paragraph [ref=f20e92]: What's included
+      - heading "Everything you need to go deep" [level=2] [ref=f20e93]
+      - paragraph [ref=f20e94]: From a free Foundation chart to 500+ chart views, Genetic Matrix grows with you.
+    - generic [ref=f20e95]:
+      - link [ref=f20e96] [cursor=pointer]:
+        - /url: https://www.geneticmatrix.com/talking-charts/
+        - img "Talking Charts" [ref=f20e97]
+        - heading "Talking Charts" [level=3] [ref=f20e98]
+        - paragraph [ref=f20e99]: Human-recorded audio interpretations for Foundation, Variable, Shadow, and Sleep charts.
+      - link [ref=f20e100] [cursor=pointer]:
+        - /url: https://www.geneticmatrix.com/geneticmatrix-reports/
+        - img "Personal Reports" [ref=f20e101]
+        - heading "Personal Reports" [level=3] [ref=f20e102]
+        - paragraph [ref=f20e103]: Foundation, Connection, Cycles, and more.
+      - generic [ref=f20e104]:
+        - img "500+ Chart Views" [ref=f20e105]
+        - heading "500+ Chart Views" [level=3] [ref=f20e106]
+        - paragraph [ref=f20e107]: Quantum, Mandalas, Aspects, Transits, Astro HD, BG5, Career, and much more.
+      - link [ref=f20e108] [cursor=pointer]:
+        - /url: /learn-hub/#chart-methods
+        - img "14 Calculation Methods" [ref=f20e109]
+        - heading "14 Calculation Methods" [level=3] [ref=f20e110]
+        - paragraph [ref=f20e111]: Tropical, Sidereal, Draconic, True Sidereal, 13-Sign, J2000, and more.
+      - generic [ref=f20e112]:
+        - img "Full Customization" [ref=f20e113]
+        - heading "Full Customization" [level=3] [ref=f20e114]
+        - paragraph [ref=f20e115]: Adjust Bodygraph style, Centers, Channels, Planets, colors, and more.
+      - generic [ref=f20e116]:
+        - img "iOS, Android and Web" [ref=f20e117]
+        - heading "iOS, Android and Web" [level=3] [ref=f20e118]
+        - paragraph [ref=f20e119]: Full functionality across every device. Charts sync automatically.
+      - generic [ref=f20e120]:
+        - img "Educational Videos" [ref=f20e121]
+        - heading "Educational Videos" [level=3] [ref=f20e122]
+        - paragraph [ref=f20e123]: Hundreds of training videos covering HD charts, tools, profiles, centers, and more.
+      - generic [ref=f20e124]:
+        - img "Affiliate Program" [ref=f20e125]
+        - heading "Affiliate Program" [level=3] [ref=f20e126]
+        - paragraph [ref=f20e127]: Earn income by referring new members to Genetic Matrix. Simple, transparent commissions.
+  - generic [ref=f20e130]:
+    - generic [ref=f20e131]:
+      - generic [ref=f20e132]: Coming Soon
+      - heading "Astro HD Transit Calendar" [level=2] [ref=f20e135]
+      - paragraph [ref=f20e136]: Global HD and Astrology transits laid out day by day, minute by minute. See every gate activation, planetary ingress, and aspect in one calendar view, across all 14 calculation methods.
+      - list [ref=f20e137]:
+        - listitem [ref=f20e138]: Global transit calendar, daily transits for everyone
+        - listitem [ref=f20e141]: Authored explanations on every element, over 24,000 tooltips, click any gate, channel, or aspect
+        - listitem [ref=f20e144]: Astrology - Signs, planets, aspects, lunar phases, eclipses, ingresses, retrogrades
+        - listitem [ref=f20e147]: Human Design - Gates, lines, channels, Sun Line Day
+        - listitem [ref=f20e150]: Vedic / Jyotish - Panchanga, Kaal periods, nakshatras
+        - listitem [ref=f20e153]: Available in 8 languages including Hindi
+        - listitem [ref=f20e156]: 14 calculation methods with choice of 7 ayanamsas
+        - listitem [ref=f20e159]: Geocentric, Heliocentric, Barycentric perspectives
+        - listitem [ref=f20e162]: Brief, Month, Today, Feed, Timeline views
+        - listitem [ref=f20e165]: Three years of data, navigate to any day past, present, or future
+        - listitem [ref=f20e168]: Free for all users, no registration required
+    - generic [ref=f20e171]:
+      - img "Astro HD Transit Calendar, Month view" [ref=f20e173]
+      - img "Astro HD Transit Calendar, Brief view" [ref=f20e174]
+  - generic [ref=f20e176]:
+    - generic [ref=f20e177]:
+      - paragraph [ref=f20e178]: Built-in Tools
+      - heading "Powerful tools, ready to use" [level=2] [ref=f20e179]
+      - paragraph [ref=f20e180]: Genetic Matrix includes a full suite of specialist tools built directly into the platform.
+    - generic [ref=f20e181]:
+      - link "Chart Builder Chart Builder Create custom charts" [ref=f20e182] [cursor=pointer]:
+        - /url: https://www.geneticmatrix.com/chart-builder/
+        - img "Chart Builder" [ref=f20e183]
+        - generic [ref=f20e184]: Chart Builder
+        - generic [ref=f20e185]: Create custom charts
+      - link "Transit Browser Transit Browser Explore transits" [ref=f20e186] [cursor=pointer]:
+        - /url: https://www.geneticmatrix.com/transit-browser/
+        - img "Transit Browser" [ref=f20e187]
+        - generic [ref=f20e188]: Transit Browser
+        - generic [ref=f20e189]: Explore transits
+      - link "Cycle Chart Selector Cycle Chart Selector Life cycle charts" [ref=f20e190] [cursor=pointer]:
+        - /url: https://www.geneticmatrix.com/cycle-chart-selector/
+        - img "Cycle Chart Selector" [ref=f20e191]
+        - generic [ref=f20e192]: Cycle Chart Selector
+        - generic [ref=f20e193]: Life cycle charts
+      - link "HD New Year Chart HD New Year Chart Global HD New Year Charts" [ref=f20e194] [cursor=pointer]:
+        - /url: https://www.geneticmatrix.com/hd-new-year-chart/
+        - img "HD New Year Chart" [ref=f20e195]
+        - generic [ref=f20e196]: HD New Year Chart
+        - generic [ref=f20e197]: Global HD New Year Charts
+      - link "Astro HD Relocation Astro HD Relocation Chart for any location" [ref=f20e198] [cursor=pointer]:
+        - /url: https://www.geneticmatrix.com/relocation-chart/
+        - img "Astro HD Relocation" [ref=f20e199]
+        - generic [ref=f20e200]: Astro HD Relocation
+        - generic [ref=f20e201]: Chart for any location
+      - link "Birthday Reminder Birthday Reminder Never miss a birthday" [ref=f20e202] [cursor=pointer]:
+        - /url: https://www.geneticmatrix.com/birthday-reminder-tool/
+        - img "Birthday Reminder" [ref=f20e203]
+        - generic [ref=f20e204]: Birthday Reminder
+        - generic [ref=f20e205]: Never miss a birthday
+  - generic [ref=f20e208]:
+    - generic [ref=f20e209]:
+      - paragraph [ref=f20e210]: Celebrity Search
+      - heading "Explore 94,000+ celebrity charts" [level=2] [ref=f20e211]
+      - paragraph [ref=f20e212]: Search any public figure and instantly see their Human Design chart including key astrology information across all 14 calculation methods. Politicians, musicians, athletes, spiritual leaders, all here.
+      - list [ref=f20e213]:
+        - listitem [ref=f20e214]: "Free: bodygraph in all 14 calculation methods"
+        - listitem [ref=f20e217]: "Paid members: full 500+ chart views per celebrity"
+        - listitem [ref=f20e220]: Browse by Type, Profile, Sun Sign, and more
+      - link "Search celebrities" [ref=f20e223] [cursor=pointer]:
+        - /url: https://www.geneticmatrix.com/celebrities/
+    - generic [ref=f20e226]:
+      - generic [ref=f20e227]: Celebrity Charts
+      - generic [ref=f20e229]:
+        - generic [ref=f20e230]: 94,000+
+        - generic [ref=f20e231]: Celebrities
+      - generic [ref=f20e232]: Free Bodygraph
+      - generic [ref=f20e234]: Search by name and category.
+      - generic [ref=f20e236]:
+        - generic [ref=f20e237]: "14"
+        - generic [ref=f20e238]: Calculation Systems
+      - generic [ref=f20e239]: Browse the largest celebrity Human Design and Astrology database.
+  - generic [ref=f20e243]:
+    - generic [ref=f20e244]:
+      - paragraph [ref=f20e245]: Mobile App
+      - heading "Your charts, everywhere" [level=2] [ref=f20e246]
+      - paragraph [ref=f20e247]: 100% of Genetic Matrix is available as a native app on iOS and Android. Every chart, every feature, on any device.
+      - generic [ref=f20e248]:
+        - link [ref=f20e249] [cursor=pointer]:
+          - /url: https://apps.apple.com/app/genetic-matrix
+          - img "Download on the App Store" [ref=f20e250]
+        - link [ref=f20e251] [cursor=pointer]:
+          - /url: https://play.google.com/store/apps/details?id=com.geneticmatrix
+          - img "Get it on Google Play" [ref=f20e252]
+    - img "Genetic Matrix on tablet and mobile" [ref=f20e254]
+  - generic [ref=f20e255]:
+    - generic [ref=f20e256]:
+      - generic [ref=f20e257]: Live Now
+      - heading "Astro HD Neutrino Conditioning Weather" [level=2] [ref=f20e260]
+      - paragraph [ref=f20e261]: The planetary weather as it stands right now. Click any element on the chart for a detailed interpretation. Updates continuously.
+    - iframe [ref=f20e263]:
+      - img [ref=f21e4]:
+        - generic [ref=f21e7]:
+          - generic [ref=f21e8]: GM Neutrino Weather
+          - generic [ref=f21e9]: 11.10.2016.
+          - generic [ref=f21e10]: "Program Themes:"
+          - generic [ref=f21e11]: "Motivation:"
+          - generic [ref=f21e12]: "Perspective:"
+        - generic [ref=f21e17]:
+          - generic [ref=f21e18]: "2"
+          - generic [ref=f21e22]: "2"
+          - generic [ref=f21e26]: "2"
+          - generic [ref=f21e30]: "2"
+          - generic [ref=f21e34]: "2"
+          - generic [ref=f21e38]: "2"
+          - generic [ref=f21e42]: "2"
+          - generic [ref=f21e46]: "2"
+          - generic [ref=f21e50]: "2"
+          - generic [ref=f21e54]: "2"
+          - generic [ref=f21e58]: "2"
+          - generic [ref=f21e62]: "2"
+          - generic [ref=f21e66]: "2"
+          - generic [ref=f21e70]: "2"
+    - paragraph [ref=f20e264]: Real-time. Click any gate, channel, center, planet, sign, house, moon phase, variable arrow, retrograde, or color for an interpretation. Hover over a planet in the mandala to see its aspects.
+    - generic [ref=f20e265]:
+      - heading "Aspect Legend" [level=3] [ref=f20e266]
+      - generic [ref=f20e267]:
+        - generic [ref=f20e268]:
+          - generic [ref=f20e269]:
+            - generic [ref=f20e270]: Line
+            - generic [ref=f20e271]: Sym
+            - generic [ref=f20e272]: Aspect
+            - generic [ref=f20e273]: °
+          - generic [ref=f20e274]:
+            - generic [ref=f20e278]: Conjunction
+            - generic [ref=f20e279]: "0"
+          - generic [ref=f20e280]:
+            - generic [ref=f20e284]: Semi-sextile
+            - generic [ref=f20e285]: "30"
+          - generic [ref=f20e286]:
+            - generic [ref=f20e290]: Semi-square
+            - generic [ref=f20e291]: "45"
+          - generic [ref=f20e292]:
+            - generic [ref=f20e296]: Sextile
+            - generic [ref=f20e297]: "60"
+          - generic [ref=f20e298]:
+            - generic [ref=f20e302]: Quintile
+            - generic [ref=f20e303]: "72"
+          - generic [ref=f20e304]:
+            - generic [ref=f20e308]: Square
+            - generic [ref=f20e309]: "90"
+        - generic [ref=f20e310]:
+          - generic [ref=f20e311]:
+            - generic [ref=f20e312]: Line
+            - generic [ref=f20e313]: Sym
+            - generic [ref=f20e314]: Aspect
+            - generic [ref=f20e315]: °
+          - generic [ref=f20e316]:
+            - generic [ref=f20e320]: Trine
+            - generic [ref=f20e321]: "120"
+          - generic [ref=f20e322]:
+            - generic [ref=f20e326]: Sesquiquadrate
+            - generic [ref=f20e327]: "135"
+          - generic [ref=f20e328]:
+            - generic [ref=f20e332]: Bi-quintile
+            - generic [ref=f20e333]: "144"
+          - generic [ref=f20e334]:
+            - generic [ref=f20e338]: Inconjunct
+            - generic [ref=f20e339]: "150"
+          - generic [ref=f20e340]:
+            - generic [ref=f20e344]: Opposition
+            - generic [ref=f20e345]: "180"
+      - paragraph [ref=f20e346]: Hover over a planet in the mandala to see its aspects. Blue = harmonious. Red/pink = tension. Green = adjustment. Orange = secondary tension. Purple = creative.
+  - generic [ref=f20e348]:
+    - paragraph [ref=f20e349]: Membership
+    - heading "Start free. Go as deep as you want." [level=2] [ref=f20e350]
+    - paragraph [ref=f20e351]: No credit card required for the Starter plan. Upgrade any time to unlock advanced chart views, tools, customizations, multiple calculation methods and perspectives, and the full astrology suite.
+    - generic [ref=f20e352]:
+      - link "See all plans and pricing" [ref=f20e353] [cursor=pointer]:
+        - /url: https://www.geneticmatrix.com/plans-features/
+      - link "Register free" [ref=f20e354] [cursor=pointer]:
+        - /url: https://www.geneticmatrix.com/register/
+  - contentinfo [ref=f20e355]:
+    - generic [ref=f20e357]:
+      - generic [ref=f20e358]:
+        - img "Genetic Matrix" [ref=f20e359]
+        - paragraph [ref=f20e360]: © 2026 Genetic Matrix LLC.
+        - paragraph [ref=f20e361]: All right reserved.
+        - paragraph [ref=f20e362]:
+          - link "Privacy, Terms and Conditions" [ref=f20e363] [cursor=pointer]:
+            - /url: https://www.geneticmatrix.com/privacy/
+      - generic [ref=f20e364]:
+        - heading "Subscribe to Our Newsletter" [level=3] [ref=f20e365]
+        - paragraph [ref=f20e366]: Sign up to receive updates, offers, new releases, and everything related to Genetic Matrix.
+        - generic [ref=f20e367]:
+          - textbox "Your Email Address" [ref=f20e368]
+          - button [ref=f20e369] [cursor=pointer]
+      - generic [ref=f20e372]:
+        - heading "Connect With Us" [level=3] [ref=f20e373]
+        - generic [ref=f20e374]:
+          - link [ref=f20e375] [cursor=pointer]:
+            - /url: https://www.facebook.com/GeneticMatrixx
+            - img "Facebook" [ref=f20e376]
+          - link [ref=f20e377] [cursor=pointer]:
+            - /url: https://x.com/GeneticMatrix
+            - img "X" [ref=f20e378]
+          - link [ref=f20e379] [cursor=pointer]:
+            - /url: https://www.instagram.com/genetic_matrix/
+            - img "Instagram" [ref=f20e380]
+          - link [ref=f20e381] [cursor=pointer]:
+            - /url: https://www.youtube.com/@geneticmatrixhd
+            - img "YouTube" [ref=f20e382]
+        - link "Get in Touch" [ref=f20e383] [cursor=pointer]:
+          - /url: mailto:support@geneticmatrix.com

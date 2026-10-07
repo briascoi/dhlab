@@ -1,0 +1,196 @@
+- generic [active] [ref=f19e1]:
+  - main [ref=f19e4]:
+    - heading "Help:RR" [level=1] [ref=f19e5]
+    - generic [ref=f19e6]:
+      - generic [ref=f19e8]:
+        - text: (Redirected from
+        - link "Help:Rodden Rating" [ref=f19e9] [cursor=pointer]:
+          - /url: /wiki/astro-databank/index.php?title=Help:Rodden_Rating&redirect=no
+        - text: )
+      - link "Jump to navigation" [ref=f19e10] [cursor=pointer]:
+        - /url: "#mw-head"
+      - link "Jump to search" [ref=f19e11] [cursor=pointer]:
+        - /url: "#searchInput"
+      - generic [ref=f19e13]:
+        - paragraph [ref=f19e14]:
+          - text: It is essential to have accurate data from which to draw accurate conclusions in astrological studies.
+          - link "Lois Rodden" [ref=f19e15] [cursor=pointer]:
+            - /url: /astro-databank/Rodden,_Lois_M.
+          - text: created the Rodden Rating system to classify data reliability.
+        - paragraph [ref=f19e16]: Since data are always volatile, no rating system is infallible and data are often updated when new information comes to light. The AA, A and B data are fairly stable. The C and D data are the ones that tend to change with the continued upgrades to the Astro-Databank.
+        - heading "Formal definitions of Rodden Ratings" [level=2] [ref=f19e17]
+        - paragraph [ref=f19e18]:
+          - text: These are all based on objective evidence about the
+          - link "source of the data" [ref=f19e19] [cursor=pointer]:
+            - /url: /astro-databank/Help:DataSource
+          - text: .
+        - table [ref=f19e20]:
+          - rowgroup [ref=f19e21]:
+            - row [ref=f19e22]:
+              - cell "AA" [ref=f19e23]
+              - cell "Accurate accurate" [ref=f19e24]
+              - cell [ref=f19e25]:
+                - text: Data as recorded by the family or state. This includes BC (birth certificate), and BR (birth record), that which is not an official document but a quote of the birth record from the Registrar or Bureau of Records, the baptismal certificate, family Bible, or baby book. These data reflect the best available accuracy.
+                - paragraph [ref=f19e26]:
+                  - text: "Taeger data groups: 1*,1"
+                  - superscript [ref=f19e27]: F
+            - row [ref=f19e28]:
+              - cell "A" [ref=f19e29]
+              - cell "Accurate" [ref=f19e30]
+              - cell [ref=f19e31]:
+                - text: Data as quoted by the person, kin, friend, or associate. These data all come from someone's memory, family legend, or hearsay. The quote may be substantiated by a qualifying statement such as, "My grandfather wanted me to be born on his birthday and my mother said that I almost made it. I was born three minutes before midnight." When the information comes from an astrologer's client, it is considered reliable, since a client is investing money for the astrologer's time and expertise. When the quote is from a public figure given in public, it may be questionable. Please keep in mind that public figures, especially politicians, answer a question in public to be accommodating; therefore, the time given may not be accurate. When the quote is from one of a group of people who were asked casually, it might be questionable. Rounded-off time such as 6 AM or midnight might also be questionable.
+                - paragraph [ref=f19e32]:
+                  - text: "Taeger data groups: 2"
+                  - superscript [ref=f19e33]: M
+                  - text: ",2"
+                  - superscript [ref=f19e34]: F
+                  - text: ",2"
+                  - superscript [ref=f19e35]: P
+                  - text: ",2"
+                  - superscript [ref=f19e36]: R
+            - row [ref=f19e37]:
+              - cell "B" [ref=f19e38]
+              - cell "Biography" [ref=f19e39]
+              - cell [ref=f19e40]:
+                - text: "Biography. When these data are substantiated by a quote that qualifies the information, they are considered reliable. An example: \"His grandmother arrived at 9 in the morning and barely had time to remove her coat before mother gave birth.\" Or, \"Though she claims to have been born in 1946, state records clearly give September 5, 1942\" or, \"family legend reports 'before noon'.\" When the quote is vague, such as, \"It was a wild and stormy night,\" a specific time may simply reflect the biographer's literary license. At times public figures lie about their age. Biographers who market scandal and gossip may actually create misinformation for the sake of book sales. Autobiaography falls usually under rating A, as \"data quoted by person\".When data from books are specifically attributed to birth records, they are given a Rodden Rating of \"AA\"."
+                - paragraph [ref=f19e41]:
+                  - text: "Taeger data groups: 2"
+                  - superscript [ref=f19e42]: B
+            - row [ref=f19e43]:
+              - cell "C" [ref=f19e44]
+              - cell "Caution" [ref=f19e45]
+              - cell [ref=f19e46]:
+                - text: Caution, no source. These data are also listed as "OSNK, Original Source Not Known". They are undocumented data, often given in magazines or journals, with no source, or an ambiguous source such as "personal" or "archives." When a magazine, journal, or astrologer, is quoted without the original source of the information, the quote is a reference, not a source. There is no way to know if the datum is valid. If the person making the quote was proven unreliable in the past, any future quote automatically falls in the C category unless attributed to a specific source. Rectified data from an approximate birth time have a valid place in astrology and fall in the C category unless there are contradictory rectified times, which nudges it into DD.
+                - paragraph [ref=f19e47]: "Taeger data group: 3"
+            - row [ref=f19e48]:
+              - cell "DD" [ref=f19e49]
+              - cell "Dirty Data" [ref=f19e50]
+              - cell [ref=f19e51]:
+                - text: Two or more conflicting quotes that are unqualified. These data are offered as a reference in order to document their lack of reliability and prevent their being presented elsewhere as factual. They are often sincere attempts to find a birth time that have met with ambiguous results. In many cases, the presentation of Dirty Data leads to the discovery of an accurate source and the data are updated to a category of greater accuracy.
+                - paragraph [ref=f19e52]: "Taeger data group: 4"
+            - row [ref=f19e53]:
+              - cell "X" [ref=f19e54]
+              - cell [ref=f19e55]
+              - cell "Data with no time of birth. Untimed data may be of interest in the examination of planetary patterns. It can also form the basis for a solar chart. Rectified times that don't start from an approximate time are still given an X rating." [ref=f19e56]
+            - row [ref=f19e57]:
+              - cell "XX" [ref=f19e58]
+              - cell [ref=f19e59]
+              - cell "Data without a known or confirmed date. Historic figures or certain current news figures may be of interest even with speculative birth dates." [ref=f19e60]
+        - heading "Accuracy and Rodden Ratings" [level=2] [ref=f19e61]
+        - paragraph [ref=f19e62]: AA, A, and B data are the only data that should be used in astrological studies. Data rated "AA" (from birth certificate or birth record) are the most accurate obtainable. Data rated "A" (from memory) are usually accurate, but there are exceptions. Politicians and entertainers are notorious for giving misleading birth dates and times, except when consulting their astrologer. "B" data (from biographies) are similarly accurate because authors who give times are likely to have obtained the data from the subject, the subject's immediate family, or from a birth record.
+        - paragraph [ref=f19e63]: Data rated "C" (Caution) are not reliable, since they have no direct link to their source. In all cases where there is no source or data classification, the data can only be considered hypothetical. Similarly, data that is quoted "from The Mountain Astrologer magazine" or "from Rodden" is a quote from a reference and not a direct source. Where did these reference sources get the data? If that is not known, these data must be given a Data Source of "Original source not known" and a Rodden Rating of "C". All rectified data are also rated "C". Some astrologers consider rectified times more accurate than birth times. Unfortunately, there is no consensus on how to rectify birth times. Thus, one astrologer's ultra-accurate rectified time may contradict another astrologer's ultra-accurate rectified time. Until there is a standard and proven rectification method, one should treat all rectified data with caution.
+        - paragraph [ref=f19e64]: The AstroDatabank contains people who are named by a prominent category (such as Alcoholics, or Prostitutes, or persons with AIDS) and given the Data Type "Anonymous." In the wiki edition, they are contained in the namespace Research. When the collection has been gathered from a specific group and given in a rounded off time to the hour or half-hour, with the category name only and not including any explanatory information, it is unconditionally given as "C" data. When the collection has birth times given to the second, they are obviously rectified and are also designated as "C" data.
+        - paragraph [ref=f19e65]: However, over the years, many astrologers have contributed anonymous data from their collections that come from first-hand knowledge of the case history. They give a birth time to the minute along with dates of events in the medical history or trauma that is being discussed. Many of these have been given without a specific source but simply noted that they are from the astrologer's personal files; they are nonetheless given the "A" classification.
+        - paragraph [ref=f19e66]: Data rated "DD" (Dirty Data) are useful for identifying data where multiple birth times are reported. One of the birth times may be right, but more research is required to determine which one. Many times a DD rating has driven the data-collecting community to find the birth records to verify one of the given times.
+  - generic:
+    - heading "Navigation menu" [level=2] [ref=f19e67]
+    - generic [ref=f19e68]:
+      - navigation "Personal tools" [ref=f19e69]:
+        - list [ref=f19e71]:
+          - listitem [ref=f19e72]:
+            - link "Log in" [ref=f19e73] [cursor=pointer]:
+              - /url: /wiki/astro-databank/index.php?title=Special:UserLogin&returnto=Help%3ARR
+      - navigation "Namespaces" [ref=f19e75]:
+        - list [ref=f19e76]:
+          - listitem [ref=f19e77]:
+            - link "Help page" [ref=f19e78] [cursor=pointer]:
+              - /url: /astro-databank/Help:RR
+          - listitem [ref=f19e79]:
+            - link "Discussion" [ref=f19e80] [cursor=pointer]:
+              - /url: /wiki/astro-databank/index.php?title=Help_talk:RR&action=edit&redlink=1
+      - generic [ref=f19e81]:
+        - navigation "Views" [ref=f19e82]:
+          - list [ref=f19e83]:
+            - listitem [ref=f19e84]:
+              - link "Read" [ref=f19e85] [cursor=pointer]:
+                - /url: /astro-databank/Help:RR
+            - listitem [ref=f19e86]:
+              - link "View history" [ref=f19e87] [cursor=pointer]:
+                - /url: /wiki/astro-databank/index.php?title=Help:RR&action=history
+        - search [ref=f19e88]:
+          - generic [ref=f19e89]:
+            - heading "Search" [level=3] [ref=f19e90]
+            - generic [ref=f19e92]:
+              - searchbox "Search Astro-Databank" [ref=f19e93]
+              - button "Search" [ref=f19e94] [cursor=pointer]
+              - button "Go" [ref=f19e95] [cursor=pointer]
+    - generic [ref=f19e96]:
+      - banner [ref=f19e97]:
+        - link "Visit the main page" [ref=f19e98] [cursor=pointer]:
+          - /url: /astro-databank/Main_Page
+      - navigation "Navigation" [ref=f19e99]:
+        - list [ref=f19e101]:
+          - listitem [ref=f19e102]:
+            - link "Main page" [ref=f19e103] [cursor=pointer]:
+              - /url: /astro-databank/Main_Page
+          - listitem [ref=f19e104]:
+            - link "All pages" [ref=f19e105] [cursor=pointer]:
+              - /url: /astro-databank/Special:AllPages
+          - listitem [ref=f19e106]:
+            - link "New pages" [ref=f19e107] [cursor=pointer]:
+              - /url: /astro-databank/Special:NewPages
+          - listitem [ref=f19e108]:
+            - link "Recent changes" [ref=f19e109] [cursor=pointer]:
+              - /url: /astro-databank/Special:RecentChanges
+          - listitem [ref=f19e110]:
+            - link "Random page" [ref=f19e111] [cursor=pointer]:
+              - /url: /astro-databank/Special:Random
+          - listitem [ref=f19e112]:
+            - link "Help" [ref=f19e113] [cursor=pointer]:
+              - /url: /astro-databank/Help:Contents
+          - listitem [ref=f19e114]:
+            - link "Help Astrodatabank research tool" [ref=f19e115] [cursor=pointer]:
+              - /url: /astro-databank/Help:Adb-search
+          - listitem [ref=f19e116]:
+            - link "Help external" [ref=f19e117] [cursor=pointer]:
+              - /url: http://www.mediawiki.org/wiki/Help:Contents
+          - listitem [ref=f19e118]:
+            - link "to Astrodienst" [ref=f19e119] [cursor=pointer]:
+              - /url: https://www.astro.com/horoscope
+      - navigation [ref=f19e120]:
+        - heading "Tools" [level=3] [ref=f19e121]
+        - list [ref=f19e123]:
+          - listitem [ref=f19e124]:
+            - link "What links here" [ref=f19e125] [cursor=pointer]:
+              - /url: /astro-databank/Special:WhatLinksHere/Help:RR
+          - listitem [ref=f19e126]:
+            - link "Related changes" [ref=f19e127] [cursor=pointer]:
+              - /url: /astro-databank/Special:RecentChangesLinked/Help:RR
+          - listitem [ref=f19e128]:
+            - link "Special pages" [ref=f19e129] [cursor=pointer]:
+              - /url: /astro-databank/Special:SpecialPages
+          - listitem [ref=f19e130]:
+            - link "Printable version" [ref=f19e131] [cursor=pointer]:
+              - /url: javascript:print();
+          - listitem [ref=f19e132]:
+            - link "Permanent link" [ref=f19e133] [cursor=pointer]:
+              - /url: /wiki/astro-databank/index.php?title=Help:RR&oldid=335394
+          - listitem [ref=f19e134]:
+            - link "Page information" [ref=f19e135] [cursor=pointer]:
+              - /url: /wiki/astro-databank/index.php?title=Help:RR&action=info
+  - contentinfo [ref=f19e136]:
+    - list [ref=f19e137]:
+      - listitem [ref=f19e138]: This page was last edited on 24 July 2025, at 11:36.
+      - listitem [ref=f19e139]:
+        - text: Content is available under
+        - link "these permissions." [ref=f19e140] [cursor=pointer]:
+          - /url: /astro-databank/Astro-Databank:Copyright
+        - text: unless otherwise noted.
+    - list:
+      - listitem [ref=f19e141]:
+        - link "Privacy policy" [ref=f19e142] [cursor=pointer]:
+          - /url: /astro-databank/Astro-Databank:Privacy_policy
+      - listitem [ref=f19e143]:
+        - link "About Astro-Databank" [ref=f19e144] [cursor=pointer]:
+          - /url: /astro-databank/Astro-Databank:About
+      - listitem [ref=f19e145]:
+        - link "Disclaimers" [ref=f19e146] [cursor=pointer]:
+          - /url: /astro-databank/Astro-Databank:General_disclaimer
+      - listitem [ref=f19e147]:
+        - link "Mobile view" [ref=f19e148] [cursor=pointer]:
+          - /url: https://www.astro.com/wiki/astro-databank/index.php?title=Help:RR&mobileaction=toggle_view_mobile
+    - list [ref=f19e149]:
+      - listitem [ref=f19e150]:
+        - link [ref=f19e151] [cursor=pointer]:
+          - /url: https://www.mediawiki.org/
+          - img "Powered by MediaWiki" [ref=f19e152]

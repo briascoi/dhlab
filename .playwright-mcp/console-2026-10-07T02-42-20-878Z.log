@@ -1,0 +1,12 @@
+[    1515ms] TypeError: Cannot read properties of null (reading 'style')
+    at MegaMenuPromoCarousel._updateControlsColor (https://jovianarchive.com/cdn/shop/t/7/assets/theme.js?v=113393055883670750101775571333:109:23117)
+    at MegaMenuPromoCarousel.connectedCallback (https://jovianarchive.com/cdn/shop/t/7/assets/theme.js?v=113393055883670750101775571333:109:22917)
+    at https://jovianarchive.com/cdn/shop/t/7/assets/theme.js?v=113393055883670750101775571333:109:28065
+[    1519ms] TypeError: Cannot read properties of null (reading 'style')
+    at MegaMenuPromoCarousel._updateControlsColor (https://jovianarchive.com/cdn/shop/t/7/assets/theme.js?v=113393055883670750101775571333:109:23117)
+    at MegaMenuPromoCarousel.connectedCallback (https://jovianarchive.com/cdn/shop/t/7/assets/theme.js?v=113393055883670750101775571333:109:22917)
+    at https://jovianarchive.com/cdn/shop/t/7/assets/theme.js?v=113393055883670750101775571333:109:28065
+[    1528ms] [LOG] %c ► Bixgrow: toolbar background-color: #f90; color: #fff; padding: 5px; @ https://cdn.shopify.com/extensions/01a11051-9820-7cda-8cd9-fd25c9a6e7a4/bixgrow-affiliate-205/assets/bixgrow_affiliate_toolbar.js:825
+[    1528ms] [LOG] %c ► Bixgrow:App embed tracker background-color: #f90; color: #fff; padding: 5px; @ https://cdn.shopify.com/extensions/01a11051-9820-7cda-8cd9-fd25c9a6e7a4/bixgrow-affiliate-205/assets/bixgrow_tracker_logic.js:220
+[    2078ms] [LOG] BG pixel loaded @ https://jovianarchive.com/web-pixels/strict/app/web-pixel-1977975088@13124b044e9b3aaaba4080cdba031853.js:0
+[    2451ms] [INFO] Clear-Site-Data header on 'https://jovianarchive.com/cart/update.js': Cleared data types: "prefetchCache", "prerenderCache". @ https://jovianarchive.com/pages/human-design-statistics:0

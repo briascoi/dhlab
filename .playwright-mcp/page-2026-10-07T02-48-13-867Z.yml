@@ -1,0 +1,90 @@
+- generic [active] [ref=f43e1]:
+  - banner [ref=f43e2]:
+    - generic [ref=f43e3]:
+      - link "Open Human Design" [ref=f43e4] [cursor=pointer]:
+        - /url: /
+      - link "Get your free chart →" [ref=f43e5] [cursor=pointer]:
+        - /url: /
+  - main [ref=f43e6]:
+    - navigation [ref=f43e7]:
+      - link "Human Design" [ref=f43e8] [cursor=pointer]:
+        - /url: /human-design
+      - text: ›
+      - link "Celebrities" [ref=f43e9] [cursor=pointer]:
+        - /url: /celebrity
+      - text: › Steve Jobs
+    - heading "Steve Jobs's Human Design" [level=1] [ref=f43e10]
+    - generic [ref=f43e11]: Generator · 6/3 · Emotional Authority
+    - generic [ref=f43e12]:
+      - img "Steve Jobs's Human Design bodygraph"
+    - generic [ref=f43e13]:
+      - generic [ref=f43e14]:
+        - text: Type
+        - link "Generator" [ref=f43e15] [cursor=pointer]:
+          - /url: /type/generator
+      - generic [ref=f43e16]: Authority Emotional Authority
+      - generic [ref=f43e17]:
+        - text: Profile
+        - link "6/3 Role Model/Martyr" [ref=f43e18] [cursor=pointer]:
+          - /url: /profile/6-3
+      - generic [ref=f43e19]: Definition Split Definition
+    - paragraph [ref=f43e20]:
+      - text: Steve Jobs is a
+      - link "Generator" [ref=f43e21] [cursor=pointer]:
+        - /url: /type/generator
+      - text: with Emotional Authority and the
+      - link "6/3 Role Model/Martyr" [ref=f43e22] [cursor=pointer]:
+        - /url: /profile/6-3
+      - text: profile. The incarnation cross is the Cross of Spirit.
+    - generic [ref=f43e23]:
+      - strong [ref=f43e24]: Compare your chart with Steve Jobs
+      - generic [ref=f43e25]: See your electromagnetic, companionship and dominance connections — free, in seconds.
+      - link "Compare my design with Steve Jobs" [ref=f43e26] [cursor=pointer]:
+        - /url: /?d=1955-02-24&t=19%3A15&tz=-8&n=Steve+Jobs&connect=1
+    - heading "Birth data" [level=2] [ref=f43e27]
+    - generic [ref=f43e28]:
+      - generic [ref=f43e29]: Born February 24, 1955 at 19:15
+      - generic [ref=f43e30]: Place San Francisco, California, United States
+      - generic [ref=f43e31]: Rodden rating AA
+    - paragraph [ref=f43e32]:
+      - text: Birth data Rodden-rated AA ·
+      - link "source" [ref=f43e33] [cursor=pointer]:
+        - /url: https://www.astro.com/astro-databank/Jobs,_Steve
+      - text: . Human Design is time-sensitive — this chart reflects the recorded birth time above.
+    - heading "More celebrity charts" [level=2] [ref=f43e34]
+    - generic [ref=f43e35]:
+      - link "Whitney Houston" [ref=f43e36] [cursor=pointer]:
+        - /url: /celebrity/whitney-houston
+      - link "Albert Einstein" [ref=f43e37] [cursor=pointer]:
+        - /url: /celebrity/albert-einstein
+      - link "Amy Winehouse" [ref=f43e38] [cursor=pointer]:
+        - /url: /celebrity/amy-winehouse
+      - link "Angelina Jolie" [ref=f43e39] [cursor=pointer]:
+        - /url: /celebrity/angelina-jolie
+      - link "Audrey Hepburn" [ref=f43e40] [cursor=pointer]:
+        - /url: /celebrity/audrey-hepburn
+      - link "Barack Obama" [ref=f43e41] [cursor=pointer]:
+        - /url: /celebrity/barack-obama
+      - link "Beyoncé" [ref=f43e42] [cursor=pointer]:
+        - /url: /celebrity/beyonce
+      - link "Bob Dylan" [ref=f43e43] [cursor=pointer]:
+        - /url: /celebrity/bob-dylan
+    - paragraph [ref=f43e44]:
+      - link "All celebrity Human Design charts →" [ref=f43e45] [cursor=pointer]:
+        - /url: /celebrity
+    - generic [ref=f43e46]:
+      - strong [ref=f43e47]: See this in your own chart
+      - generic [ref=f43e48]: Open Human Design computes your full bodygraph — type, authority, profile, the Variable arrows, connections and transits — free, accurate, no account.
+      - link "Calculate your free chart" [ref=f43e49] [cursor=pointer]:
+        - /url: /
+  - contentinfo [ref=f43e50]:
+    - generic [ref=f43e51]:
+      - link "Human Design reference" [ref=f43e52] [cursor=pointer]:
+        - /url: /human-design
+      - text: ·
+      - link "Free chart calculator" [ref=f43e53] [cursor=pointer]:
+        - /url: /
+      - text: Open Human Design — open-source, original interpretations, computed in your browser. Powered by
+      - link "natalengine" [ref=f43e54] [cursor=pointer]:
+        - /url: https://www.npmjs.com/package/natalengine
+      - text: .

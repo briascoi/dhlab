@@ -1,0 +1,269 @@
+- generic [ref=f40e3]:
+  - generic [ref=f40e4]:
+    - generic "Homepage - Astro-Seek.com" [ref=f40e5] [cursor=pointer]:
+      - img "Astro-Seek.com - Horoscopes for free online" [ref=f40e6]
+    - heading [level=1] [ref=f40e7]
+  - generic [ref=f40e8]:
+    - navigation:
+      - list [ref=f40e9]:
+        - listitem [ref=f40e10]:
+          - link [ref=f40e11] [cursor=pointer]:
+            - /url: https://horoscopes.astro-seek.com/
+            - strong [ref=f40e12]: Free Horoscopes
+        - listitem [ref=f40e13]:
+          - link [ref=f40e14] [cursor=pointer]:
+            - /url: https://horoscopes.astro-seek.com/advanced-astrology-chart-tools-tables
+            - strong [ref=f40e15]: Astro Tools
+        - listitem [ref=f40e16]:
+          - link [ref=f40e17] [cursor=pointer]:
+            - /url: https://famouspeople.astro-seek.com/
+            - strong [ref=f40e18]: Famous People
+        - listitem [ref=f40e19]:
+          - link [ref=f40e20] [cursor=pointer]:
+            - /url: https://horoscopes.astro-seek.com/love-compatibility-calculator-horoscope-matching
+            - strong [ref=f40e21]: Compatibility
+        - listitem [ref=f40e22]:
+          - link [ref=f40e23] [cursor=pointer]:
+            - /url: https://mooncalendar.astro-seek.com/
+            - strong [ref=f40e24]: Moon Calendar
+        - listitem [ref=f40e25]:
+          - link [ref=f40e26] [cursor=pointer]:
+            - /url: https://numerology.astro-seek.com
+            - strong [ref=f40e27]: Numerology
+        - listitem [ref=f40e28]:
+          - link [ref=f40e29] [cursor=pointer]:
+            - /url: https://horoscopes.astro-seek.com/guess-sun-zodiac-sign
+            - strong [ref=f40e30]: Guess Sign
+        - listitem [ref=f40e31]:
+          - link [ref=f40e32] [cursor=pointer]:
+            - /url: https://www.astro-seek.com/login
+            - strong [ref=f40e33]: Account
+            - img "Login" [ref=f40e34]
+    - generic [ref=f40e35]:
+      - link [ref=f40e38] [cursor=pointer]:
+        - /url: https://horoscopes.astro-seek.com/current-planets-astrology-transits-planetary-positions
+        - img "Current Planets, Astrology Transits, Chart of this moment" [ref=f40e39]
+        - text: Currentplanets
+      - link [ref=f40e42] [cursor=pointer]:
+        - /url: https://mooncalendar.astro-seek.com/
+        - img "Moon Lunar calendar 2026" [ref=f40e43]
+        - img "Leo" [ref=f40e44]
+        - text: Leo Moon
+      - link [ref=f40e46] [cursor=pointer]:
+        - /url: https://horoscopes.astro-seek.com/astro-seek-tools-search
+        - img "Search" [ref=f40e47]
+    - generic [ref=f40e58]:
+      - generic [ref=f40e59]:
+        - link "Home" [ref=f40e60] [cursor=pointer]:
+          - /url: https://www.astro-seek.com/
+        - text: "> Error 404 - Page not found"
+      - generic [ref=f40e62]:
+        - heading "Error 404 - Page not found" [level=2] [ref=f40e63]
+        - text: Sorry, the page you requested was not found :( Please continue to the
+        - link "Homepage" [ref=f40e64] [cursor=pointer]:
+          - /url: https://www.astro-seek.com/
+        - text: .
+    - generic [ref=f40e73]:
+      - generic "AstroSeek" [ref=f40e74] [cursor=pointer]
+      - generic [ref=f40e75]:
+        - generic [ref=f40e76]:
+          - link "FAQ" [ref=f40e77] [cursor=pointer]:
+            - /url: https://www.astro-seek.com/faq
+          - text: "|"
+          - link "Terms & Conditions" [ref=f40e78] [cursor=pointer]:
+            - /url: https://www.astro-seek.com/terms-conditions
+          - text: "|"
+          - link "Personal Data Security" [ref=f40e79] [cursor=pointer]:
+            - /url: https://www.astro-seek.com/terms-conditions#personaldata
+          - text: "|"
+          - link "Report Abuse" [ref=f40e80] [cursor=pointer]:
+            - /url: https://www.astro-seek.com/report-abuse
+          - text: "|"
+          - link "Update cookie consent" [ref=f40e81] [cursor=pointer]:
+            - /url: https://www.astro-seek.com/terms-conditions#privacy
+        - generic [ref=f40e83]:
+          - link "Contact" [ref=f40e84] [cursor=pointer]:
+            - /url: https://www.astro-seek.com/contact
+          - text: "|"
+          - link "Links" [ref=f40e85] [cursor=pointer]:
+            - /url: https://www.astro-seek.com/best-astrology-free-websites
+          - text: "|"
+          - link [ref=f40e86] [cursor=pointer]:
+            - /url: https://www.astro-seek.com/
+            - img "English" [ref=f40e87]
+          - text: "|"
+          - link [ref=f40e88] [cursor=pointer]:
+            - /url: https://es.astro-seek.com/
+            - img "Astrología gratis en línea, Horóscopos Astrológicos" [ref=f40e89]
+          - text: "|"
+          - link [ref=f40e90] [cursor=pointer]:
+            - /url: https://pt.astro-seek.com/
+            - img "Horóscopos gratuito" [ref=f40e91]
+          - text: "|"
+          - link [ref=f40e92] [cursor=pointer]:
+            - /url: https://de.astro-seek.com/
+            - img "Kostenlose Horoskope" [ref=f40e93]
+          - text: "|"
+          - link [ref=f40e94] [cursor=pointer]:
+            - /url: https://ru.astro-seek.com/
+            - img "Бесплатные гороскопы онлайн, астрологические расчеты" [ref=f40e95]
+          - text: "|"
+          - link [ref=f40e96] [cursor=pointer]:
+            - /url: https://it.astro-seek.com/
+            - img "Tema Natale Gratis, Oroscopi Online" [ref=f40e97]
+          - text: "|"
+          - link [ref=f40e98] [cursor=pointer]:
+            - /url: https://fr.astro-seek.com/
+            - img "Astrologie et horoscopes" [ref=f40e99]
+          - text: "|"
+          - link [ref=f40e100] [cursor=pointer]:
+            - /url: https://tr.astro-seek.com/
+            - img "Ücretsiz Haritalar, Ücretsiz astroloji grafikleri" [ref=f40e101]
+          - text: "|"
+          - link [ref=f40e102] [cursor=pointer]:
+            - /url: https://ko.astro-seek.com/
+            - img "무료 점성술 차트" [ref=f40e103]
+          - text: "|"
+          - link [ref=f40e104] [cursor=pointer]:
+            - /url: https://www.trustpilot.com/review/www.astro-seek.com
+            - img "Trustpilot Rating 4.8/5" [ref=f40e105]
+        - generic [ref=f40e106]: © 2026 Astro-Seek.com
+    - generic [ref=f40e108]:
+      - link "Sun" [ref=f40e109] [cursor=pointer]:
+        - /url: https://horoscopes.astro-seek.com/sun-sign-calculator-horoscope-zodiac
+      - text: "|"
+      - link "Moon" [ref=f40e110] [cursor=pointer]:
+        - /url: https://horoscopes.astro-seek.com/which-moon-phase-was-i-born-under-calculator
+      - text: "|"
+      - link "Dominant Planet" [ref=f40e111] [cursor=pointer]:
+        - /url: https://horoscopes.astro-seek.com/dominant-planets-astrology-online-calculator
+      - text: "|"
+      - link "Name Numerology" [ref=f40e112] [cursor=pointer]:
+        - /url: https://numerology.astro-seek.com/name-numerology-online-calculator
+      - text: "|"
+      - link "Life Path" [ref=f40e113] [cursor=pointer]:
+        - /url: https://numerology.astro-seek.com/life-path-number-online-calculator
+      - text: "|"
+      - link "Composite" [ref=f40e114] [cursor=pointer]:
+        - /url: https://horoscopes.astro-seek.com/composite-chart-horoscope
+      - text: "|"
+      - link "Venus Cycle" [ref=f40e115] [cursor=pointer]:
+        - /url: https://horoscopes.astro-seek.com/venus-cycle-5-petals-of-venus-online-astrology-calendar
+      - text: "|"
+      - link "Sidereal Vedic Chart" [ref=f40e116] [cursor=pointer]:
+        - /url: https://horoscopes.astro-seek.com/sidereal-astrology-chart-calculator
+      - text: "|"
+      - link "Nakshatra Calculator" [ref=f40e117] [cursor=pointer]:
+        - /url: https://horoscopes.astro-seek.com/nakshatra-vedic-astrology-online-calculator
+      - text: "|"
+      - link "Monthly" [ref=f40e118] [cursor=pointer]:
+        - /url: https://horoscopes.astro-seek.com/free-personal-monthly-horoscope
+      - text: "|"
+      - link "Solar Return" [ref=f40e119] [cursor=pointer]:
+        - /url: https://horoscopes.astro-seek.com/solar-return-chart
+      - text: "|"
+      - link "Rectification" [ref=f40e120] [cursor=pointer]:
+        - /url: https://horoscopes.astro-seek.com/birth-time-rectification-calculator-primary-directions
+      - text: "|"
+      - link "Primary Directions" [ref=f40e121] [cursor=pointer]:
+        - /url: https://horoscopes.astro-seek.com/primary-directions-proportional-semi-arcs-astrology-calculator
+      - text: "|"
+      - link "Full Moon October" [ref=f40e122] [cursor=pointer]:
+        - /url: https://mooncalendar.astro-seek.com/full-moon-october-2026
+      - text: ","
+      - link "November" [ref=f40e123] [cursor=pointer]:
+        - /url: https://mooncalendar.astro-seek.com/full-moon-november-2026
+      - text: "|"
+      - link "Astro Calendar" [ref=f40e124] [cursor=pointer]:
+        - /url: https://horoscopes.astro-seek.com/astrology-calendar-2026
+      - text: "|"
+      - link "Ephemeris" [ref=f40e125] [cursor=pointer]:
+        - /url: https://horoscopes.astro-seek.com/astrology-ephemeris-planetary-online-ephemerides
+      - text: "|"
+      - link "Weather Forecasting" [ref=f40e126] [cursor=pointer]:
+        - /url: https://horoscopes.astro-seek.com/weather-forecasting-astrology-astrometeorology-calendar-2026
+      - text: "|"
+      - link "Horary Chart" [ref=f40e127] [cursor=pointer]:
+        - /url: https://horoscopes.astro-seek.com/horary-astrology-chart-calculator
+      - text: "|"
+      - link "ChatGPT AI" [ref=f40e128] [cursor=pointer]:
+        - /url: https://horoscopes.astro-seek.com/chatgpt-ai-astrology-free-birth-chart
+      - text: "|"
+      - link "Midpoint Calculator" [ref=f40e129] [cursor=pointer]:
+        - /url: https://horoscopes.astro-seek.com/astrology-midpoints-online-calculator
+      - text: "|"
+      - link "House Systems" [ref=f40e130] [cursor=pointer]:
+        - /url: https://horoscopes.astro-seek.com/astrology-house-systems-calculator
+      - text: "|"
+      - link "Solar Arc" [ref=f40e131] [cursor=pointer]:
+        - /url: https://horoscopes.astro-seek.com/solar-arc-directions-calculator
+      - text: "|"
+      - link "Zodiac Signs Dates" [ref=f40e132] [cursor=pointer]:
+        - /url: https://horoscopes.astro-seek.com/astrology-zodiac-signs-dates
+      - text: "|"
+      - link "Electional" [ref=f40e133] [cursor=pointer]:
+        - /url: https://horoscopes.astro-seek.com/electional-astrology-election-chart-online-calculator
+      - text: "|"
+      - link "DE431 Ephemeris" [ref=f40e134] [cursor=pointer]:
+        - /url: https://horoscopes.astro-seek.com/jpl-de431-ephemeris-astrology-online-tables
+      - text: "|"
+      - link "Gardening" [ref=f40e135] [cursor=pointer]:
+        - /url: https://mooncalendar.astro-seek.com/gardening-moon-calendar-farmers-guide
+      - text: "|"
+      - link "Sabian Symbols" [ref=f40e136] [cursor=pointer]:
+        - /url: https://horoscopes.astro-seek.com/sabian-symbols-calculator-calendar
+      - text: "|"
+      - link "Big Three" [ref=f40e137] [cursor=pointer]:
+        - /url: https://horoscopes.astro-seek.com/astrology-big-three-online-calculator
+      - text: "|"
+      - link "Tarot Astrology" [ref=f40e138] [cursor=pointer]:
+        - /url: https://horoscopes.astro-seek.com/tarot-astrology-tarotstrology-horoscope
+      - text: "|"
+      - link "Mercury Retrograde" [ref=f40e139] [cursor=pointer]:
+        - /url: https://horoscopes.astro-seek.com/mercury-retrograde-shadow-retroshade-periods
+      - text: "|"
+      - link "Kundli" [ref=f40e140] [cursor=pointer]:
+        - /url: https://horoscopes.astro-seek.com/kundli-free-janam-kundali-online-calculator
+      - text: "|"
+      - link "90° Dial" [ref=f40e141] [cursor=pointer]:
+        - /url: https://horoscopes.astro-seek.com/90-degree-dial-uranian-astrology-online-calculator
+      - text: "|"
+      - link "VOC Moon" [ref=f40e142] [cursor=pointer]:
+        - /url: https://mooncalendar.astro-seek.com/void-of-course-moon-astrology-online-calendar
+      - text: "|"
+      - link "Planetary Overview" [ref=f40e143] [cursor=pointer]:
+        - /url: https://horoscopes.astro-seek.com/astrology-planetary-overview-2026
+      - text: "|"
+      - link "Interpretations" [ref=f40e144] [cursor=pointer]:
+        - /url: https://horoscopes.astro-seek.com/astrology-chart-free-interpretations
+      - text: "|"
+      - link "Natal" [ref=f40e145] [cursor=pointer]:
+        - /url: https://horoscopes.astro-seek.com/natal-aspects-astrology-free-interpretations
+      - text: "|"
+      - link "Synastry" [ref=f40e146] [cursor=pointer]:
+        - /url: https://horoscopes.astro-seek.com/synastry-aspects-astrology-free-interpretations
+      - text: "|"
+      - link "Transit" [ref=f40e147] [cursor=pointer]:
+        - /url: https://horoscopes.astro-seek.com/transit-aspects-astrology-free-interpretations
+      - text: "|"
+      - link "Fixed Stars" [ref=f40e148] [cursor=pointer]:
+        - /url: https://horoscopes.astro-seek.com/fixed-stars-astrology-online-calculator
+      - text: "|"
+      - link "Julian to Gregorian" [ref=f40e149] [cursor=pointer]:
+        - /url: https://horoscopes.astro-seek.com/julian-to-gregorian-calendar-converter
+      - text: "| |"
+      - link "Sinastria" [ref=f40e150] [cursor=pointer]:
+        - /url: https://it.astro-seek.com/sinastria-di-coppia-oroscopo-online
+      - text: "|"
+      - link "Astrologia" [ref=f40e151] [cursor=pointer]:
+        - /url: https://pt.astro-seek.com/
+      - text: "|"
+      - link "Mapa Astral" [ref=f40e152] [cursor=pointer]:
+        - /url: https://pt.astro-seek.com/calculo-do-mapa-astral-natal
+      - text: "|"
+      - link "Horóscopos gratuitos" [ref=f40e153] [cursor=pointer]:
+        - /url: https://es.astro-seek.com/horoscopos-gratuitos-cartas-astrologicas-online
+      - text: "|"
+      - link "Horoskop Berechnen" [ref=f40e154] [cursor=pointer]:
+        - /url: https://de.astro-seek.com/horoskop-berechnung-geburtshoroskop-rechner
+      - text: "|"

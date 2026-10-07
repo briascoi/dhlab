@@ -1,0 +1,253 @@
+- generic [active] [ref=f36e1]:
+  - navigation [ref=f36e2]:
+    - generic [ref=f36e3]:
+      - link [ref=f36e4] [cursor=pointer]:
+        - /url: https://www.geneticmatrix.com/
+        - img "Genetic Matrix" [ref=f36e5]
+      - generic [ref=f36e6]:
+        - button "Products" [ref=f36e8] [cursor=pointer]
+        - button "Explore" [ref=f36e12] [cursor=pointer]
+        - link "Our Plans" [ref=f36e15] [cursor=pointer]:
+          - /url: https://www.geneticmatrix.com/plans-features/
+        - button "English" [ref=f36e17] [cursor=pointer]
+        - link "Sign In" [ref=f36e22] [cursor=pointer]:
+          - /url: https://www.geneticmatrix.com/login/
+        - link "Sign Up" [ref=f36e23] [cursor=pointer]:
+          - /url: https://www.geneticmatrix.com/register/
+  - heading "Reports" [level=1] [ref=f36e26]
+  - generic [ref=f36e29]:
+    - link "All" [ref=f36e30] [cursor=pointer]:
+      - /url: "#all"
+    - link "Foundation" [ref=f36e31] [cursor=pointer]:
+      - /url: "#foundation"
+    - link "Connection" [ref=f36e32] [cursor=pointer]:
+      - /url: "#connection"
+    - link "Life Cycles" [ref=f36e33] [cursor=pointer]:
+      - /url: "#lifecycle"
+    - link "Free" [ref=f36e34] [cursor=pointer]:
+      - /url: "#free"
+  - generic [ref=f36e37]:
+    - generic [ref=f36e38]:
+      - link [ref=f36e39] [cursor=pointer]:
+        - /url: https://www.geneticmatrix.com/foundation-reports/
+        - img "Report - Foundation" [ref=f36e40]
+      - link [ref=f36e41] [cursor=pointer]:
+        - /url: https://www.geneticmatrix.com/foundation-reports/
+        - heading "Report - Foundation" [level=3] [ref=f36e42]
+        - paragraph [ref=f36e43]: "The Foundation Report is the complete written walk-through of your Human Design, a reliable reference you can return to as your understanding deepens. It covers your Type, Strategy, Inner Authority, and Profile, then maps every defined and undefined Center to show how energy moves through you. It works through every Planet, Channel, Gate, and Line activated in your chart, explaining what each brings to your daily life. Your Incarnation Cross and Nodal Environment close the picture with the bigger frame: your life role, guiding themes, and the direction you are moving toward as your design unfolds with experience."
+      - generic [ref=f36e44]:
+        - link "Order Now" [ref=f36e45] [cursor=pointer]:
+          - /url: https://www.geneticmatrix.com/foundation-reports/
+        - link "View Sample" [ref=f36e46] [cursor=pointer]:
+          - /url: https://insight.geneticmatrix.com/media/images/xmasspecial/GM_HD_Foundation_Report_Example.pdf
+    - generic [ref=f36e47]:
+      - link [ref=f36e48] [cursor=pointer]:
+        - /url: https://www.geneticmatrix.com/connection-report/
+        - img "Report - Connection" [ref=f36e49]
+      - link [ref=f36e50] [cursor=pointer]:
+        - /url: https://www.geneticmatrix.com/connection-report/
+        - heading "Report - Connection" [level=3] [ref=f36e51]
+        - paragraph [ref=f36e52]: The Connection Report analyzes two charts as one living system, revealing how two people actually meet, mix, and move apart. Over 50 pages, it covers your Composite Chart, Connection Style, Relationship Authority, Aura Compatibility, and the four channel dynamics (Dominance, Electromagnetic, Compromise, Companionship) that govern magnetism, friction, and flow. It explores Nodal Lines and Social Growth, Profile Compatibility, Sleep Connection, and Variable Compatibility across environment, perspective, and digestion rhythm. The result is a layered view of your compatibility, revealing where you align easily and where conscious effort is required.
+      - generic [ref=f36e53]:
+        - link "Order Now" [ref=f36e54] [cursor=pointer]:
+          - /url: https://www.geneticmatrix.com/connection-report/
+        - link "View Sample" [ref=f36e55] [cursor=pointer]:
+          - /url: https://www.geneticmatrix.com/wp-content/uploads/samples/connection-report/GM_Connection_Jennifer_Lopez_Ben_Affleck_en_Tropical.pdf
+    - generic [ref=f36e56]:
+      - link [ref=f36e57] [cursor=pointer]:
+        - /url: https://www.geneticmatrix.com/lunar-return-report/
+        - img "Report - Lunar Return" [ref=f36e58]
+      - link [ref=f36e59] [cursor=pointer]:
+        - /url: https://www.geneticmatrix.com/lunar-return-report/
+        - heading "Report - Lunar Return" [level=3] [ref=f36e60]
+        - paragraph [ref=f36e61]: The Lunar Return Report offers an exploration of the Moon's influence on you, reflecting environmental conditioning, focus, and internal alignment throughout the monthly cycle. This report highlights how the Moon's transit temporarily activates Centers, Channels, Gates and Lines, shaping focus, themes, and conditioning influences for the month. The report also examines your cycle Profile, Cross thematic influences, and Nodal Environment, offering insights into how these shifting dynamics can influence alignment. By understanding these rhythms, the report provides guidance on recognizing conditioning influences and living with greater clarity and self-awareness.
+      - generic [ref=f36e62]:
+        - link "Order Now" [ref=f36e63] [cursor=pointer]:
+          - /url: https://www.geneticmatrix.com/lunar-return-report/
+        - link "View Sample" [ref=f36e64] [cursor=pointer]:
+          - /url: https://www.geneticmatrix.com/wp-content/uploads/ebooks/GM_HD_LunarReport_Preview%20Pitt.pdf
+    - generic [ref=f36e65]:
+      - link [ref=f36e66] [cursor=pointer]:
+        - /url: https://www.geneticmatrix.com/solar-return-report/
+        - img "Report - Solar Return" [ref=f36e67]
+      - link [ref=f36e68] [cursor=pointer]:
+        - /url: https://www.geneticmatrix.com/solar-return-report/
+        - heading "Report - Solar Return" [level=3] [ref=f36e69]
+        - paragraph [ref=f36e70]: The Solar Return Report provides a detailed breakdown of your Solar cycle. It delves into the Nodal Environment and Line themes present for the cycle year. It examines the Centers defined by the return and explores the themes that arise as a result. If the Solar Return activates Gates that create Channels, the report provides insights into these, explaining the distinctions between Educational and Personal Channels and the attributes they bring. Additionally, the report covers all Environmental Gates. It closes with an overview of the undefined Centers, reminding us how the not-self can corrupt our decision-making.
+      - generic [ref=f36e71]:
+        - link "Order Now" [ref=f36e72] [cursor=pointer]:
+          - /url: https://www.geneticmatrix.com/solar-return-report/
+        - link "View Sample" [ref=f36e73] [cursor=pointer]:
+          - /url: https://www.geneticmatrix.com/wp-content/uploads/ebooks/GM_HD_SolarReport_Tropical_Brad%20Pitt-Sample.pdf
+    - generic [ref=f36e74]:
+      - link [ref=f36e75] [cursor=pointer]:
+        - /url: https://www.geneticmatrix.com/venus-return-report/
+        - img "Report - Venus Return" [ref=f36e76]
+      - link [ref=f36e77] [cursor=pointer]:
+        - /url: https://www.geneticmatrix.com/venus-return-report/
+        - heading "Report - Venus Return" [level=3] [ref=f36e78]
+        - paragraph [ref=f36e79]: The Venus Return Report explores the recurring cycle of love, romance, values, and harmony that occurs approximately every year. In Human Design, Venus highlights themes of beauty, personal values, creative expression, and social connection, shaping how you align with what brings you comfort and joy. This report examines how your Cycle Profile, Cross themes, Nodal Environments, and activated Centers, Channels, and Gates influence your relationships, creative expression, financial attitudes, and priorities. It offers guidance on aligning your connections, resources, and values with your authentic self, helping you foster deeper harmony, fulfillment, and alignment with what matters most to you.
+      - generic [ref=f36e80]:
+        - link "Order Now" [ref=f36e81] [cursor=pointer]:
+          - /url: https://www.geneticmatrix.com/venus-return-report/
+        - link "View Sample" [ref=f36e82] [cursor=pointer]:
+          - /url: https://www.geneticmatrix.com/wp-content/uploads/ebooks/GM_HD_VenusReport_Preview%20Lee%20Evans.pdf
+    - generic [ref=f36e83]:
+      - link [ref=f36e84] [cursor=pointer]:
+        - /url: https://www.geneticmatrix.com/mars-return-report/
+        - img "Report - Mars Return" [ref=f36e85]
+      - link [ref=f36e86] [cursor=pointer]:
+        - /url: https://www.geneticmatrix.com/mars-return-report/
+        - heading "Report - Mars Return" [level=3] [ref=f36e87]
+        - paragraph [ref=f36e88]: The Mars Return Report explores the energetic cycle that occurs approximately every two years, when Mars completes its orbit and returns to its original position in your chart. Mars in Human Design represents drive, motivation, willpower, and the urge to take action. This report examines how Mars activates specific Centers, Channels, Gates, and Lines, influencing your energy, focus, ambition, and the way you assert yourself. It also explores your Cycle Profile, Cross themes, and Nodal Environment, revealing how these dynamics shape your relationship to action and personal drive during this period.
+      - generic [ref=f36e89]:
+        - link "Order Now" [ref=f36e90] [cursor=pointer]:
+          - /url: https://www.geneticmatrix.com/mars-return-report/
+        - link "View Sample" [ref=f36e91] [cursor=pointer]:
+          - /url: https://www.geneticmatrix.com/wp-content/uploads/ebooks/GM_HD_MarsReport_Preview%20Stiller.pdf
+    - generic [ref=f36e92]:
+      - link [ref=f36e93] [cursor=pointer]:
+        - /url: https://www.geneticmatrix.com/jupiter-return-report/
+        - img "Report - Jupiter Return" [ref=f36e94]
+      - link [ref=f36e95] [cursor=pointer]:
+        - /url: https://www.geneticmatrix.com/jupiter-return-report/
+        - heading "Report - Jupiter Return" [level=3] [ref=f36e96]
+        - paragraph [ref=f36e97]: The Jupiter Return Report marks a cycle of growth, expansion, and alignment with your higher purpose. Occurring approximately every 12 years, the Jupiter Return represents a powerful moment of opportunity, learning, and inner development. This report explores how Jupiter activates Centers, Channels, Gates, and Lines in your chart, revealing themes of abundance, expansion, philosophy, and meaning that emerge during this cycle. It also covers your Cycle Profile, Cross themes, and Nodal Environment, offering insights into how to navigate the growth opportunities that arise.
+      - generic [ref=f36e98]:
+        - link "Order Now" [ref=f36e99] [cursor=pointer]:
+          - /url: https://www.geneticmatrix.com/jupiter-return-report/
+        - link "View Sample" [ref=f36e100] [cursor=pointer]:
+          - /url: https://www.geneticmatrix.com/wp-content/uploads/ebooks/GM_HD_Jupiter-5th-Return-Report_Preview%20Fairbrass.pdf
+    - generic [ref=f36e101]:
+      - link [ref=f36e102] [cursor=pointer]:
+        - /url: https://www.geneticmatrix.com/jupiter-opposition-report/
+        - img "Report - Jupiter Opposition" [ref=f36e103]
+      - link [ref=f36e104] [cursor=pointer]:
+        - /url: https://www.geneticmatrix.com/jupiter-opposition-report/
+        - heading "Report - Jupiter Opposition" [level=3] [ref=f36e105]
+        - paragraph [ref=f36e106]: The Jupiter Opposition Report explores a recurring transit that occurs approximately every 6 years, marking a midpoint in the Jupiter cycle. This is a time for recalibration, where the themes of growth and expansion that began at your Jupiter Return reach a point of reassessment. The report examines how this opposition activates specific Centers, Channels, Gates, and Lines in your chart, revealing themes of perspective, integration, and conscious expansion. It also covers your Cycle Profile, Cross themes, and Nodal Environment.
+      - generic [ref=f36e107]:
+        - link "Order Now" [ref=f36e108] [cursor=pointer]:
+          - /url: https://www.geneticmatrix.com/jupiter-opposition-report/
+        - link "View Sample" [ref=f36e109] [cursor=pointer]:
+          - /url: https://www.geneticmatrix.com/wp-content/uploads/ebooks/GM_HD_Jupiter-3rd-Opp-Report_Preview%20Swift.pdf
+    - generic [ref=f36e110]:
+      - link [ref=f36e111] [cursor=pointer]:
+        - /url: https://www.geneticmatrix.com/saturn-return-report/
+        - img "Report - Saturn Return" [ref=f36e112]
+      - link [ref=f36e113] [cursor=pointer]:
+        - /url: https://www.geneticmatrix.com/saturn-return-report/
+        - heading "Report - Saturn Return" [level=3] [ref=f36e114]
+        - paragraph [ref=f36e115]: The Saturn Return Report analyzes a crucial transit occurring every 29 years, exploring how Saturn challenges and reshapes your structures, responsibilities, and sense of authority. The First Saturn Return (ages 28-30) often dismantles what no longer serves your true design, while the Second (ages 58-60) and Third (around 87) bring deeper layers of integration. This report examines how Saturn activates specific Centers, Channels, Gates, and Lines, revealing themes of discipline, maturity, and structural transformation. It also covers your Cycle Profile, Cross themes, and Nodal Environment.
+      - generic [ref=f36e116]:
+        - link "Order Now" [ref=f36e117] [cursor=pointer]:
+          - /url: https://www.geneticmatrix.com/saturn-return-report/
+        - link "View Sample" [ref=f36e118] [cursor=pointer]:
+          - /url: https://www.geneticmatrix.com/wp-content/uploads/ebooks/GM_HD_SaturnReport_Tropical_1368523_Bella-Hadid-Final.pdf
+    - generic [ref=f36e119]:
+      - link [ref=f36e120] [cursor=pointer]:
+        - /url: https://www.geneticmatrix.com/saturn-opposition-report/
+        - img "Report - Saturn Opposition" [ref=f36e121]
+      - link [ref=f36e122] [cursor=pointer]:
+        - /url: https://www.geneticmatrix.com/saturn-opposition-report/
+        - heading "Report - Saturn Opposition" [level=3] [ref=f36e123]
+        - paragraph [ref=f36e124]: The Saturn Opposition Report explores the three pivotal transits that occur at different life stages, challenging your structures and pushing you toward greater authenticity. Occurring approximately at ages 14, 44, and 74, these oppositions mark moments when Saturn's themes of responsibility, maturity, and structure come into sharp focus. This report examines how the opposition activates specific Centers, Channels, Gates, and Lines, revealing themes of reassessment, integrity, and conscious choice. It also covers your Cycle Profile, Cross themes, and Nodal Environment.
+      - generic [ref=f36e125]:
+        - link "Order Now" [ref=f36e126] [cursor=pointer]:
+          - /url: https://www.geneticmatrix.com/saturn-opposition-report/
+        - link "View Sample" [ref=f36e127] [cursor=pointer]:
+          - /url: https://www.geneticmatrix.com/wp-content/uploads/ebooks/GM_HD_Saturn-2nd-Opp-Report_Ryan%20Gosling.pdf
+    - generic [ref=f36e128]:
+      - link [ref=f36e129] [cursor=pointer]:
+        - /url: https://www.geneticmatrix.com/uranus-opposition-report/
+        - img "Report - Uranus Opposition" [ref=f36e130]
+      - link [ref=f36e131] [cursor=pointer]:
+        - /url: https://www.geneticmatrix.com/uranus-opposition-report/
+        - heading "Report - Uranus Opposition" [level=3] [ref=f36e132]
+        - paragraph [ref=f36e133]: The Uranus Opposition Report examines a key life transition between ages 39-42. This transit represents a profound shift in how your unique frequency expresses itself, often called the midlife awakening. The report explores how Uranus activates specific Centers, Channels, Gates, and Lines, revealing themes of liberation, individuation, and authentic self-expression. North Node activation during this period brings into focus the themes of growth and direction. It also covers your Cycle Profile, Cross themes, and Nodal Environment.
+      - generic [ref=f36e134]:
+        - link "Order Now" [ref=f36e135] [cursor=pointer]:
+          - /url: https://www.geneticmatrix.com/uranus-opposition-report/
+        - link "View Sample" [ref=f36e136] [cursor=pointer]:
+          - /url: https://www.geneticmatrix.com/wp-content/uploads/ebooks/GM_HD_UranusReport_Tropical_842456%20-%20Henry%20Cavill%20Final.pdf
+    - generic [ref=f36e137]:
+      - link [ref=f36e138] [cursor=pointer]:
+        - /url: https://www.geneticmatrix.com/chiron-return-report/
+        - img "Report - Chiron Return" [ref=f36e139]
+      - link [ref=f36e140] [cursor=pointer]:
+        - /url: https://www.geneticmatrix.com/chiron-return-report/
+        - heading "Report - Chiron Return" [level=3] [ref=f36e141]
+        - paragraph [ref=f36e142]: The Chiron Return Report analyzes your Chiron cycle, focusing on the transformative period around ages 50-51 when Chiron completes its first full orbit and returns to its natal position. This transit represents the wisdom integration phase, where wounds become gifts and lifelong themes find resolution. The report examines how Chiron activates specific Centers, Channels, Gates, and Lines in your chart, revealing themes of healing, mentorship, and the integration of accumulated wisdom. It also covers your Cycle Profile, Cross themes, and Nodal Environment.
+      - generic [ref=f36e143]:
+        - link "Order Now" [ref=f36e144] [cursor=pointer]:
+          - /url: https://www.geneticmatrix.com/chiron-return-report/
+        - link "View Sample" [ref=f36e145] [cursor=pointer]:
+          - /url: https://www.geneticmatrix.com/wp-content/uploads/ebooks/GM_HD_ChironReport_Tropical_16802_Leonardo_DiCaprio_Final.pdf
+    - generic [ref=f36e146]:
+      - link [ref=f36e147] [cursor=pointer]:
+        - /url: https://www.geneticmatrix.com/uranus-return-report/
+        - img "Report - Uranus Return" [ref=f36e148]
+      - link [ref=f36e149] [cursor=pointer]:
+        - /url: https://www.geneticmatrix.com/uranus-return-report/
+        - heading "Report - Uranus Return" [level=3] [ref=f36e150]
+        - paragraph [ref=f36e151]: The Uranus Return marks a profound milestone at age 84 when 9-centered humans complete a full Uranian cycle. This rare transit represents the culmination of a lifetime of awakening, individuation, and authentic self-expression. The report examines how Uranus activates specific Centers, Channels, Gates, and Lines at this completion point, revealing themes of integration, legacy, and the synthesis of a life lived in alignment with your true frequency. It also covers your Cycle Profile, Cross themes, and Nodal Environment.
+      - generic [ref=f36e152]:
+        - link "Order Now" [ref=f36e153] [cursor=pointer]:
+          - /url: https://www.geneticmatrix.com/uranus-return-report/
+        - link "View Sample" [ref=f36e154] [cursor=pointer]:
+          - /url: https://www.geneticmatrix.com/wp-content/uploads/ebooks/GM_HD_UranusReturnReport_Al%20Pacino.pdf
+    - generic [ref=f36e155]:
+      - link [ref=f36e156] [cursor=pointer]:
+        - /url: ""
+        - img "Free Report - Foundation Essentials" [ref=f36e157]
+      - link [ref=f36e158] [cursor=pointer]:
+        - /url: ""
+        - heading "Free Report - Foundation Essentials" [level=3] [ref=f36e159]
+        - paragraph [ref=f36e160]: Unlock your free Foundation Essentials Report from Genetic Matrix and discover the core building blocks of your Human Design. This personalized guide reveals your Type, Strategy, Authority, Profile, and Definition, giving you a clear picture of how your energy operates and how you're designed to make decisions. Also learn about your defined and open Centers, understand the Channels that shape your unique gifts, and explore how your Aura interacts with the world around you. Whether you're new to Human Design or looking for a concise overview of your chart's key elements, this essential, free resource is the perfect starting point for living in alignment with your true design.
+      - link "Get Now" [ref=f36e162] [cursor=pointer]:
+        - /url: ""
+    - generic [ref=f36e163]:
+      - link [ref=f36e164] [cursor=pointer]:
+        - /url: "#"
+        - img "Free Report - Homo Solaris" [ref=f36e165]
+      - link [ref=f36e166] [cursor=pointer]:
+        - /url: "#"
+        - heading "Free Report - Homo Solaris" [level=3] [ref=f36e167]
+        - paragraph [ref=f36e168]: Unlock your free Homo Solaris Report from Genetic Matrix and discover the next leap in human evolution. This exclusive, no-cost guide reveals the upcoming Solar Plexus Mutation of 2027 and humanity's transition into a new species, Homo Solaris, characterized by collective consciousness, emotional stability, and deep interconnectedness. Explore the evolutionary journey leading to this transformation, why Solaris is the true name for our future, and how you can align with and support this profound shift. Get ready for the Age of the Sleeping Phoenix with this essential, free resource and be among the first to understand and embrace the dawning era of luminous, evolved humanity.
+      - link "Get Now" [ref=f36e170] [cursor=pointer]:
+        - /url: "#"
+  - text: 
+  - contentinfo [ref=f36e171]:
+    - generic [ref=f36e173]:
+      - generic [ref=f36e174]:
+        - img "Genetic Matrix" [ref=f36e175]
+        - paragraph [ref=f36e176]: © 2026 Genetic Matrix LLC.
+        - paragraph [ref=f36e177]: All right reserved.
+        - paragraph [ref=f36e178]:
+          - link "Privacy, Terms and Conditions" [ref=f36e179] [cursor=pointer]:
+            - /url: https://www.geneticmatrix.com/privacy/
+      - generic [ref=f36e180]:
+        - heading "Subscribe to Our Newsletter" [level=3] [ref=f36e181]
+        - paragraph [ref=f36e182]: Sign up to receive updates, offers, new releases, and everything related to Genetic Matrix.
+        - generic [ref=f36e183]:
+          - textbox "Your Email Address" [ref=f36e184]
+          - button [ref=f36e185] [cursor=pointer]
+      - generic [ref=f36e188]:
+        - heading "Connect With Us" [level=3] [ref=f36e189]
+        - generic [ref=f36e190]:
+          - link [ref=f36e191] [cursor=pointer]:
+            - /url: https://www.facebook.com/GeneticMatrixx
+            - img "Facebook" [ref=f36e192]
+          - link [ref=f36e193] [cursor=pointer]:
+            - /url: https://x.com/GeneticMatrix
+            - img "X" [ref=f36e194]
+          - link [ref=f36e195] [cursor=pointer]:
+            - /url: https://www.instagram.com/genetic_matrix/
+            - img "Instagram" [ref=f36e196]
+          - link [ref=f36e197] [cursor=pointer]:
+            - /url: https://www.youtube.com/@geneticmatrixhd
+            - img "YouTube" [ref=f36e198]
+        - link "Get in Touch" [ref=f36e199] [cursor=pointer]:
+          - /url: mailto:support@geneticmatrix.com
+  - text:    
+  - status

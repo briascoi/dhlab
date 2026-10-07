@@ -71,8 +71,10 @@ test.skipIf(!archivos.some((a) => a.includes("capitulo-5")))("el Capítulo 5 tie
 const normal = (s: string) => s.toLowerCase().replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/\s+/g, " ");
 const archivoDe = (donde: string) => `contenido/fuentes/${donde.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase()}.txt`;
 const esPagina = (donde: string) => /^[a-z0-9.-]+\.[a-z]+\/\S+$/i.test(donde) && !donde.startsWith("github.com/");
+// Un dato que la fuente da con muchos decimales (los CSV de estadísticas: 35.89896716064467) vale también redondeado a entero y a un decimal.
+const redondeos = (t: string) => t + " " + [...t.matchAll(/\b\d+\.\d{6,}\b/g)].map(([n]) => `${Math.round(Number(n))}% ${Number(n).toFixed(1)}%`).join(" ");
 const crudo = (e: Record<string, unknown>) =>
-  (e.fuentes as { donde: string }[]).filter((f) => existsSync(archivoDe(f.donde))).map((f) => normal(readFileSync(archivoDe(f.donde), "utf8")));
+  (e.fuentes as { donde: string }[]).filter((f) => existsSync(archivoDe(f.donde))).map((f) => redondeos(normal(readFileSync(archivoDe(f.donde), "utf8"))));
 
 test.skipIf(!archivos.length)("cada página citada tiene su texto crudo guardado", () => {
   for (const e of entradas) for (const f of e.fuentes as { donde: string }[]) if (esPagina(f.donde)) expect(existsSync(archivoDe(f.donde)), `${String(e.id)}: falta ${archivoDe(f.donde)}`).toBe(true);

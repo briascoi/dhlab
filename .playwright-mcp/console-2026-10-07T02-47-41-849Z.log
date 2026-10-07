@@ -1,0 +1,10 @@
+[    2090ms] ReferenceError: tailwind is not defined
+    at https://www.geneticmatrix.com/celebrity/gwen-stefani/tropical/:28:5
+[    2466ms] ReferenceError: jQuery is not defined
+    at https://www.geneticmatrix.com/celebrity/gwen-stefani/tropical/:1055:2
+[    2475ms] TypeError: window._nslDOMReady is not a function
+    at https://www.geneticmatrix.com/celebrity/gwen-stefani/tropical/:1333:8
+    at https://www.geneticmatrix.com/celebrity/gwen-stefani/tropical/:1461:6
+[    2497ms] ReferenceError: darkmysite_init_draggable_floating_switch is not defined
+    at HTMLDocument.<anonymous> (https://www.geneticmatrix.com/celebrity/gwen-stefani/tropical/:1045:9)
+[    3592ms] [LOG] {advChart: null, ChartAdvsStruct: Array(0), data: Object, chartProperties: Object, personSettings: Array(3)} @ https://www.geneticmatrix.com/wp-content/themes/geneticmatrix/assets/svg/scripts/main.js?v=1786967302:3

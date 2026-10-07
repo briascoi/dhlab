@@ -1,0 +1,22 @@
+- generic [active] [ref=f25e1]:
+  - main [ref=f25e2]:
+    - generic [ref=f25e3]:
+      - generic [ref=f25e4]:
+        - img "Ícono para www.geneticmatrix.com" [ref=f25e5]
+        - heading "www.geneticmatrix.com" [level=1] [ref=f25e6]
+      - heading "Verificación de seguridad en curso" [level=2] [ref=f25e7]
+      - paragraph [ref=f25e8]: Este sitio web utiliza un servicio de seguridad para protegerse contra bots maliciosos. Esta página se muestra mientras el sitio web verifica que tú no eres un bot.
+  - contentinfo [ref=f25e9]:
+    - generic [ref=f25e11]:
+      - generic [ref=f25e13]:
+        - text: "Ray ID:"
+        - code [ref=f25e14]: a46993a2bdf1fdd3
+      - generic [ref=f25e15]:
+        - generic [ref=f25e16]:
+          - text: Rendimiento y seguridad de
+          - link "Cloudflare, se abre en una pestaña nueva" [ref=f25e17] [cursor=pointer]:
+            - /url: https://www.cloudflare.com?utm_source=challenge&utm_campaign=m
+            - text: Cloudflare
+        - link "Privacidad, se abre en una pestaña nueva" [ref=f25e19] [cursor=pointer]:
+          - /url: https://www.cloudflare.com/es-es/privacypolicy/
+          - text: Privacidad

@@ -8,6 +8,12 @@ export const archivoDe = (donde) => `contenido/fuentes/${donde.replace(/[^a-z0-9
 // Solo páginas web: una fuente que es código (un repositorio con su commit) no se baja acá.
 export const esPagina = (donde) => /^[a-z0-9.-]+\.[a-z]+\/\S+$/i.test(donde) && !donde.startsWith("github.com/");
 
+// Datos que la página muestra en gráficos y no en su texto: se bajan aparte, tal cual, y se guardan al final del mismo archivo.
+// Las estadísticas de Jovian Archive están en CSV de Datawrapper (Tipo, Autoridad, Definición y Perfil).
+const ANEXOS = {
+  "jovianarchive.com/pages/human-design-statistics": ["zc184/3", "YOinl/2", "7RPND/2", "81Kkb/6"].map((id) => `https://datawrapper.dwcdn.net/${id}/dataset.csv`),
+};
+
 const texto = (html) =>
   html
     .replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, " ")
@@ -31,7 +37,13 @@ if (process.argv[1]?.endsWith("bajar-fuentes.mjs")) {
     if (!r.ok) throw new Error(`${donde}: ${r.status}`);
     const cuerpo = texto(await r.text());
     if (cuerpo.length < 2000) throw new Error(`${donde}: la página vino casi vacía (${cuerpo.length} caracteres)`);
-    writeFileSync(archivo, `Fuente: https://${donde.startsWith("jovianarchive.com") ? "www." : ""}${donde}\nBajada: ${new Date().toISOString().slice(0, 10)}\n\n${cuerpo}\n`);
+    let anexos = "";
+    for (const url of ANEXOS[donde] ?? []) {
+      const a = await fetch(url);
+      if (!a.ok) throw new Error(`${url}: ${a.status}`);
+      anexos += `\n\nDatos: ${url}\n${(await a.text()).trim()}\n`;
+    }
+    writeFileSync(archivo, `Fuente: https://${donde.startsWith("jovianarchive.com") ? "www." : ""}${donde}\nBajada: ${new Date().toISOString().slice(0, 10)}\n\n${cuerpo}\n${anexos}`);
     console.log(`${archivo} (${cuerpo.length} caracteres)`);
   }
 }
